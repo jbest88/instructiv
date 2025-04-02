@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -83,7 +84,7 @@ const Index = () => {
     
     // Create the appropriate element type based on the 'type' parameter
     if (type === "text") {
-      newElement = {
+      const textElement: TextElement = {
         id: `text-${uuidv4()}`,
         type: "text",
         content: "New Text",
@@ -94,8 +95,9 @@ const Index = () => {
         fontSize: 16,
         fontColor: "#333333"
       };
+      newElement = textElement;
     } else if (type === "image") {
-      newElement = {
+      const imageElement: ImageElement = {
         id: `image-${uuidv4()}`,
         type: "image",
         src: "/placeholder.svg",
@@ -105,8 +107,9 @@ const Index = () => {
         width: 200,
         height: 150
       };
+      newElement = imageElement;
     } else if (type === "button") {
-      newElement = {
+      const buttonElement: ButtonElement = {
         id: `button-${uuidv4()}`,
         type: "button",
         label: "Button",
@@ -117,8 +120,9 @@ const Index = () => {
         width: 150,
         height: 50
       };
+      newElement = buttonElement;
     } else if (type === "hotspot") {
-      newElement = {
+      const hotspotElement: HotspotElement = {
         id: `hotspot-${uuidv4()}`,
         type: "hotspot",
         tooltip: "Hotspot information",
@@ -128,6 +132,7 @@ const Index = () => {
         width: 60,
         height: 60
       };
+      newElement = hotspotElement;
     } else {
       // This should never happen, but TypeScript needs this
       throw new Error(`Unsupported element type: ${type}`);
