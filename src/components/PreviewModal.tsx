@@ -1,130 +1,116 @@
 
 import { useState, useEffect } from "react";
+import { X, ArrowLeft, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
-import { Scene, Slide } from "@/utils/slideTypes";
+import { useProject } from "@/contexts/ProjectContext";
 
 interface PreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  scenes: Scene[];
-  initialSceneId: string;
-  initialSlideId: string;
 }
 
-export function PreviewModal({ 
-  isOpen, 
-  onClose, 
-  scenes,
-  initialSceneId,
-  initialSlideId
-}: PreviewModalProps) {
-  const [currentSceneId, setCurrentSceneId] = useState(initialSceneId);
-  const [currentSlideId, setCurrentSlideId] = useState(initialSlideId);
+export function PreviewModal({ isOpen, onClose }: PreviewModalProps) {
+  const { project } = useProject();
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
-  // Reset to initial state when modal opens
+  // Reset indices when opening the preview
   useEffect(() => {
     if (isOpen) {
-      setCurrentSceneId(initialSceneId);
-      setCurrentSlideId(initialSlideId);
+      // Find the index of current scene and slide
+      const sceneIndex = project.scenes.findIndex(s => s.id === project.currentSceneId);
+      
+      if (sceneIndex >= 0) {
+        setCurrentSceneIndex(sceneIndex);
+        
+        const scene = project.scenes[sceneIndex];
+        const slideIndex = scene.slides.findIndex(s => s.id === project.currentSlideId);
+        
+        if (slideIndex >= 0) {
+          setCurrentSlideIndex(slideIndex);
+        } else {
+          setCurrentSlideIndex(0);
+        }
+      } else {
+        setCurrentSceneIndex(0);
+        setCurrentSlideIndex(0);
+      }
     }
-  }, [isOpen, initialSceneId, initialSlideId]);
+  }, [isOpen, project]);
   
-  // Find the current scene and slide
-  const currentScene = scenes.find(scene => scene.id === currentSceneId) || scenes[0];
-  const sortedSlides = [...currentScene.slides].sort((a, b) => a.order - b.order);
-  const currentSlide = sortedSlides.find(slide => slide.id === currentSlideId) || sortedSlides[0];
-  
-  // Get the current slide index for navigation
-  const currentSlideIndex = sortedSlides.findIndex(slide => slide.id === currentSlideId);
-  
-  // Navigate to the next slide or scene
+  // Navigate to next slide or scene
   const handleNext = () => {
-    // If there are more slides in the current scene
-    if (currentSlideIndex < sortedSlides.length - 1) {
-      setCurrentSlideId(sortedSlides[currentSlideIndex + 1].id);
-      return;
-    }
+    const currentScene = project.scenes[currentSceneIndex];
     
-    // If this is the last slide in the current scene, move to the next scene
-    const currentSceneIndex = scenes.findIndex(scene => scene.id === currentSceneId);
-    if (currentSceneIndex < scenes.length - 1) {
-      const nextScene = scenes[currentSceneIndex + 1];
-      const nextSlides = [...nextScene.slides].sort((a, b) => a.order - b.order);
-      setCurrentSceneId(nextScene.id);
-      setCurrentSlideId(nextSlides[0]?.id || "");
+    if (currentSlideIndex < currentScene.slides.length - 1) {
+      // Go to next slide in current scene
+      setCurrentSlideIndex(currentSlideIndex + 1);
+    } else if (currentSceneIndex < project.scenes.length - 1) {
+      // Go to first slide of next scene
+      setCurrentSceneIndex(currentSceneIndex + 1);
+      setCurrentSlideIndex(0);
     }
   };
   
-  // Navigate to the previous slide or scene
+  // Navigate to previous slide or scene
   const handlePrevious = () => {
-    // If there are previous slides in the current scene
     if (currentSlideIndex > 0) {
-      setCurrentSlideId(sortedSlides[currentSlideIndex - 1].id);
-      return;
-    }
-    
-    // If this is the first slide in the current scene, move to the previous scene
-    const currentSceneIndex = scenes.findIndex(scene => scene.id === currentSceneId);
-    if (currentSceneIndex > 0) {
-      const prevScene = scenes[currentSceneIndex - 1];
-      const prevSlides = [...prevScene.slides].sort((a, b) => a.order - b.order);
-      setCurrentSceneId(prevScene.id);
-      setCurrentSlideId(prevSlides[prevSlides.length - 1]?.id || "");
+      // Go to previous slide in current scene
+      setCurrentSlideIndex(currentSlideIndex - 1);
+    } else if (currentSceneIndex > 0) {
+      // Go to last slide of previous scene
+      const prevScene = project.scenes[currentSceneIndex - 1];
+      setCurrentSceneIndex(currentSceneIndex - 1);
+      setCurrentSlideIndex(prevScene.slides.length - 1);
     }
   };
   
-  // Function to handle button clicks in slides
-  const handleButtonClick = (action: string, targetSlideId?: string) => {
-    if (action === "nextSlide") {
-      handleNext();
-    } else if (action === "prevSlide") {
-      handlePrevious();
-    } else if (action === "goToSlide" && targetSlideId) {
-      setCurrentSlideId(targetSlideId);
-    }
+  // Get current slide
+  const getCurrentSlide = () => {
+    if (project.scenes.length === 0) return null;
+    
+    const currentScene = project.scenes[currentSceneIndex];
+    if (!currentScene || currentScene.slides.length === 0) return null;
+    
+    return currentScene.slides[currentSlideIndex];
   };
-
+  
+  const currentSlide = getCurrentSlide();
+  
+  if (!currentSlide) return null;
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-6xl w-[90vw] h-[80vh] p-0 overflow-hidden">
-        <div className="relative w-full h-full flex flex-col">
-          {/* Preview Header */}
-          <div className="bg-card border-b p-2 flex items-center justify-between">
-            <div className="text-sm font-medium">
-              Preview: {currentScene.title} - {currentSlide.title}
-            </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8" 
-              onClick={onClose}
-            >
-              <X size={16} />
-            </Button>
+      <DialogContent className="max-w-7xl w-screen h-[90vh] flex flex-col p-0">
+        <div className="border-b p-2 flex items-center justify-between">
+          <div className="text-sm font-medium">
+            Preview: {project.scenes[currentSceneIndex]?.title} - {currentSlide.title}
           </div>
-          
-          {/* Preview Content */}
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X size={18} />
+          </Button>
+        </div>
+        
+        <div className="flex-1 relative bg-gray-100 overflow-hidden">
+          {/* Preview of slide */}
           <div 
-            className="flex-1 relative overflow-hidden" 
+            className="absolute inset-8 shadow-xl rounded-md overflow-hidden"
             style={{ background: currentSlide.background || '#ffffff' }}
           >
-            {/* Render slide elements */}
+            {/* Render slide elements here */}
             {currentSlide.elements.map(element => {
               if (element.type === "text") {
                 return (
                   <div
                     key={element.id}
-                    className="absolute"
                     style={{
+                      position: 'absolute',
                       left: `${element.x}px`,
                       top: `${element.y}px`,
-                      width: `${element.width}px`,
-                      height: `${element.height}px`,
-                      fontSize: `${element.fontSize || 16}px`,
-                      color: element.fontColor || '#000000',
-                      fontWeight: element.fontWeight || 'normal'
+                      fontSize: `${element.fontSize}px`,
+                      color: element.fontColor,
+                      fontWeight: element.fontWeight,
                     }}
                   >
                     {element.content}
@@ -134,22 +120,19 @@ export function PreviewModal({
               
               if (element.type === "image") {
                 return (
-                  <div
+                  <img
                     key={element.id}
-                    className="absolute"
+                    src={element.src}
+                    alt={element.alt || ""}
                     style={{
+                      position: 'absolute',
                       left: `${element.x}px`,
                       top: `${element.y}px`,
                       width: `${element.width}px`,
-                      height: `${element.height}px`
+                      height: `${element.height}px`,
+                      objectFit: 'contain'
                     }}
-                  >
-                    <img 
-                      src={element.src} 
-                      alt={element.alt || 'Slide image'} 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
+                  />
                 );
               }
               
@@ -164,14 +147,14 @@ export function PreviewModal({
                 return (
                   <button
                     key={element.id}
-                    className={`absolute flex items-center justify-center rounded ${buttonClass}`}
+                    className={`absolute rounded ${buttonClass} flex items-center justify-center`}
                     style={{
                       left: `${element.x}px`,
                       top: `${element.y}px`,
                       width: `${element.width}px`,
-                      height: `${element.height}px`
+                      height: `${element.height}px`,
                     }}
-                    onClick={() => handleButtonClick(element.action, element.targetSlideId)}
+                    onClick={element.action === "nextSlide" ? handleNext : undefined}
                   >
                     {element.label}
                   </button>
@@ -179,17 +162,15 @@ export function PreviewModal({
               }
               
               if (element.type === "hotspot") {
-                const isCircle = element.shape === "circle";
-                
                 return (
                   <div
                     key={element.id}
-                    className={`absolute bg-blue-400/30 border-2 border-blue-500 ${isCircle ? 'rounded-full' : 'rounded'}`}
+                    className={`absolute ${element.shape === "circle" ? "rounded-full" : "rounded"} bg-blue-400/30 border-2 border-blue-500`}
                     style={{
                       left: `${element.x}px`,
                       top: `${element.y}px`,
                       width: `${element.width}px`,
-                      height: `${element.height}px`
+                      height: `${element.height}px`,
                     }}
                     title={element.tooltip}
                   />
@@ -199,37 +180,32 @@ export function PreviewModal({
               return null;
             })}
           </div>
+        </div>
+        
+        <div className="border-t p-2 flex items-center justify-center space-x-4">
+          <Button 
+            onClick={handlePrevious}
+            disabled={currentSceneIndex === 0 && currentSlideIndex === 0}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous
+          </Button>
           
-          {/* Preview Controls */}
-          <div className="bg-card border-t p-2 flex items-center justify-between">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handlePrevious}
-              disabled={currentSlideIndex === 0 && scenes.findIndex(scene => scene.id === currentSceneId) === 0}
-            >
-              <ArrowLeft size={16} className="mr-1" />
-              Previous
-            </Button>
-            
-            <div className="text-sm">
-              Scene {scenes.findIndex(scene => scene.id === currentSceneId) + 1} / {scenes.length},
-              Slide {currentSlideIndex + 1} / {sortedSlides.length}
-            </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleNext}
-              disabled={
-                currentSlideIndex === sortedSlides.length - 1 && 
-                scenes.findIndex(scene => scene.id === currentSceneId) === scenes.length - 1
-              }
-            >
-              Next
-              <ArrowRight size={16} className="ml-1" />
-            </Button>
+          <div className="text-sm">
+            Slide {currentSlideIndex + 1} of {project.scenes[currentSceneIndex]?.slides.length} 
+            | Scene {currentSceneIndex + 1} of {project.scenes.length}
           </div>
+          
+          <Button 
+            onClick={handleNext}
+            disabled={
+              currentSceneIndex === project.scenes.length - 1 &&
+              currentSlideIndex === project.scenes[currentSceneIndex]?.slides.length - 1
+            }
+          >
+            Next
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

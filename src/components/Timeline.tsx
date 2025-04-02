@@ -5,6 +5,7 @@ import { Slide, TimelineItem } from "@/utils/slideTypes";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { usePanels } from "@/contexts/PanelContext";
 
 interface TimelineProps {
   currentSlide: Slide;
@@ -12,7 +13,7 @@ interface TimelineProps {
 
 export function Timeline({ currentSlide }: TimelineProps) {
   const [tab, setTab] = useState("timeline");
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { timelineOpen, setTimelineOpen } = usePanels();
   
   // Use the slide's timelineItems or an empty array instead of demo data
   const timelineItems = currentSlide.timelineItems || [];
@@ -22,8 +23,8 @@ export function Timeline({ currentSlide }: TimelineProps) {
   
   return (
     <Collapsible
-      open={!isCollapsed}
-      onOpenChange={(open) => setIsCollapsed(!open)}
+      open={timelineOpen}
+      onOpenChange={setTimelineOpen}
       className="w-full bg-white border-t flex flex-col"
     >
       <div className="flex items-center justify-between border-b p-1">
@@ -51,7 +52,7 @@ export function Timeline({ currentSlide }: TimelineProps) {
         </Tabs>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="ml-2">
-            {isCollapsed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {!timelineOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </Button>
         </CollapsibleTrigger>
       </div>

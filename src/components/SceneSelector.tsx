@@ -1,72 +1,78 @@
 
-import { Plus, Trash2 } from "lucide-react";
-import { Scene } from "@/utils/slideTypes";
+import { useProject } from "@/contexts/ProjectContext";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { ChevronsLeft, ChevronsRight, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
-interface SceneSelectorProps {
-  scenes: Scene[];
-  currentSceneId: string;
-  onSelectScene: (sceneId: string) => void;
-  onAddScene: () => void;
-  onDeleteScene: (sceneId: string) => void;
-}
-
-export function SceneSelector({
-  scenes,
-  currentSceneId,
-  onSelectScene,
-  onAddScene,
-  onDeleteScene
-}: SceneSelectorProps) {
-  const [isHovering, setIsHovering] = useState<string | null>(null);
+export function SceneSelector() {
+  const { 
+    project, 
+    handleSelectScene, 
+    handleAddScene, 
+    handleDeleteScene 
+  } = useProject();
   
-  // Sort scenes by order
-  const sortedScenes = [...scenes].sort((a, b) => a.order - b.order);
+  const [isHovering, setIsHovering] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="w-full h-20 bg-card flex items-center gap-2 px-4 overflow-x-auto border-b">
-      {sortedScenes.map((scene) => (
-        <div
-          key={scene.id}
-          className={cn(
-            "scene-item flex-shrink-0 h-14 w-32 rounded-md border relative",
-            currentSceneId === scene.id && "ring-2 ring-primary"
-          )}
-          onClick={() => onSelectScene(scene.id)}
-          onMouseEnter={() => setIsHovering(scene.id)}
-          onMouseLeave={() => setIsHovering(null)}
-        >
-          <div className="absolute inset-0 p-2 flex flex-col">
-            <div className="text-xs font-medium truncate">{scene.title}</div>
-            <div className="text-[10px] text-muted-foreground">{scene.slides.length} Slides</div>
+    <div className={cn(
+      "flex items-center border-b border-border py-1 px-2 transition-all duration-200",
+      collapsed ? "h-8" : "h-12"
+    )}>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="mr-1 h-6 w-6" 
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
+      </Button>
+      
+      {!collapsed && (
+        <>
+          <div className="flex-1 flex items-center overflow-x-auto scrollbar-hide space-x-1 pr-2">
+            {project.scenes.map((scene) => (
+              <div
+                key={scene.id}
+                className={cn(
+                  "relative group px-3 py-1 rounded text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+                  scene.id === project.currentSceneId ? "bg-accent text-accent-foreground" : "text-foreground"
+                )}
+                onClick={() => handleSelectScene(scene.id)}
+                onMouseEnter={() => setIsHovering(scene.id)}
+                onMouseLeave={() => setIsHovering(null)}
+              >
+                {scene.title}
+                
+                {/* Delete button - only show when hovering and more than 1 scene */}
+                {isHovering === scene.id && project.scenes.length > 1 && (
+                  <button
+                    className="absolute -right-1 -top-1 h-4 w-4 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteScene(scene.id);
+                    }}
+                  >
+                    <Trash2 size={10} className="h-3 w-3 mx-auto" />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
           
-          {/* Delete button overlay - only show when hovering and more than 1 scene */}
-          {isHovering === scene.id && scenes.length > 1 && (
-            <button 
-              className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-red-100 text-red-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteScene(scene.id);
-              }}
-            >
-              <Trash2 size={12} />
-            </button>
-          )}
-        </div>
-      ))}
-      
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="h-14 flex-shrink-0"
-        onClick={onAddScene}
-      >
-        <Plus size={16} className="mr-1" />
-        Add Scene
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 shrink-0"
+            onClick={handleAddScene}
+          >
+            <Plus size={16} className="mr-1" />
+            New Scene
+          </Button>
+        </>
+      )}
     </div>
   );
 }

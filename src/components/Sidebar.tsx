@@ -1,46 +1,43 @@
 
 import { useState } from "react";
 import { Plus, Trash2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { Slide } from "@/utils/slideTypes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useProject } from "@/contexts/ProjectContext";
+import { usePanels } from "@/contexts/PanelContext";
 
-interface SidebarProps {
-  slides: Slide[];
-  currentSlideId: string;
-  onSelectSlide: (slideId: string) => void;
-  onAddSlide: () => void;
-  onDeleteSlide: (slideId: string) => void;
-}
-
-export function Sidebar({ 
-  slides, 
-  currentSlideId, 
-  onSelectSlide, 
-  onAddSlide, 
-  onDeleteSlide 
-}: SidebarProps) {
+export function Sidebar() {
+  const { 
+    currentScene, 
+    currentSlide, 
+    handleSelectSlide, 
+    handleAddSlide, 
+    handleDeleteSlideInitiate 
+  } = useProject();
+  
+  const { sidebarOpen, setSidebarOpen } = usePanels();
   const [isHovering, setIsHovering] = useState<string | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  if (!currentScene) return null;
   
   // Sort slides by order
-  const sortedSlides = [...slides].sort((a, b) => a.order - b.order);
+  const sortedSlides = [...currentScene.slides].sort((a, b) => a.order - b.order);
 
   return (
-    <div className={`h-full bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 ${isCollapsed ? 'w-10' : 'w-64'}`}>
+    <div className={`h-full bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-10'}`}>
       <div className="p-2 border-b border-sidebar-border flex items-center justify-between">
-        {!isCollapsed && <h2 className="text-lg font-medium">Slides</h2>}
+        {!sidebarOpen && <h2 className="text-lg font-medium">Slides</h2>}
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className={isCollapsed ? "mx-auto" : ""}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={sidebarOpen ? "mx-auto" : ""}
         >
-          {isCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          {sidebarOpen ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </Button>
       </div>
       
-      {!isCollapsed && (
+      {!sidebarOpen && (
         <>
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {sortedSlides.map((slide) => (
@@ -48,9 +45,9 @@ export function Sidebar({
                 key={slide.id}
                 className={cn(
                   "slide-thumb aspect-video",
-                  currentSlideId === slide.id && "active"
+                  currentSlide?.id === slide.id && "active"
                 )}
-                onClick={() => onSelectSlide(slide.id)}
+                onClick={() => handleSelectSlide(slide.id)}
                 onMouseEnter={() => setIsHovering(slide.id)}
                 onMouseLeave={() => setIsHovering(null)}
                 style={{ background: slide.background || '#ffffff' }}
@@ -107,12 +104,12 @@ export function Sidebar({
                 </div>
                 
                 {/* Delete button overlay - only show when hovering and more than 1 slide */}
-                {isHovering === slide.id && slides.length > 1 && (
+                {isHovering === slide.id && sortedSlides.length > 1 && (
                   <button 
                     className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-red-100 text-red-500"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteSlide(slide.id);
+                      handleDeleteSlideInitiate(slide.id);
                     }}
                   >
                     <Trash2 size={14} />
@@ -127,7 +124,7 @@ export function Sidebar({
               variant="outline" 
               size="sm" 
               className="w-full flex items-center justify-center"
-              onClick={onAddSlide}
+              onClick={handleAddSlide}
             >
               <Plus size={16} className="mr-1" />
               Add Slide
