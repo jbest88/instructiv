@@ -1,8 +1,10 @@
 
 import { useState } from "react";
-import { Eye, Loader } from "lucide-react";
+import { Eye, ChevronUp, ChevronDown } from "lucide-react";
 import { Slide, TimelineItem } from "@/utils/slideTypes";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface TimelineProps {
   currentSlide: Slide;
@@ -10,6 +12,7 @@ interface TimelineProps {
 
 export function Timeline({ currentSlide }: TimelineProps) {
   const [tab, setTab] = useState("timeline");
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Use the slide's timelineItems or an empty array instead of demo data
   const timelineItems = currentSlide.timelineItems || [];
@@ -18,30 +21,43 @@ export function Timeline({ currentSlide }: TimelineProps) {
   const timeMarkers = Array.from({ length: 23 }, (_, i) => i + 1);
   
   return (
-    <div className="w-full bg-white border-t flex flex-col">
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="h-8 bg-white border-b rounded-none gap-2 p-1">
-          <TabsTrigger 
-            value="timeline" 
-            className="h-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded px-3"
-          >
-            Timeline
-          </TabsTrigger>
-          <TabsTrigger 
-            value="states" 
-            className="h-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded px-3"
-          >
-            States
-          </TabsTrigger>
-          <TabsTrigger 
-            value="notes" 
-            className="h-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded px-3"
-          >
-            Notes
-          </TabsTrigger>
-        </TabsList>
-        
-        <div className="flex bg-white p-0 h-[200px] overflow-y-auto">
+    <Collapsible
+      open={!isCollapsed}
+      onOpenChange={(open) => setIsCollapsed(!open)}
+      className="w-full bg-white border-t flex flex-col"
+    >
+      <div className="flex items-center justify-between border-b p-1">
+        <Tabs value={tab} onValueChange={setTab} className="flex-1">
+          <TabsList className="h-8 bg-white rounded-none gap-2 p-1">
+            <TabsTrigger 
+              value="timeline" 
+              className="h-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded px-3"
+            >
+              Timeline
+            </TabsTrigger>
+            <TabsTrigger 
+              value="states" 
+              className="h-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded px-3"
+            >
+              States
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notes" 
+              className="h-6 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded px-3"
+            >
+              Notes
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="ml-2">
+            {isCollapsed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </Button>
+        </CollapsibleTrigger>
+      </div>
+      
+      <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+        <div className="bg-white p-0 h-[180px] overflow-y-auto">
           {/* Timeline ruler */}
           <div className="w-full">
             {/* Time markers */}
@@ -90,7 +106,7 @@ export function Timeline({ currentSlide }: TimelineProps) {
             </div>
           </div>
         </div>
-      </Tabs>
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

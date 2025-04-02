@@ -504,6 +504,11 @@ const Index = () => {
     }
   }, []);
 
+  // Add state for collapsible panels
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [toolboxOpen, setToolboxOpen] = useState(true);
+  const [timelineOpen, setTimelineOpen] = useState(true);
+
   // Empty state - no scenes
   if (project.scenes.length === 0) {
     return (
