@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Project, Scene, Slide, ButtonElement, TextElement, ImageElement } from "@/utils/slideTypes";
 
@@ -215,14 +214,12 @@ export function createDefaultScene(title: string, order: number): Scene {
 }
 
 export function createDefaultProject(): Project {
-  const scene1 = createDefaultScene("HOME", 1);
-  const scene2 = createDefaultScene("Introduction", 2);
-  
+  // Create an empty project with no default scenes
   return {
     id: `project-${uuidv4()}`,
-    title: "Technology Enabled Learning",
-    scenes: [scene1, scene2],
-    currentSceneId: scene1.id,
-    currentSlideId: scene1.slides[0].id
+    title: "New Project",
+    scenes: [],
+    currentSceneId: "",
+    currentSlideId: ""
   };
 }

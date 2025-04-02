@@ -11,15 +11,8 @@ interface TimelineProps {
 export function Timeline({ currentSlide }: TimelineProps) {
   const [tab, setTab] = useState("timeline");
   
-  // Create some demo timeline items if none exist
-  const timelineItems = currentSlide.timelineItems || [
-    { id: '1', name: 'Button 6', type: 'button', startTime: 0, duration: 3 },
-    { id: '2', name: 'Button 5', type: 'button', startTime: 0, duration: 3 },
-    { id: '3', name: 'Button 4', type: 'button', startTime: 0, duration: 3 },
-    { id: '4', name: 'Picture 3', type: 'image', startTime: 0, duration: 3 },
-    { id: '5', name: 'Picture 2', type: 'image', startTime: 0, duration: 3 },
-    { id: '6', name: 'Picture 1', type: 'image', startTime: 0, duration: 3 },
-  ];
+  // Use the slide's timelineItems or an empty array instead of demo data
+  const timelineItems = currentSlide.timelineItems || [];
   
   // Create time markers (in seconds)
   const timeMarkers = Array.from({ length: 23 }, (_, i) => i + 1);
@@ -62,32 +55,38 @@ export function Timeline({ currentSlide }: TimelineProps) {
             
             {/* Timeline items */}
             <div className="timeline-items">
-              {timelineItems.map((item, index) => (
-                <div key={item.id} className="flex items-center h-8 border-b">
-                  <div className="w-12 flex justify-center border-r">
-                    <Eye className="h-4 w-4 text-gray-500" />
-                  </div>
-                  <div className="w-12 flex justify-center items-center border-r">
-                    <input type="checkbox" className="h-3 w-3" />
-                  </div>
-                  <div className="w-40 text-xs p-1 border-r">
-                    {item.name}
-                  </div>
-                  
-                  {/* Timeline bar */}
-                  <div className="flex-1 relative h-full pl-1">
-                    {item.type === 'button' ? (
-                      <div className="absolute top-1 h-5 bg-blue-100 border border-blue-500 rounded flex items-center px-1 text-[10px]" style={{ width: '120px' }}>
-                        Debug
-                      </div>
-                    ) : (
-                      <div className="absolute top-1 h-5 bg-blue-100 border border-blue-500 rounded flex items-center px-1 text-[10px]" style={{ width: '120px' }}>
-                        {item.name}.png
-                      </div>
-                    )}
-                  </div>
+              {timelineItems.length === 0 ? (
+                <div className="flex items-center justify-center h-36 text-muted-foreground">
+                  No timeline items found for this slide
                 </div>
-              ))}
+              ) : (
+                timelineItems.map((item, index) => (
+                  <div key={item.id} className="flex items-center h-8 border-b">
+                    <div className="w-12 flex justify-center border-r">
+                      <Eye className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <div className="w-12 flex justify-center items-center border-r">
+                      <input type="checkbox" className="h-3 w-3" />
+                    </div>
+                    <div className="w-40 text-xs p-1 border-r">
+                      {item.name}
+                    </div>
+                    
+                    {/* Timeline bar */}
+                    <div className="flex-1 relative h-full pl-1">
+                      {item.type === 'button' ? (
+                        <div className="absolute top-1 h-5 bg-blue-100 border border-blue-500 rounded flex items-center px-1 text-[10px]" style={{ width: '120px' }}>
+                          Debug
+                        </div>
+                      ) : (
+                        <div className="absolute top-1 h-5 bg-blue-100 border border-blue-500 rounded flex items-center px-1 text-[10px]" style={{ width: '120px' }}>
+                          {item.name}.png
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

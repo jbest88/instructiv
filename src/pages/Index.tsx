@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -11,6 +12,8 @@ import { ToolboxPanel } from "@/components/ToolboxPanel";
 import { SceneSelector } from "@/components/SceneSelector";
 import { Toolbar } from "@/components/Toolbar";
 import { Timeline } from "@/components/Timeline";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const Index = () => {
   // Project state
@@ -20,9 +23,15 @@ const Index = () => {
   const [toolboxOpen, setToolboxOpen] = useState(true);
   
   // Get current scene, slide and element
-  const currentScene = project.scenes.find(scene => scene.id === project.currentSceneId) || project.scenes[0];
-  const currentSlide = currentScene.slides.find(slide => slide.id === project.currentSlideId) || currentScene.slides[0];
-  const selectedElement = selectedElementId
+  const currentScene = project.currentSceneId 
+    ? project.scenes.find(scene => scene.id === project.currentSceneId) 
+    : project.scenes[0] || null;
+    
+  const currentSlide = currentScene && project.currentSlideId
+    ? currentScene.slides.find(slide => slide.id === project.currentSlideId)
+    : currentScene?.slides[0] || null;
+    
+  const selectedElement = selectedElementId && currentSlide
     ? currentSlide.elements.find(element => element.id === selectedElementId) || null
     : null;
   
@@ -44,12 +53,15 @@ const Index = () => {
     const newSceneOrder = project.scenes.length + 1;
     const newScene = createDefaultScene(`Scene ${newSceneOrder}`, newSceneOrder);
     
-    setProject(prev => ({
-      ...prev,
-      scenes: [...prev.scenes, newScene],
-      currentSceneId: newScene.id,
-      currentSlideId: newScene.slides[0].id
-    }));
+    setProject(prev => {
+      const newProject = {
+        ...prev,
+        scenes: [...prev.scenes, newScene],
+        currentSceneId: newScene.id,
+        currentSlideId: newScene.slides[0].id
+      };
+      return newProject;
+    });
     
     toast.success("New scene added");
   };
@@ -95,6 +107,11 @@ const Index = () => {
   
   // Function to add a new slide
   const handleAddSlide = () => {
+    if (!currentScene) {
+      toast.error("Please create a scene first");
+      return;
+    }
+    
     const slidesInCurrentScene = currentScene.slides.length;
     const newSlide: Slide = {
       id: `slide-${uuidv4()}`,
@@ -427,6 +444,28 @@ const Index = () => {
     }
   }, []);
 
+  // Empty state - no scenes
+  if (project.scenes.length === 0) {
+    return (
+      <div className="flex flex-col h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4 max-w-md p-8 rounded-lg">
+          <h1 className="text-2xl font-bold">Welcome to Narratify</h1>
+          <p className="text-muted-foreground">
+            No scenes have been created yet. Create your first scene to get started.
+          </p>
+          <Button 
+            size="lg" 
+            className="mt-4"
+            onClick={handleAddScene}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Your First Scene
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       {/* Toolbar at the top */}
@@ -435,30 +474,56 @@ const Index = () => {
       {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar with slides for current scene */}
-        <Sidebar 
-          slides={currentScene.slides}
-          currentSlideId={project.currentSlideId}
-          onSelectSlide={handleSelectSlide}
-          onAddSlide={handleAddSlide}
-          onDeleteSlide={handleDeleteSlide}
-        />
+        {currentScene && (
+          <Sidebar 
+            slides={currentScene.slides}
+            currentSlideId={project.currentSlideId}
+            onSelectSlide={handleSelectSlide}
+            onAddSlide={handleAddSlide}
+            onDeleteSlide={handleDeleteSlide}
+          />
+        )}
         
         {/* Main content */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#f3f2f1]">
+          {/* Scene selector */}
+          <SceneSelector
+            scenes={project.scenes}
+            currentSceneId={project.currentSceneId}
+            onSelectScene={handleSelectScene}
+            onAddScene={handleAddScene}
+            onDeleteScene={handleDeleteScene}
+          />
+          
           {/* Editor canvas */}
-          <div className="flex-1 overflow-hidden relative">
-            <div className="absolute inset-6 shadow-lg bg-white rounded-md overflow-hidden">
-              <SlideCanvas 
-                slide={currentSlide}
-                selectedElementId={selectedElementId}
-                onSelectElement={setSelectedElementId}
-                onUpdateElement={handleUpdateElement}
-              />
+          {currentSlide ? (
+            <div className="flex-1 overflow-hidden relative">
+              <div className="absolute inset-6 shadow-lg bg-white rounded-md overflow-hidden">
+                <SlideCanvas 
+                  slide={currentSlide}
+                  selectedElementId={selectedElementId}
+                  onSelectElement={setSelectedElementId}
+                  onUpdateElement={handleUpdateElement}
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center p-8">
+                <h2 className="text-xl font-medium mb-2">No Slides Available</h2>
+                <p className="text-muted-foreground mb-4">
+                  This scene doesn't have any slides yet.
+                </p>
+                <Button onClick={handleAddSlide}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Your First Slide
+                </Button>
+              </div>
+            </div>
+          )}
           
           {/* Timeline at the bottom */}
-          <Timeline currentSlide={currentSlide} />
+          {currentSlide && <Timeline currentSlide={currentSlide} />}
         </div>
         
         {/* Right toolbox panel */}
