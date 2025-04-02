@@ -14,6 +14,8 @@ type ProjectContextType = {
   openSlides: { id: string; title: string }[];
   isDeleteConfirmOpen: boolean;
   slideToDelete: string | null;
+  isPreviewOpen: boolean; // Added missing property
+  setIsPreviewOpen: (isOpen: boolean) => void; // Added missing property
   setSelectedElementId: (id: string | null) => void;
   handleSelectScene: (sceneId: string) => void;
   handleAddScene: () => void;
@@ -40,6 +42,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [project, setProject] = useState<Project>(createDefaultProject());
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Added state for preview modal
   
   // Confirmation dialog state
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -522,6 +525,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     openSlides,
     isDeleteConfirmOpen,
     slideToDelete,
+    isPreviewOpen, // Added to the context value
+    setIsPreviewOpen, // Added to the context value
     setSelectedElementId,
     handleSelectScene,
     handleAddScene,

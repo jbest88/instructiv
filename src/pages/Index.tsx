@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { ProjectProvider } from "@/contexts/ProjectContext";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { useProject } from "@/contexts/ProjectContext";
