@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -10,8 +9,8 @@ import { SlideControls } from "@/components/SlideControls";
 import { PreviewModal } from "@/components/PreviewModal";
 import { ToolboxPanel } from "@/components/ToolboxPanel";
 import { SceneSelector } from "@/components/SceneSelector";
-import { PanelRightOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Toolbar } from "@/components/Toolbar";
+import { Timeline } from "@/components/Timeline";
 
 const Index = () => {
   // Project state
@@ -430,22 +429,8 @@ const Index = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
-      {/* Header/Toolbar */}
-      <header className="h-14 border-b bg-card flex items-center px-4 shrink-0">
-        <h1 className="text-xl font-semibold">Narratify Studio</h1>
-        <span className="text-muted-foreground ml-2">
-          {project.title}
-        </span>
-      </header>
-      
-      {/* Scene Selector */}
-      <SceneSelector 
-        scenes={project.scenes}
-        currentSceneId={project.currentSceneId}
-        onSelectScene={handleSelectScene}
-        onAddScene={handleAddScene}
-        onDeleteScene={handleDeleteScene}
-      />
+      {/* Toolbar at the top */}
+      <Toolbar onPreview={() => setIsPreviewOpen(true)} />
       
       {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
@@ -459,19 +444,9 @@ const Index = () => {
         />
         
         {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Top toolbar */}
-          <SlideControls 
-            selectedElement={selectedElement}
-            onUpdateElement={handleUpdateElement}
-            onAddElement={handleAddElement}
-            onPreview={() => setIsPreviewOpen(true)}
-            onSaveProject={handleSaveProject}
-            onLoadProject={handleLoadProject}
-          />
-          
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#f3f2f1]">
           {/* Editor canvas */}
-          <div className="flex-1 overflow-hidden bg-muted relative">
+          <div className="flex-1 overflow-hidden relative">
             <div className="absolute inset-6 shadow-lg bg-white rounded-md overflow-hidden">
               <SlideCanvas 
                 slide={currentSlide}
@@ -480,19 +455,10 @@ const Index = () => {
                 onUpdateElement={handleUpdateElement}
               />
             </div>
-            
-            {/* Toolbox toggle button (only when closed) */}
-            {!toolboxOpen && (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="absolute right-2 top-2"
-                onClick={() => setToolboxOpen(true)}
-              >
-                <PanelRightOpen size={16} />
-              </Button>
-            )}
           </div>
+          
+          {/* Timeline at the bottom */}
+          <Timeline currentSlide={currentSlide} />
         </div>
         
         {/* Right toolbox panel */}

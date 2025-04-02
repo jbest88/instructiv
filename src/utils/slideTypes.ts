@@ -14,6 +14,7 @@ export interface TextElement extends ElementBase {
   fontSize?: number;
   fontColor?: string;
   fontWeight?: string;
+  align?: "left" | "center" | "right";
 }
 
 export interface ImageElement extends ElementBase {
@@ -25,7 +26,7 @@ export interface ImageElement extends ElementBase {
 export interface ButtonElement extends ElementBase {
   type: "button";
   label: string;
-  action: "nextSlide" | "prevSlide" | "goToSlide";
+  action: "nextSlide" | "prevSlide" | "goToSlide" | "debug";
   targetSlideId?: string;
   style?: "primary" | "secondary" | "outline";
 }
@@ -38,19 +39,29 @@ export interface HotspotElement extends ElementBase {
 
 export type SlideElement = TextElement | ImageElement | ButtonElement | HotspotElement;
 
+export interface TimelineItem {
+  id: string;
+  name: string;
+  type: "button" | "image" | "text";
+  startTime: number; // in seconds
+  duration: number; // in seconds
+  linkedElementId?: string;
+}
+
 export interface Slide {
   id: string;
   title: string;
   elements: SlideElement[];
   background?: string;
-  order: number; // Added order property for sorting within a scene
+  order: number;
+  timelineItems?: TimelineItem[]; // Added timeline items
 }
 
 export interface Scene {
   id: string;
   title: string;
   slides: Slide[];
-  order: number; // Added order property for sorting scenes
+  order: number;
 }
 
 export interface Project {
