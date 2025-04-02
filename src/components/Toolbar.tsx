@@ -4,17 +4,28 @@ import {
   AlignCenter, AlignLeft, AlignRight, 
   Bold, Italic, Underline, Type,
   Image, Square, Play, 
-  ListOrdered, ListX
+  ListOrdered, ListX, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slide } from "@/utils/slideTypes";
 
 interface ToolbarProps {
   onPreview: () => void;
+  openSlides?: { id: string; title: string }[];
+  currentSlideId?: string; 
+  onSelectSlide?: (slideId: string) => void;
+  onCloseSlide?: (slideId: string) => void;
 }
 
-export function Toolbar({ onPreview }: ToolbarProps) {
+export function Toolbar({ 
+  onPreview, 
+  openSlides = [], 
+  currentSlideId,
+  onSelectSlide,
+  onCloseSlide
+}: ToolbarProps) {
   return (
     <div className="w-full bg-[#f3f2f1] border-b flex flex-col">
       {/* Main toolbar with tabs */}
@@ -154,21 +165,27 @@ export function Toolbar({ onPreview }: ToolbarProps) {
         <div className="bg-gray-200 px-2 py-1 text-xs font-medium rounded">
           STORY VIEW
         </div>
-        <div className="bg-blue-500 text-white px-2 py-1 text-xs font-medium rounded">
-          1.2 Home
-        </div>
-        <div className="bg-gray-200 px-2 py-1 text-xs font-medium rounded">
-          6.1 Hotspot 1
-        </div>
-        <div className="bg-gray-200 px-2 py-1 text-xs font-medium rounded">
-          2.3 Hotspot 1
-        </div>
-        <div className="bg-gray-200 px-2 py-1 text-xs font-medium rounded">
-          2.4 Hotspot 2
-        </div>
-        <div className="bg-gray-200 px-2 py-1 text-xs font-medium rounded">
-          4.1 Intro
-        </div>
+        
+        {openSlides.map(slide => (
+          <div 
+            key={slide.id}
+            className={`relative flex items-center ${
+              currentSlideId === slide.id ? "bg-blue-500 text-white" : "bg-gray-200"
+            } px-2 py-1 text-xs font-medium rounded group`}
+            onClick={() => onSelectSlide && onSelectSlide(slide.id)}
+          >
+            {slide.title}
+            <button 
+              className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCloseSlide && onCloseSlide(slide.id);
+              }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );

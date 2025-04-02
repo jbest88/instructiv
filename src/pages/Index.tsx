@@ -21,6 +21,7 @@ const Index = () => {
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [toolboxOpen, setToolboxOpen] = useState(true);
+  const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
   
   // Get current scene, slide and element
   const currentScene = project.currentSceneId 
@@ -34,6 +35,13 @@ const Index = () => {
   const selectedElement = selectedElementId && currentSlide
     ? currentSlide.elements.find(element => element.id === selectedElementId) || null
     : null;
+  
+  // When a slide is selected, add it to the open slides if not already there
+  useEffect(() => {
+    if (currentSlide && !openSlides.some(slide => slide.id === currentSlide.id)) {
+      setOpenSlides(prev => [...prev, { id: currentSlide.id, title: currentSlide.title }]);
+    }
+  }, [currentSlide, openSlides]);
   
   // Function to select a scene
   const handleSelectScene = (sceneId: string) => {
@@ -103,6 +111,24 @@ const Index = () => {
       currentSlideId: slideId
     }));
     setSelectedElementId(null);
+  };
+  
+  // Function to close a slide tab
+  const handleCloseSlide = (slideId: string) => {
+    setOpenSlides(prev => prev.filter(slide => slide.id !== slideId));
+    
+    // If closing the current slide, switch to another open slide or clear current slide
+    if (project.currentSlideId === slideId) {
+      const remainingSlides = openSlides.filter(slide => slide.id !== slideId);
+      if (remainingSlides.length > 0) {
+        handleSelectSlide(remainingSlides[0].id);
+      } else {
+        setProject(prev => ({
+          ...prev,
+          currentSlideId: ""
+        }));
+      }
+    }
   };
   
   // Function to add a new slide
@@ -469,7 +495,13 @@ const Index = () => {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       {/* Toolbar at the top */}
-      <Toolbar onPreview={() => setIsPreviewOpen(true)} />
+      <Toolbar 
+        onPreview={() => setIsPreviewOpen(true)} 
+        openSlides={openSlides}
+        currentSlideId={project.currentSlideId}
+        onSelectSlide={handleSelectSlide}
+        onCloseSlide={handleCloseSlide}
+      />
       
       {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
