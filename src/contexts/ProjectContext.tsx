@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -161,7 +162,20 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       if (!data) throw new Error("Project not found");
       
-      setProject(data.data as Project);
+      // Properly cast the data to Project type
+      const projectData = data.data as unknown as Project;
+      
+      // Validate that the data has the required Project properties
+      if (!projectData || 
+          !projectData.id || 
+          !projectData.title || 
+          !Array.isArray(projectData.scenes) || 
+          !projectData.currentSceneId || 
+          !projectData.currentSlideId) {
+        throw new Error("Invalid project data format");
+      }
+      
+      setProject(projectData);
       setSelectedElementId(null);
       setOpenSlides([]);
       toast.success("Project loaded successfully!");
