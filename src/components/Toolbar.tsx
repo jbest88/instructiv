@@ -1,8 +1,18 @@
 
+import { useState } from "react";
 import { useProject } from "@/contexts/ProjectContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Upload, Eye, X } from "lucide-react";
+import { ProjectsList } from "@/components/ProjectsList";
+import { Save, Upload, Eye, X, User, LogOut, Cloud, Database } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ToolbarProps {
   onPreview: () => void;
@@ -18,19 +28,26 @@ export function Toolbar({ onPreview }: ToolbarProps) {
     handleLoadProject 
   } = useProject();
 
+  const { user, signOut } = useAuth();
+  const [isProjectsListOpen, setIsProjectsListOpen] = useState(false);
+
   return (
     <div className="flex items-center justify-between gap-4 border-b p-2">
       <div className="flex items-center">
         <span className="font-semibold text-lg mr-4">Narratify</span>
         
         <div className="space-x-1">
-          <Button variant="outline" size="sm" onClick={handleSaveProject}>
-            <Save className="h-4 w-4 mr-1" />
-            Save
+          <Button variant="outline" size="sm" onClick={handleSaveProject} title="Save to browser storage">
+            <Database className="h-4 w-4 mr-1" />
+            Save Local
           </Button>
-          <Button variant="outline" size="sm" onClick={handleLoadProject}>
+          <Button variant="outline" size="sm" onClick={handleLoadProject} title="Load from browser storage">
             <Upload className="h-4 w-4 mr-1" />
-            Load
+            Load Local
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setIsProjectsListOpen(true)} title="Cloud projects">
+            <Cloud className="h-4 w-4 mr-1" />
+            Cloud Projects
           </Button>
         </div>
       </div>
@@ -66,12 +83,41 @@ export function Toolbar({ onPreview }: ToolbarProps) {
         )}
       </div>
       
-      <div>
+      <div className="flex items-center gap-2">
         <Button onClick={onPreview}>
           <Eye className="h-4 w-4 mr-1" />
           Preview
         </Button>
+        
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <User className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled>
+                {user.email}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => signOut()}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button variant="ghost" size="sm" asChild>
+            <a href="/auth">Sign In</a>
+          </Button>
+        )}
       </div>
+      
+      <ProjectsList 
+        isOpen={isProjectsListOpen}
+        onClose={() => setIsProjectsListOpen(false)}
+      />
     </div>
   );
 }

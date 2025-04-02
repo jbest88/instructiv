@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { createDefaultProject, createDefaultScene } from "@/utils/defaultSlides";
 import { Project, Scene, Slide, SlideElement, TextElement, ImageElement, ButtonElement, HotspotElement } from "@/utils/slideTypes";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ProjectContextType = {
   project: Project;
@@ -14,8 +16,8 @@ type ProjectContextType = {
   openSlides: { id: string; title: string }[];
   isDeleteConfirmOpen: boolean;
   slideToDelete: string | null;
-  isPreviewOpen: boolean; // Added missing property
-  setIsPreviewOpen: (isOpen: boolean) => void; // Added missing property
+  isPreviewOpen: boolean;
+  setIsPreviewOpen: (isOpen: boolean) => void;
   setSelectedElementId: (id: string | null) => void;
   handleSelectScene: (sceneId: string) => void;
   handleAddScene: () => void;
@@ -33,6 +35,11 @@ type ProjectContextType = {
   handleSaveProject: () => void;
   handleLoadProject: () => void;
   setIsDeleteConfirmOpen: (isOpen: boolean) => void;
+  userProjects: { id: string; title: string; updated_at: string }[];
+  isLoadingProjects: boolean;
+  handleSaveProjectToSupabase: (title?: string) => Promise<void>;
+  handleLoadProjectFromSupabase: (projectId: string) => Promise<void>;
+  handleDeleteProjectFromSupabase: (projectId: string) => Promise<void>;
 };
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -42,11 +49,17 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [project, setProject] = useState<Project>(createDefaultProject());
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Added state for preview modal
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   // Confirmation dialog state
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [slideToDelete, setSlideToDelete] = useState<string | null>(null);
+  
+  // User projects from Supabase
+  const [userProjects, setUserProjects] = useState<{ id: string; title: string; updated_at: string }[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  
+  const { user } = useAuth();
   
   // Get current scene, slide and element
   const currentScene = project.currentSceneId 
@@ -61,12 +74,124 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     ? currentSlide.elements.find(element => element.id === selectedElementId) || null
     : null;
   
+  // Fetch user's projects when authenticated
+  useEffect(() => {
+    if (user) {
+      fetchUserProjects();
+    } else {
+      setUserProjects([]);
+    }
+  }, [user]);
+  
   // When a slide is selected, add it to the open slides if not already there
   useEffect(() => {
     if (currentSlide && !openSlides.some(slide => slide.id === currentSlide.id)) {
       setOpenSlides(prev => [...prev, { id: currentSlide.id, title: currentSlide.title }]);
     }
   }, [currentSlide, openSlides]);
+  
+  const fetchUserProjects = async () => {
+    if (!user) return;
+    
+    setIsLoadingProjects(true);
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, title, updated_at')
+        .order('updated_at', { ascending: false });
+        
+      if (error) throw error;
+      setUserProjects(data || []);
+    } catch (error: any) {
+      console.error("Error fetching projects:", error);
+      toast.error(`Failed to load projects: ${error.message}`);
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  };
+  
+  // Function to save project to Supabase
+  const handleSaveProjectToSupabase = async (title?: string) => {
+    if (!user) {
+      toast.error("Please sign in to save your project");
+      return;
+    }
+    
+    try {
+      const projectToSave = {
+        ...project,
+        title: title || project.title
+      };
+      
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user.id,
+          title: projectToSave.title,
+          data: projectToSave
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      toast.success(`Project "${projectToSave.title}" saved successfully!`);
+      await fetchUserProjects();
+      return;
+    } catch (error: any) {
+      console.error("Error saving project:", error);
+      toast.error(`Failed to save project: ${error.message}`);
+    }
+  };
+  
+  // Function to load project from Supabase
+  const handleLoadProjectFromSupabase = async (projectId: string) => {
+    if (!user) {
+      toast.error("Please sign in to load projects");
+      return;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('data')
+        .eq('id', projectId)
+        .single();
+        
+      if (error) throw error;
+      if (!data) throw new Error("Project not found");
+      
+      setProject(data.data as Project);
+      setSelectedElementId(null);
+      setOpenSlides([]);
+      toast.success("Project loaded successfully!");
+    } catch (error: any) {
+      console.error("Error loading project:", error);
+      toast.error(`Failed to load project: ${error.message}`);
+    }
+  };
+  
+  // Function to delete project from Supabase
+  const handleDeleteProjectFromSupabase = async (projectId: string) => {
+    if (!user) {
+      toast.error("Please sign in to delete projects");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      await fetchUserProjects();
+      toast.success("Project deleted successfully!");
+    } catch (error: any) {
+      console.error("Error deleting project:", error);
+      toast.error(`Failed to delete project: ${error.message}`);
+    }
+  };
   
   // Function to select a scene
   const handleSelectScene = (sceneId: string) => {
@@ -480,7 +605,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const handleSaveProject = () => {
     try {
       localStorage.setItem('narratifyProject', JSON.stringify(project));
-      toast.success("Project saved successfully");
+      toast.success("Project saved to browser storage");
     } catch (error) {
       toast.error("Failed to save project");
       console.error("Save error:", error);
@@ -494,9 +619,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       
       if (savedProject) {
         setProject(JSON.parse(savedProject));
-        toast.success("Project loaded successfully");
+        toast.success("Project loaded from browser storage");
       } else {
-        toast.info("No saved project found");
+        toast.info("No saved project found in browser storage");
       }
     } catch (error) {
       toast.error("Failed to load project");
@@ -525,8 +650,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     openSlides,
     isDeleteConfirmOpen,
     slideToDelete,
-    isPreviewOpen, // Added to the context value
-    setIsPreviewOpen, // Added to the context value
+    isPreviewOpen,
+    setIsPreviewOpen,
     setSelectedElementId,
     handleSelectScene,
     handleAddScene,
@@ -543,7 +668,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     handleUpdateScene,
     handleSaveProject,
     handleLoadProject,
-    setIsDeleteConfirmOpen
+    setIsDeleteConfirmOpen,
+    userProjects,
+    isLoadingProjects,
+    handleSaveProjectToSupabase,
+    handleLoadProjectFromSupabase,
+    handleDeleteProjectFromSupabase
   };
 
   return (
