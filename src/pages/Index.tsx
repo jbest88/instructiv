@@ -139,16 +139,20 @@ const Index = () => {
     }
     
     setProject(prev => {
-      const updatedSlides = prev.slides.map(slide => {
+      // Create a properly typed array of updated slides
+      const updatedSlides: Slide[] = prev.slides.map(slide => {
         if (slide.id === prev.currentSlideId) {
-          return {
+          // Create a new slide with the element added
+          const updatedSlide: Slide = {
             ...slide,
             elements: [...slide.elements, newElement]
           };
+          return updatedSlide;
         }
         return slide;
       });
       
+      // Return a properly typed Project object
       return {
         ...prev,
         slides: updatedSlides
@@ -162,23 +166,28 @@ const Index = () => {
   // Function to update an element
   const handleUpdateElement = (elementId: string, updates: Partial<SlideElement>) => {
     setProject(prev => {
-      const updatedSlides = prev.slides.map(slide => {
+      // Create a properly typed array of updated slides
+      const updatedSlides: Slide[] = prev.slides.map(slide => {
         if (slide.id === prev.currentSlideId) {
-          const updatedElements = slide.elements.map(element => {
+          // Create a properly typed array of updated elements
+          const updatedElements: SlideElement[] = slide.elements.map(element => {
             if (element.id === elementId) {
               return { ...element, ...updates };
             }
             return element;
           });
           
-          return {
+          // Create a new slide with the updated elements
+          const updatedSlide: Slide = {
             ...slide,
             elements: updatedElements
           };
+          return updatedSlide;
         }
         return slide;
       });
       
+      // Return a properly typed Project object
       return {
         ...prev,
         slides: updatedSlides
@@ -189,13 +198,20 @@ const Index = () => {
   // Function to update slide properties
   const handleUpdateSlide = (updates: Partial<Slide>) => {
     setProject(prev => {
-      const updatedSlides = prev.slides.map(slide => {
+      // Create a properly typed array of updated slides
+      const updatedSlides: Slide[] = prev.slides.map(slide => {
         if (slide.id === prev.currentSlideId) {
-          return { ...slide, ...updates };
+          // Create a new slide with the updates
+          const updatedSlide: Slide = {
+            ...slide,
+            ...updates
+          };
+          return updatedSlide;
         }
         return slide;
       });
       
+      // Return a properly typed Project object
       return {
         ...prev,
         slides: updatedSlides
