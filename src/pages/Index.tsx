@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -14,6 +13,16 @@ import { Toolbar } from "@/components/Toolbar";
 import { Timeline } from "@/components/Timeline";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Index = () => {
   // Project state
@@ -22,6 +31,10 @@ const Index = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [toolboxOpen, setToolboxOpen] = useState(true);
   const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
+  
+  // Confirmation dialog state
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [slideToDelete, setSlideToDelete] = useState<string | null>(null);
   
   // Get current scene, slide and element
   const currentScene = project.currentSceneId 
@@ -171,20 +184,33 @@ const Index = () => {
     toast.success("New slide added");
   };
   
-  // Function to delete a slide
-  const handleDeleteSlide = (slideId: string) => {
+  // Function to initiate slide deletion with confirmation
+  const handleDeleteSlideInitiate = (slideId: string) => {
+    setSlideToDelete(slideId);
+    setIsDeleteConfirmOpen(true);
+  };
+  
+  // Function to delete a slide after confirmation
+  const handleDeleteSlideConfirmed = () => {
+    if (!slideToDelete || !currentScene) return;
+    
     if (currentScene.slides.length <= 1) {
       toast.error("Cannot delete the last slide in a scene");
+      setIsDeleteConfirmOpen(false);
+      setSlideToDelete(null);
       return;
     }
     
-    const slideIndex = currentScene.slides.findIndex(slide => slide.id === slideId);
+    const slideIndex = currentScene.slides.findIndex(slide => slide.id === slideToDelete);
+    
+    // Remove from open slides list
+    setOpenSlides(prev => prev.filter(slide => slide.id !== slideToDelete));
     
     setProject(prev => {
       // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
-          const newSlides = scene.slides.filter(slide => slide.id !== slideId);
+          const newSlides = scene.slides.filter(slide => slide.id !== slideToDelete);
           
           // Create a new scene with the slide removed
           const updatedScene: Scene = {
@@ -198,7 +224,7 @@ const Index = () => {
       
       // If deleting the current slide, select the previous or next slide
       let newCurrentSlideId = prev.currentSlideId;
-      if (slideId === prev.currentSlideId) {
+      if (slideToDelete === prev.currentSlideId) {
         const sceneToUpdate = updatedScenes.find(s => s.id === prev.currentSceneId);
         if (sceneToUpdate) {
           const newIndex = slideIndex > 0 ? slideIndex - 1 : 0;
@@ -214,8 +240,16 @@ const Index = () => {
     });
     
     toast.success("Slide deleted");
+    setIsDeleteConfirmOpen(false);
+    setSlideToDelete(null);
   };
   
+  // Function to cancel slide deletion
+  const handleCancelDelete = () => {
+    setIsDeleteConfirmOpen(false);
+    setSlideToDelete(null);
+  };
+
   // Function to add an element to the current slide
   const handleAddElement = (type: SlideElement['type']) => {
     let newElement: SlideElement;
@@ -512,7 +546,7 @@ const Index = () => {
             currentSlideId={project.currentSlideId}
             onSelectSlide={handleSelectSlide}
             onAddSlide={handleAddSlide}
-            onDeleteSlide={handleDeleteSlide}
+            onDeleteSlide={handleDeleteSlideInitiate}
           />
         )}
         
@@ -578,6 +612,27 @@ const Index = () => {
         initialSceneId={project.currentSceneId}
         initialSlideId={project.currentSlideId}
       />
+      
+      {/* Delete Slide Confirmation Dialog */}
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Slide</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this slide? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDelete}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteSlideConfirmed}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
