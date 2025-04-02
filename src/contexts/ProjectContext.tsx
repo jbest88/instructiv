@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -6,6 +5,7 @@ import { createDefaultProject, createDefaultScene } from "@/utils/defaultSlides"
 import { Project, Scene, Slide, SlideElement, TextElement, ImageElement, ButtonElement, HotspotElement } from "@/utils/slideTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Database } from "@/integrations/supabase/types";
 
 type ProjectContextType = {
   project: Project;
@@ -98,6 +98,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('projects')
         .select('id, title, updated_at')
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
         
       if (error) throw error;
@@ -128,7 +129,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         .insert({
           user_id: user.id,
           title: projectToSave.title,
-          data: projectToSave
+          data: projectToSave as any
         })
         .select();
         
