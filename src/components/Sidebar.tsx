@@ -21,6 +21,9 @@ export function Sidebar({
   onDeleteSlide 
 }: SidebarProps) {
   const [isHovering, setIsHovering] = useState<string | null>(null);
+  
+  // Sort slides by order
+  const sortedSlides = [...slides].sort((a, b) => a.order - b.order);
 
   return (
     <div className="w-64 h-full bg-sidebar flex flex-col border-r border-sidebar-border">
@@ -29,7 +32,7 @@ export function Sidebar({
       </div>
       
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {slides.map((slide) => (
+        {sortedSlides.map((slide) => (
           <div 
             key={slide.id}
             className={cn(

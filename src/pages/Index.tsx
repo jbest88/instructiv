@@ -2,13 +2,14 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-import { createDefaultProject } from "@/utils/defaultSlides";
-import { Project, Slide, SlideElement, TextElement, ImageElement, ButtonElement, HotspotElement } from "@/utils/slideTypes";
+import { createDefaultProject, createDefaultScene, createDefaultSlide } from "@/utils/defaultSlides";
+import { Project, Scene, Slide, SlideElement, TextElement, ImageElement, ButtonElement, HotspotElement } from "@/utils/slideTypes";
 import { Sidebar } from "@/components/Sidebar";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SlideControls } from "@/components/SlideControls";
 import { PreviewModal } from "@/components/PreviewModal";
 import { ToolboxPanel } from "@/components/ToolboxPanel";
+import { SceneSelector } from "@/components/SceneSelector";
 import { PanelRightOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,11 +20,70 @@ const Index = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [toolboxOpen, setToolboxOpen] = useState(true);
   
-  // Get current slide and element
-  const currentSlide = project.slides.find(slide => slide.id === project.currentSlideId) || project.slides[0];
+  // Get current scene, slide and element
+  const currentScene = project.scenes.find(scene => scene.id === project.currentSceneId) || project.scenes[0];
+  const currentSlide = currentScene.slides.find(slide => slide.id === project.currentSlideId) || currentScene.slides[0];
   const selectedElement = selectedElementId
     ? currentSlide.elements.find(element => element.id === selectedElementId) || null
     : null;
+  
+  // Function to select a scene
+  const handleSelectScene = (sceneId: string) => {
+    const scene = project.scenes.find(s => s.id === sceneId);
+    if (!scene) return;
+    
+    setProject(prev => ({
+      ...prev,
+      currentSceneId: sceneId,
+      currentSlideId: scene.slides[0]?.id || prev.currentSlideId
+    }));
+    setSelectedElementId(null);
+  };
+  
+  // Function to add a new scene
+  const handleAddScene = () => {
+    const newSceneOrder = project.scenes.length + 1;
+    const newScene = createDefaultScene(`Scene ${newSceneOrder}`, newSceneOrder);
+    
+    setProject(prev => ({
+      ...prev,
+      scenes: [...prev.scenes, newScene],
+      currentSceneId: newScene.id,
+      currentSlideId: newScene.slides[0].id
+    }));
+    
+    toast.success("New scene added");
+  };
+  
+  // Function to delete a scene
+  const handleDeleteScene = (sceneId: string) => {
+    if (project.scenes.length <= 1) {
+      toast.error("Cannot delete the last scene");
+      return;
+    }
+    
+    const sceneIndex = project.scenes.findIndex(scene => scene.id === sceneId);
+    const newScenes = project.scenes.filter(scene => scene.id !== sceneId);
+    
+    // If deleting the current scene, select the previous or next scene
+    let newCurrentSceneId = project.currentSceneId;
+    let newCurrentSlideId = project.currentSlideId;
+    
+    if (sceneId === project.currentSceneId) {
+      const newIndex = sceneIndex > 0 ? sceneIndex - 1 : 0;
+      newCurrentSceneId = newScenes[newIndex].id;
+      newCurrentSlideId = newScenes[newIndex].slides[0]?.id || "";
+    }
+    
+    setProject(prev => ({
+      ...prev,
+      scenes: newScenes,
+      currentSceneId: newCurrentSceneId,
+      currentSlideId: newCurrentSlideId
+    }));
+    
+    toast.success("Scene deleted");
+  };
   
   // Function to select a slide
   const handleSelectSlide = (slideId: string) => {
@@ -36,44 +96,80 @@ const Index = () => {
   
   // Function to add a new slide
   const handleAddSlide = () => {
+    const slidesInCurrentScene = currentScene.slides.length;
     const newSlide: Slide = {
       id: `slide-${uuidv4()}`,
-      title: `Slide ${project.slides.length + 1}`,
+      title: `Slide ${slidesInCurrentScene + 1}`,
       elements: [],
-      background: '#ffffff'
+      background: '#ffffff',
+      order: slidesInCurrentScene + 1
     };
     
-    setProject(prev => ({
-      ...prev,
-      slides: [...prev.slides, newSlide],
-      currentSlideId: newSlide.id
-    }));
+    setProject(prev => {
+      // Create a properly typed array of updated scenes
+      const updatedScenes: Scene[] = prev.scenes.map(scene => {
+        if (scene.id === prev.currentSceneId) {
+          // Create a new scene with the slide added
+          const updatedScene: Scene = {
+            ...scene,
+            slides: [...scene.slides, newSlide]
+          };
+          return updatedScene;
+        }
+        return scene;
+      });
+      
+      return {
+        ...prev,
+        scenes: updatedScenes,
+        currentSlideId: newSlide.id
+      };
+    });
     
     toast.success("New slide added");
   };
   
   // Function to delete a slide
   const handleDeleteSlide = (slideId: string) => {
-    if (project.slides.length <= 1) {
-      toast.error("Cannot delete the last slide");
+    if (currentScene.slides.length <= 1) {
+      toast.error("Cannot delete the last slide in a scene");
       return;
     }
     
-    const slideIndex = project.slides.findIndex(slide => slide.id === slideId);
-    const newSlides = project.slides.filter(slide => slide.id !== slideId);
+    const slideIndex = currentScene.slides.findIndex(slide => slide.id === slideId);
     
-    // If deleting the current slide, select the previous or next slide
-    let newCurrentSlideId = project.currentSlideId;
-    if (slideId === project.currentSlideId) {
-      const newIndex = slideIndex > 0 ? slideIndex - 1 : 0;
-      newCurrentSlideId = newSlides[newIndex].id;
-    }
-    
-    setProject(prev => ({
-      ...prev,
-      slides: newSlides,
-      currentSlideId: newCurrentSlideId
-    }));
+    setProject(prev => {
+      // Create a properly typed array of updated scenes
+      const updatedScenes: Scene[] = prev.scenes.map(scene => {
+        if (scene.id === prev.currentSceneId) {
+          const newSlides = scene.slides.filter(slide => slide.id !== slideId);
+          
+          // Create a new scene with the slide removed
+          const updatedScene: Scene = {
+            ...scene,
+            slides: newSlides
+          };
+          return updatedScene;
+        }
+        return scene;
+      });
+      
+      // If deleting the current slide, select the previous or next slide
+      let newCurrentSlideId = prev.currentSlideId;
+      if (slideId === prev.currentSlideId) {
+        const sceneToUpdate = updatedScenes.find(s => s.id === prev.currentSceneId);
+        if (sceneToUpdate) {
+          const newIndex = slideIndex > 0 ? slideIndex - 1 : 0;
+          newCurrentSlideId = sceneToUpdate.slides[newIndex]?.id || "";
+        }
+      }
+      
+      return {
+        ...prev,
+        scenes: updatedScenes,
+        currentSlideId: newCurrentSlideId
+      };
+    });
     
     toast.success("Slide deleted");
   };
@@ -139,23 +235,36 @@ const Index = () => {
     }
     
     setProject(prev => {
-      // Create a properly typed array of updated slides
-      const updatedSlides: Slide[] = prev.slides.map(slide => {
-        if (slide.id === prev.currentSlideId) {
-          // Create a new slide with the element added
-          const updatedSlide: Slide = {
-            ...slide,
-            elements: [...slide.elements, newElement]
+      // Create a properly typed array of updated scenes
+      const updatedScenes: Scene[] = prev.scenes.map(scene => {
+        if (scene.id === prev.currentSceneId) {
+          // Create a properly typed array of updated slides
+          const updatedSlides: Slide[] = scene.slides.map(slide => {
+            if (slide.id === prev.currentSlideId) {
+              // Create a new slide with the element added
+              const updatedSlide: Slide = {
+                ...slide,
+                elements: [...slide.elements, newElement]
+              };
+              return updatedSlide;
+            }
+            return slide;
+          });
+          
+          // Create a new scene with the updated slides
+          const updatedScene: Scene = {
+            ...scene,
+            slides: updatedSlides
           };
-          return updatedSlide;
+          return updatedScene;
         }
-        return slide;
+        return scene;
       });
       
       // Return a properly typed Project object
       return {
         ...prev,
-        slides: updatedSlides
+        scenes: updatedScenes
       };
     });
     
@@ -166,41 +275,54 @@ const Index = () => {
   // Function to update an element
   const handleUpdateElement = (elementId: string, updates: Partial<SlideElement>) => {
     setProject(prev => {
-      // Create a properly typed array of updated slides
-      const updatedSlides: Slide[] = prev.slides.map(slide => {
-        if (slide.id === prev.currentSlideId) {
-          // First, find the element we need to update
-          const elementToUpdate = slide.elements.find(el => el.id === elementId);
-          
-          if (!elementToUpdate) return slide;
-          
-          // Create a new properly typed array of elements
-          const updatedElements: SlideElement[] = slide.elements.map(element => {
-            if (element.id === elementId) {
-              // Merge the existing element with updates, maintaining its specific type
-              const updated = {
-                ...element,
-                ...updates
+      // Create a properly typed array of updated scenes
+      const updatedScenes: Scene[] = prev.scenes.map(scene => {
+        if (scene.id === prev.currentSceneId) {
+          // Create a properly typed array of updated slides
+          const updatedSlides: Slide[] = scene.slides.map(slide => {
+            if (slide.id === prev.currentSlideId) {
+              // First, find the element we need to update
+              const elementToUpdate = slide.elements.find(el => el.id === elementId);
+              
+              if (!elementToUpdate) return slide;
+              
+              // Create a new properly typed array of elements
+              const updatedElements: SlideElement[] = slide.elements.map(element => {
+                if (element.id === elementId) {
+                  // Merge the existing element with updates, maintaining its specific type
+                  const updated = {
+                    ...element,
+                    ...updates
+                  };
+                  return updated as SlideElement; // Cast back to SlideElement
+                }
+                return element;
+              });
+              
+              // Create a new slide with the updated elements
+              const updatedSlide: Slide = {
+                ...slide,
+                elements: updatedElements
               };
-              return updated as SlideElement; // Cast back to SlideElement
+              return updatedSlide;
             }
-            return element;
+            return slide;
           });
           
-          // Create a new slide with the updated elements
-          const updatedSlide: Slide = {
-            ...slide,
-            elements: updatedElements
+          // Create a new scene with the updated slides
+          const updatedScene: Scene = {
+            ...scene,
+            slides: updatedSlides
           };
-          return updatedSlide;
+          return updatedScene;
         }
-        return slide;
+        return scene;
       });
       
       // Return a properly typed Project object
       return {
         ...prev,
-        slides: updatedSlides
+        scenes: updatedScenes
       };
     });
   };
@@ -208,23 +330,60 @@ const Index = () => {
   // Function to update slide properties
   const handleUpdateSlide = (updates: Partial<Slide>) => {
     setProject(prev => {
-      // Create a properly typed array of updated slides
-      const updatedSlides: Slide[] = prev.slides.map(slide => {
-        if (slide.id === prev.currentSlideId) {
-          // Create a new slide with the updates
-          const updatedSlide: Slide = {
-            ...slide,
-            ...updates
+      // Create a properly typed array of updated scenes
+      const updatedScenes: Scene[] = prev.scenes.map(scene => {
+        if (scene.id === prev.currentSceneId) {
+          // Create a properly typed array of updated slides
+          const updatedSlides: Slide[] = scene.slides.map(slide => {
+            if (slide.id === prev.currentSlideId) {
+              // Create a new slide with the updates
+              const updatedSlide: Slide = {
+                ...slide,
+                ...updates
+              };
+              return updatedSlide;
+            }
+            return slide;
+          });
+          
+          // Create a new scene with the updated slides
+          const updatedScene: Scene = {
+            ...scene,
+            slides: updatedSlides
           };
-          return updatedSlide;
+          return updatedScene;
         }
-        return slide;
+        return scene;
       });
       
       // Return a properly typed Project object
       return {
         ...prev,
-        slides: updatedSlides
+        scenes: updatedScenes
+      };
+    });
+  };
+  
+  // Function to update scene properties
+  const handleUpdateScene = (updates: Partial<Scene>) => {
+    setProject(prev => {
+      // Create a properly typed array of updated scenes
+      const updatedScenes: Scene[] = prev.scenes.map(scene => {
+        if (scene.id === prev.currentSceneId) {
+          // Create a new scene with the updates
+          const updatedScene: Scene = {
+            ...scene,
+            ...updates
+          };
+          return updatedScene;
+        }
+        return scene;
+      });
+      
+      // Return a properly typed Project object
+      return {
+        ...prev,
+        scenes: updatedScenes
       };
     });
   };
@@ -279,11 +438,20 @@ const Index = () => {
         </span>
       </header>
       
+      {/* Scene Selector */}
+      <SceneSelector 
+        scenes={project.scenes}
+        currentSceneId={project.currentSceneId}
+        onSelectScene={handleSelectScene}
+        onAddScene={handleAddScene}
+        onDeleteScene={handleDeleteScene}
+      />
+      
       {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar with slides */}
+        {/* Sidebar with slides for current scene */}
         <Sidebar 
-          slides={project.slides}
+          slides={currentScene.slides}
           currentSlideId={project.currentSlideId}
           onSelectSlide={handleSelectSlide}
           onAddSlide={handleAddSlide}
@@ -331,7 +499,9 @@ const Index = () => {
         <ToolboxPanel 
           onAddElement={handleAddElement}
           currentSlide={currentSlide}
+          currentScene={currentScene}
           onUpdateSlide={handleUpdateSlide}
+          onUpdateScene={handleUpdateScene}
           isOpen={toolboxOpen}
           onToggle={() => setToolboxOpen(!toolboxOpen)}
         />
@@ -341,7 +511,8 @@ const Index = () => {
       <PreviewModal 
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
-        slides={project.slides}
+        scenes={project.scenes}
+        initialSceneId={project.currentSceneId}
         initialSlideId={project.currentSlideId}
       />
     </div>

@@ -4,14 +4,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { 
   Square, Circle, Type, Image as ImageIcon,
-  PanelRightOpen, PanelRightClose, Layout, Settings
+  PanelRightOpen, PanelRightClose, Layout, Settings, Box
 } from "lucide-react";
-import { SlideElement, Slide } from "@/utils/slideTypes";
+import { SlideElement, Slide, Scene } from "@/utils/slideTypes";
 
 interface ToolboxPanelProps {
   onAddElement: (type: SlideElement['type']) => void;
   currentSlide: Slide;
+  currentScene: Scene;
   onUpdateSlide: (updates: Partial<Slide>) => void;
+  onUpdateScene: (updates: Partial<Scene>) => void;
   isOpen: boolean;
   onToggle: () => void;
 }
@@ -19,7 +21,9 @@ interface ToolboxPanelProps {
 export function ToolboxPanel({ 
   onAddElement, 
   currentSlide,
-  onUpdateSlide, 
+  currentScene,
+  onUpdateSlide,
+  onUpdateScene, 
   isOpen,
   onToggle
 }: ToolboxPanelProps) {
@@ -40,7 +44,7 @@ export function ToolboxPanel({
           </TabsTrigger>
           <TabsTrigger value="slide" className="flex-1">
             <Settings size={14} className="mr-1" />
-            Slide
+            Properties
           </TabsTrigger>
         </TabsList>
         
@@ -95,34 +99,62 @@ export function ToolboxPanel({
           </Accordion>
         </TabsContent>
         
-        <TabsContent value="slide" className="p-4 space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Slide Title</label>
-            <input
-              type="text"
-              className="w-full rounded-md border border-input p-2"
-              value={currentSlide.title}
-              onChange={(e) => onUpdateSlide({ title: e.target.value })}
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium mb-1 block">Background Color</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                className="rounded border border-input w-8 h-8"
-                value={currentSlide.background || '#ffffff'}
-                onChange={(e) => onUpdateSlide({ background: e.target.value })}
-              />
-              <input
-                type="text"
-                className="w-full rounded-md border border-input p-2 text-sm"
-                value={currentSlide.background || '#ffffff'}
-                onChange={(e) => onUpdateSlide({ background: e.target.value })}
-              />
-            </div>
-          </div>
+        <TabsContent value="slide" className="p-0">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="scene" className="border-b-0">
+              <AccordionTrigger className="px-4 py-2">
+                <Box size={14} className="mr-2" />
+                Scene Properties
+              </AccordionTrigger>
+              <AccordionContent className="p-4 space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Scene Title</label>
+                  <input
+                    type="text"
+                    className="w-full rounded-md border border-input p-2"
+                    value={currentScene.title}
+                    onChange={(e) => onUpdateScene({ title: e.target.value })}
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="slide" className="border-b-0">
+              <AccordionTrigger className="px-4 py-2">
+                <Layout size={14} className="mr-2" />
+                Slide Properties
+              </AccordionTrigger>
+              <AccordionContent className="p-4 space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Slide Title</label>
+                  <input
+                    type="text"
+                    className="w-full rounded-md border border-input p-2"
+                    value={currentSlide.title}
+                    onChange={(e) => onUpdateSlide({ title: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Background Color</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      className="rounded border border-input w-8 h-8"
+                      value={currentSlide.background || '#ffffff'}
+                      onChange={(e) => onUpdateSlide({ background: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-input p-2 text-sm"
+                      value={currentSlide.background || '#ffffff'}
+                      onChange={(e) => onUpdateSlide({ background: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </TabsContent>
       </Tabs>
     </div>

@@ -43,11 +43,20 @@ export interface Slide {
   title: string;
   elements: SlideElement[];
   background?: string;
+  order: number; // Added order property for sorting within a scene
+}
+
+export interface Scene {
+  id: string;
+  title: string;
+  slides: Slide[];
+  order: number; // Added order property for sorting scenes
 }
 
 export interface Project {
   id: string;
   title: string;
-  slides: Slide[];
+  scenes: Scene[];
+  currentSceneId: string;
   currentSlideId: string;
 }
