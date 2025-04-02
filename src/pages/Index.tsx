@@ -29,7 +29,6 @@ const Index = () => {
   const [project, setProject] = useState<Project>(createDefaultProject());
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [toolboxOpen, setToolboxOpen] = useState(true);
   const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
   
   // Confirmation dialog state
