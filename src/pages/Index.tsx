@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { createDefaultProject } from "@/utils/defaultSlides";
-import { Project, Slide, SlideElement } from "@/utils/slideTypes";
+import { Project, Slide, SlideElement, TextElement, ImageElement, ButtonElement, HotspotElement } from "@/utils/slideTypes";
 import { Sidebar } from "@/components/Sidebar";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SlideControls } from "@/components/SlideControls";
@@ -80,32 +80,59 @@ const Index = () => {
   
   // Function to add an element to the current slide
   const handleAddElement = (type: SlideElement['type']) => {
-    const newElement: SlideElement = {
-      id: `${type}-${uuidv4()}`,
-      type,
-      x: 200,
-      y: 200,
-      width: type === "text" ? 300 : 200,
-      height: type === "text" ? 50 : 150,
-      ...(type === "text" && { 
-        content: "New Text", 
+    let newElement: SlideElement;
+    
+    // Create the appropriate element type based on the 'type' parameter
+    if (type === "text") {
+      newElement = {
+        id: `text-${uuidv4()}`,
+        type: "text",
+        content: "New Text",
+        x: 200,
+        y: 200,
+        width: 300,
+        height: 50,
         fontSize: 16,
         fontColor: "#333333"
-      }),
-      ...(type === "image" && { 
-        src: "/placeholder.svg", 
-        alt: "Placeholder image" 
-      }),
-      ...(type === "button" && { 
-        label: "Button", 
+      };
+    } else if (type === "image") {
+      newElement = {
+        id: `image-${uuidv4()}`,
+        type: "image",
+        src: "/placeholder.svg",
+        alt: "Placeholder image",
+        x: 200,
+        y: 200,
+        width: 200,
+        height: 150
+      };
+    } else if (type === "button") {
+      newElement = {
+        id: `button-${uuidv4()}`,
+        type: "button",
+        label: "Button",
         action: "nextSlide",
-        style: "primary"
-      }),
-      ...(type === "hotspot" && { 
-        tooltip: "Hotspot information", 
-        shape: "circle" 
-      })
-    } as SlideElement;
+        style: "primary",
+        x: 200,
+        y: 200,
+        width: 150,
+        height: 50
+      };
+    } else if (type === "hotspot") {
+      newElement = {
+        id: `hotspot-${uuidv4()}`,
+        type: "hotspot",
+        tooltip: "Hotspot information",
+        shape: "circle",
+        x: 200,
+        y: 200,
+        width: 60,
+        height: 60
+      };
+    } else {
+      // This should never happen, but TypeScript needs this
+      throw new Error(`Unsupported element type: ${type}`);
+    }
     
     setProject(prev => {
       const updatedSlides = prev.slides.map(slide => {
