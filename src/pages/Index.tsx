@@ -169,10 +169,20 @@ const Index = () => {
       // Create a properly typed array of updated slides
       const updatedSlides: Slide[] = prev.slides.map(slide => {
         if (slide.id === prev.currentSlideId) {
-          // Create a properly typed array of updated elements
+          // First, find the element we need to update
+          const elementToUpdate = slide.elements.find(el => el.id === elementId);
+          
+          if (!elementToUpdate) return slide;
+          
+          // Create a new properly typed array of elements
           const updatedElements: SlideElement[] = slide.elements.map(element => {
             if (element.id === elementId) {
-              return { ...element, ...updates };
+              // Merge the existing element with updates, maintaining its specific type
+              const updated = {
+                ...element,
+                ...updates
+              };
+              return updated as SlideElement; // Cast back to SlideElement
             }
             return element;
           });
