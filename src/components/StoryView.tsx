@@ -2,13 +2,11 @@
 import { useProject } from "@/contexts/ProjectContext";
 import { usePanels } from "@/contexts/PanelContext";
 import { Button } from "@/components/ui/button";
-import { CircleCheck, LucideIcon, X } from "lucide-react";
+import { CircleCheck, X } from "lucide-react";
 import { 
   NavigationMenu,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 

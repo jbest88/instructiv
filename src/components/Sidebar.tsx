@@ -24,8 +24,8 @@ export function Sidebar() {
   const sortedSlides = [...currentScene.slides].sort((a, b) => a.order - b.order);
 
   return (
-    <div className={`h-full bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-14'}`}>
-      <div className="p-2 border-b border-sidebar-border flex items-center justify-between">
+    <div className={`h-full bg-background flex flex-col border-r transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-14'}`}>
+      <div className="p-2 border-b flex items-center justify-between">
         {sidebarOpen && <h2 className="text-lg font-medium">Slides</h2>}
         <Button 
           variant="ghost" 
@@ -119,7 +119,7 @@ export function Sidebar() {
             ))}
           </div>
           
-          <div className="p-3 border-t border-sidebar-border">
+          <div className="p-3 border-t">
             <Button 
               variant="outline" 
               size="sm" 

@@ -1,6 +1,5 @@
 
 import { useProject } from "@/contexts/ProjectContext";
-import { usePanels } from "@/contexts/PanelContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
 import { Timeline } from "@/components/Timeline";
