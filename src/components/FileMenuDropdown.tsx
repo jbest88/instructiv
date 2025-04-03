@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export function FileMenuDropdown() {
   const [isSaving, setIsSaving] = useState(false);
   
   // File input ref for importing projects
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

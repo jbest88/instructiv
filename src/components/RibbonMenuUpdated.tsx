@@ -7,7 +7,7 @@ import {
   TextIcon, 
   ImageIcon, 
   SquareIcon, 
-  MousePointerSquareIcon,
+  MousePointerIcon,
   Type,
   Image,
   Square,
