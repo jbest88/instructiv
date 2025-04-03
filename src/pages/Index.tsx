@@ -14,7 +14,7 @@ import { DeleteSlideDialog } from "@/components/DeleteSlideDialog";
 
 function ProjectContent() {
   const { project, currentScene, isPreviewOpen, setIsPreviewOpen } = useProject();
-  const { toolboxOpen, setToolboxOpen, ribbonOpen, setRibbonOpen } = usePanels();
+  const { toolboxOpen, setToolboxOpen } = usePanels();
 
   // Empty state - no scenes
   if (project.scenes.length === 0) {
@@ -23,7 +23,7 @@ function ProjectContent() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
-      {/* Toolbar at the top, including ribbon menu */}
+      {/* Toolbar at the top */}
       <Toolbar onPreview={() => setIsPreviewOpen(true)} />
       
       {/* Main content area */}

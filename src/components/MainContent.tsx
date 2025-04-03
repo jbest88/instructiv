@@ -3,10 +3,10 @@ import { useProject } from "@/contexts/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
 import { Timeline } from "@/components/Timeline";
-import { RibbonMenu } from "@/components/RibbonMenu";
+import { RibbonMenuUpdated } from "@/components/RibbonMenuUpdated";
 import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 export function MainContent() {
   const { 
@@ -15,11 +15,28 @@ export function MainContent() {
     selectedElementId, 
     setSelectedElementId, 
     handleUpdateElement,
-    handleAddSlide
+    handleAddSlide,
+    canvasZoom,
+    setCanvasZoom
   } = useProject();
+
+  const handleZoomIn = () => {
+    setCanvasZoom(Math.min(canvasZoom + 0.1, 3));
+  };
+
+  const handleZoomOut = () => {
+    setCanvasZoom(Math.max(canvasZoom - 0.1, 0.1));
+  };
+
+  const handleResetZoom = () => {
+    setCanvasZoom(1);
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#f3f2f1]">
+      {/* Ribbon menu at the top */}
+      <RibbonMenuUpdated />
+      
       {/* Story view */}
       <StoryView />
       
@@ -29,13 +46,29 @@ export function MainContent() {
       {/* Editor canvas */}
       {currentSlide ? (
         <div className="flex-1 overflow-hidden relative">
-          <div className="absolute inset-6 shadow-lg bg-white rounded-md overflow-hidden">
+          <div className="absolute inset-0">
             <SlideCanvas 
               slide={currentSlide}
               selectedElementId={selectedElementId}
               onSelectElement={setSelectedElementId}
               onUpdateElement={handleUpdateElement}
             />
+          </div>
+          
+          {/* Zoom controls */}
+          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-white/90 rounded-md p-1 shadow-md">
+            <Button variant="ghost" size="icon" onClick={handleZoomOut}>
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <div className="px-2 text-sm tabular-nums">
+              {Math.round(canvasZoom * 100)}%
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleZoomIn}>
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleResetZoom} className="ml-1">
+              <Maximize2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       ) : (

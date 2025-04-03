@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -18,8 +17,12 @@ type ProjectContextType = {
   isDeleteConfirmOpen: boolean;
   slideToDelete: string | null;
   isPreviewOpen: boolean;
+  canvasSize: { width: number; height: number };
+  canvasZoom: number;
   setIsPreviewOpen: (isOpen: boolean) => void;
   setSelectedElementId: (id: string | null) => void;
+  setCanvasZoom: (zoom: number) => void;
+  setCanvasSize: (size: { width: number; height: number }) => void;
   handleSelectScene: (sceneId: string) => void;
   handleAddScene: () => void;
   handleDeleteScene: (sceneId: string) => void;
@@ -35,6 +38,8 @@ type ProjectContextType = {
   handleUpdateScene: (updates: Partial<Scene>) => void;
   handleSaveProject: () => void;
   handleLoadProject: () => void;
+  handleExportProject: () => void;
+  handleImportProject: (file: File) => Promise<void>;
   setIsDeleteConfirmOpen: (isOpen: boolean) => void;
   userProjects: { id: string; title: string; updated_at: string }[];
   isLoadingProjects: boolean;
@@ -51,6 +56,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  // Canvas state
+  const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1200 });
+  const [canvasZoom, setCanvasZoom] = useState(1);
   
   // Confirmation dialog state
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -619,7 +628,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // Save project to localStorage
   const handleSaveProject = () => {
     try {
-      localStorage.setItem('narratifyProject', JSON.stringify(project));
+      const projectData = JSON.stringify({
+        project,
+        canvasSize
+      });
+      localStorage.setItem('narratifyProject', projectData);
       toast.success("Project saved to browser storage");
     } catch (error) {
       toast.error("Failed to save project");
@@ -630,10 +643,15 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // Load project from localStorage
   const handleLoadProject = () => {
     try {
-      const savedProject = localStorage.getItem('narratifyProject');
+      const savedData = localStorage.getItem('narratifyProject');
       
-      if (savedProject) {
-        setProject(JSON.parse(savedProject));
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        setProject(parsed.project);
+        if (parsed.canvasSize) {
+          setCanvasSize(parsed.canvasSize);
+        }
+        setOpenSlides([]);
         toast.success("Project loaded from browser storage");
       } else {
         toast.info("No saved project found in browser storage");
@@ -644,12 +662,102 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   };
   
+  // Export project to a file
+  const handleExportProject = () => {
+    try {
+      const projectData = JSON.stringify({
+        project,
+        canvasSize,
+        version: '1.0'
+      }, null, 2);
+      
+      const blob = new Blob([projectData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project.title || 'narratify-project'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success("Project exported successfully");
+    } catch (error) {
+      toast.error("Failed to export project");
+      console.error("Export error:", error);
+    }
+  };
+  
+  // Import project from a file
+  const handleImportProject = async (file: File): Promise<void> => {
+    try {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          try {
+            if (!e.target?.result) {
+              toast.error("Failed to read file");
+              reject(new Error("Failed to read file"));
+              return;
+            }
+            
+            const content = e.target.result as string;
+            const parsed = JSON.parse(content);
+            
+            // Basic validation
+            if (!parsed.project || !parsed.project.id || !parsed.project.scenes) {
+              toast.error("Invalid project file format");
+              reject(new Error("Invalid project file format"));
+              return;
+            }
+            
+            setProject(parsed.project);
+            
+            if (parsed.canvasSize) {
+              setCanvasSize(parsed.canvasSize);
+            }
+            
+            setOpenSlides([]);
+            toast.success("Project imported successfully");
+            resolve();
+          } catch (parseError) {
+            toast.error("Failed to parse project file");
+            console.error("Import parse error:", parseError);
+            reject(parseError);
+          }
+        };
+        
+        reader.onerror = (error) => {
+          toast.error("Error reading file");
+          console.error("Import read error:", error);
+          reject(error);
+        };
+        
+        reader.readAsText(file);
+      });
+    } catch (error) {
+      toast.error("Failed to import project");
+      console.error("Import error:", error);
+      throw error;
+    }
+  };
+  
   // Load saved project on initial render
   useEffect(() => {
-    const savedProject = localStorage.getItem('narratifyProject');
-    if (savedProject) {
+    const savedData = localStorage.getItem('narratifyProject');
+    if (savedData) {
       try {
-        setProject(JSON.parse(savedProject));
+        const parsed = JSON.parse(savedData);
+        setProject(parsed.project);
+        if (parsed.canvasSize) {
+          setCanvasSize(parsed.canvasSize);
+        }
       } catch (error) {
         console.error("Error loading saved project:", error);
       }
@@ -666,8 +774,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     isDeleteConfirmOpen,
     slideToDelete,
     isPreviewOpen,
+    canvasSize,
+    canvasZoom,
     setIsPreviewOpen,
     setSelectedElementId,
+    setCanvasZoom,
+    setCanvasSize,
     handleSelectScene,
     handleAddScene,
     handleDeleteScene,
@@ -683,6 +795,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     handleUpdateScene,
     handleSaveProject,
     handleLoadProject,
+    handleExportProject,
+    handleImportProject,
     setIsDeleteConfirmOpen,
     userProjects,
     isLoadingProjects,
