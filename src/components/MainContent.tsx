@@ -20,9 +20,6 @@ export function MainContent() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#f3f2f1]">
-      {/* Ribbon menu */}
-      <RibbonMenu />
-      
       {/* Story view */}
       <StoryView />
       

@@ -12,8 +12,10 @@ import {
 import { 
   Bold, Italic, AlignLeft, AlignCenter, AlignRight, 
   Type, Image, Square, Palette, Save, FilePlus, Play,
-  FileDown, FileUp, Grid, Layout, Table, List
+  FileDown, FileUp, Grid, Layout, Table, List, Cloud
 } from "lucide-react";
+import { ProjectsList } from "@/components/ProjectsList";
+import { useState } from "react";
 
 export function RibbonMenu() {
   const { 
@@ -24,6 +26,7 @@ export function RibbonMenu() {
   } = useProject();
   
   const { ribbonOpen } = usePanels();
+  const [isProjectsListOpen, setIsProjectsListOpen] = useState(false);
   
   if (!ribbonOpen) return null;
   
@@ -50,6 +53,10 @@ export function RibbonMenu() {
             <MenubarItem onClick={() => handleSaveProjectToSupabase()}>
               <FileUp className="mr-2 h-4 w-4" />
               Save to Cloud
+            </MenubarItem>
+            <MenubarItem onClick={() => setIsProjectsListOpen(true)}>
+              <Cloud className="mr-2 h-4 w-4" />
+              Cloud Projects
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
@@ -125,6 +132,12 @@ export function RibbonMenu() {
           </MenubarContent>
         </MenubarMenu>
       </Menubar>
+
+      {/* Cloud Projects Modal */}
+      <ProjectsList 
+        isOpen={isProjectsListOpen}
+        onClose={() => setIsProjectsListOpen(false)}
+      />
     </div>
   );
 }
