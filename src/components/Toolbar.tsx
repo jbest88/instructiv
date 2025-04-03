@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, X, User, LogOut } from "lucide-react";
 import { useProject } from "@/contexts/ProjectContext";
 import { usePanels } from "@/contexts/PanelContext";
-import { RibbonMenu } from "./RibbonMenu";
+import { RibbonMenuUpdated } from "./RibbonMenuUpdated";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +31,10 @@ export function Toolbar({ onPreview }: ToolbarProps) {
 
   return (
     <div className="flex flex-col border-b">
-      {/* Main toolbar */}
+      {/* Ribbon menu at the top */}
+      <RibbonMenuUpdated />
+      
+      {/* Main toolbar content */}
       <div className="flex items-center justify-between gap-4 p-2">
         <div className="flex items-center">
           <span className="font-semibold text-lg mr-4">Narratify</span>
@@ -99,9 +102,6 @@ export function Toolbar({ onPreview }: ToolbarProps) {
           )}
         </div>
       </div>
-      
-      {/* Ribbon menu */}
-      {ribbonOpen && <RibbonMenu />}
     </div>
   );
 }
