@@ -4,6 +4,8 @@ import { usePanels } from "@/contexts/PanelContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
 import { Timeline } from "@/components/Timeline";
+import { RibbonMenu } from "@/components/RibbonMenu";
+import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -19,6 +21,12 @@ export function MainContent() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#f3f2f1]">
+      {/* Ribbon menu */}
+      <RibbonMenu />
+      
+      {/* Story view */}
+      <StoryView />
+      
       {/* Scene selector */}
       <SceneSelector />
       

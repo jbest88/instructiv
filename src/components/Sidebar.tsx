@@ -15,7 +15,7 @@ export function Sidebar() {
     handleDeleteSlideInitiate 
   } = useProject();
   
-  const { sidebarOpen, setSidebarOpen } = usePanels();
+  const { sidebarOpen, toggleSidebar } = usePanels();
   const [isHovering, setIsHovering] = useState<string | null>(null);
   
   if (!currentScene) return null;
@@ -24,28 +24,28 @@ export function Sidebar() {
   const sortedSlides = [...currentScene.slides].sort((a, b) => a.order - b.order);
 
   return (
-    <div className={`h-full bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-10'}`}>
+    <div className={`h-full bg-sidebar flex flex-col border-r border-sidebar-border transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-14'}`}>
       <div className="p-2 border-b border-sidebar-border flex items-center justify-between">
-        {!sidebarOpen && <h2 className="text-lg font-medium">Slides</h2>}
+        {sidebarOpen && <h2 className="text-lg font-medium">Slides</h2>}
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={sidebarOpen ? "mx-auto" : ""}
+          onClick={toggleSidebar}
+          className={sidebarOpen ? "" : "mx-auto"}
         >
-          {sidebarOpen ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
         </Button>
       </div>
       
-      {!sidebarOpen && (
+      {sidebarOpen && (
         <>
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {sortedSlides.map((slide) => (
               <div 
                 key={slide.id}
                 className={cn(
-                  "slide-thumb aspect-video",
-                  currentSlide?.id === slide.id && "active"
+                  "slide-thumb aspect-video relative bg-white shadow rounded-md cursor-pointer border",
+                  currentSlide?.id === slide.id ? "border-primary" : "border-transparent hover:border-gray-300"
                 )}
                 onClick={() => handleSelectSlide(slide.id)}
                 onMouseEnter={() => setIsHovering(slide.id)}
