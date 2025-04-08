@@ -1,20 +1,39 @@
 
 import { useProject } from "@/contexts/project";
 import { Button } from "@/components/ui/button";
-import { ChevronsLeft, ChevronsRight, Plus, Trash2 } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Plus, Trash2, Check, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 export function SceneSelector() {
   const { 
     project, 
     handleSelectScene, 
     handleAddScene, 
-    handleDeleteScene 
+    handleDeleteScene, 
+    handleUpdateScene
   } = useProject();
   
   const [isHovering, setIsHovering] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const [editingSceneId, setEditingSceneId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+
+  const handleEditStart = (sceneId: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSceneId(sceneId);
+    setEditTitle(title);
+  };
+
+  const handleSaveEdit = (sceneId: string) => {
+    handleUpdateScene({ id: sceneId, title: editTitle });
+    setEditingSceneId(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSceneId(null);
+  };
 
   return (
     <div className={cn(
@@ -43,11 +62,43 @@ export function SceneSelector() {
                 onClick={() => handleSelectScene(scene.id)}
                 onMouseEnter={() => setIsHovering(scene.id)}
                 onMouseLeave={() => setIsHovering(null)}
+                onDoubleClick={(e) => handleEditStart(scene.id, scene.title, e)}
               >
-                {scene.title}
+                {editingSceneId === scene.id ? (
+                  <div className="flex items-center" onClick={e => e.stopPropagation()}>
+                    <Input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="h-6 py-0 px-1 text-xs min-w-24"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit(scene.id);
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                    />
+                    <Button 
+                      size="icon"
+                      variant="ghost" 
+                      className="h-5 w-5 ml-1" 
+                      onClick={() => handleSaveEdit(scene.id)}
+                    >
+                      <Check size={12} />
+                    </Button>
+                    <Button 
+                      size="icon"
+                      variant="ghost" 
+                      className="h-5 w-5" 
+                      onClick={handleCancelEdit}
+                    >
+                      <X size={12} />
+                    </Button>
+                  </div>
+                ) : (
+                  scene.title
+                )}
                 
                 {/* Delete button - only show when hovering and more than 1 scene */}
-                {isHovering === scene.id && project.scenes.length > 1 && (
+                {isHovering === scene.id && project.scenes.length > 1 && !editingSceneId && (
                   <button
                     className="absolute -right-1 -top-1 h-4 w-4 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {

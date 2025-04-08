@@ -239,7 +239,7 @@ export function SlideCanvas({
     
     return handles.map(handle => (
       <div
-        key={handle.position}
+        key={`${element.id}-${handle.position}`}
         className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full"
         style={{
           top: handle.top,
@@ -273,10 +273,9 @@ export function SlideCanvas({
 
     if (element.type === "text") {
       return (
-        <ContextMenu>
+        <ContextMenu key={element.id}>
           <ContextMenuTrigger>
             <div
-              key={element.id}
               className={baseClasses}
               style={{
                 ...baseStyle,
@@ -337,10 +336,9 @@ export function SlideCanvas({
     
     if (element.type === "image") {
       return (
-        <ContextMenu>
+        <ContextMenu key={element.id}>
           <ContextMenuTrigger>
             <div
-              key={element.id}
               className={baseClasses}
               style={baseStyle}
               onClick={(e) => handleElementClick(e, element.id)}
@@ -377,10 +375,9 @@ export function SlideCanvas({
       }
       
       return (
-        <ContextMenu>
+        <ContextMenu key={element.id}>
           <ContextMenuTrigger>
             <div
-              key={element.id}
               className={cn(
                 "absolute flex items-center justify-center rounded cursor-move",
                 buttonClass,
@@ -412,10 +409,9 @@ export function SlideCanvas({
       const isCircle = element.shape === "circle";
       
       return (
-        <ContextMenu>
+        <ContextMenu key={element.id}>
           <ContextMenuTrigger>
             <div
-              key={element.id}
               className={cn(
                 "absolute bg-blue-400/30 border-2 border-blue-500 cursor-move",
                 isCircle ? "rounded-full" : "rounded",

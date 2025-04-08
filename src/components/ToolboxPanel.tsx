@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Palette, Type, Image, Square, CircleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,17 +24,33 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
     handleAddElement, 
     handleUpdateElement,
     handleUpdateSlide, 
-    handleUpdateScene 
+    handleUpdateScene,
+    canvasSize,
+    setCanvasSize
   } = useProject();
 
   const [activeTab, setActiveTab] = useState("elements");
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
 
-  // Helper function for position updates
+  // Helper function for position updates that allows clearing values
   const handlePositionChange = (elementId: string, field: 'x' | 'y' | 'width' | 'height', value: string) => {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue)) {
-      handleUpdateElement(elementId, { [field]: numValue });
-    }
+    const numValue = value === '' ? 0 : parseInt(value);
+    // Don't check isNaN - allow empty string to be converted to 0
+    handleUpdateElement(elementId, { [field]: numValue });
+  };
+
+  // Handle double click to edit title
+  const handleTitleDoubleClick = (id: string) => {
+    setEditingTitleId(id);
+  };
+
+  // Handle canvas size change
+  const handleCanvasSizeChange = (field: 'width' | 'height', value: string) => {
+    const numValue = value === '' ? 0 : parseInt(value, 10);
+    setCanvasSize({
+      ...canvasSize,
+      [field]: numValue
+    });
   };
 
   // Helper function to render properties based on element type
@@ -286,12 +303,24 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
       <div className="space-y-4">
         <div>
           <Label htmlFor="slide-title">Slide Title</Label>
-          <Input 
-            id="slide-title"
-            value={currentSlide.title}
-            onChange={(e) => handleUpdateSlide({ title: e.target.value })}
-            className="mt-1"
-          />
+          {editingTitleId === currentSlide.id ? (
+            <Input 
+              id="slide-title"
+              value={currentSlide.title}
+              onChange={(e) => handleUpdateSlide({ title: e.target.value })}
+              className="mt-1"
+              autoFocus
+              onBlur={() => setEditingTitleId(null)}
+              onKeyDown={(e) => e.key === 'Enter' && setEditingTitleId(null)}
+            />
+          ) : (
+            <div 
+              className="p-2 mt-1 border rounded cursor-pointer hover:bg-muted"
+              onDoubleClick={() => handleTitleDoubleClick(currentSlide.id)}
+            >
+              {currentSlide.title}
+            </div>
+          )}
         </div>
         
         <div>
@@ -312,6 +341,59 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
             />
           </div>
         </div>
+        
+        {/* Canvas Size Controls */}
+        <div>
+          <Label className="font-medium">Canvas Size</Label>
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            <div>
+              <Label htmlFor="canvas-width" className="text-xs">Width</Label>
+              <Input 
+                id="canvas-width"
+                type="number"
+                value={canvasSize.width}
+                onChange={(e) => handleCanvasSizeChange('width', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="canvas-height" className="text-xs">Height</Label>
+              <Input 
+                id="canvas-height"
+                type="number"
+                value={canvasSize.height}
+                onChange={(e) => handleCanvasSizeChange('height', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-1 mt-2">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-xs"
+              onClick={() => setCanvasSize({ width: 1920, height: 1200 })}
+            >
+              1920×1200
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-xs"
+              onClick={() => setCanvasSize({ width: 1280, height: 720 })}
+            >
+              1280×720
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-xs"
+              onClick={() => setCanvasSize({ width: 3840, height: 2160 })}
+            >
+              3840×2160
+            </Button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -324,12 +406,24 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
       <div className="space-y-4">
         <div>
           <Label htmlFor="scene-title">Scene Title</Label>
-          <Input 
-            id="scene-title"
-            value={currentScene.title}
-            onChange={(e) => handleUpdateScene({ title: e.target.value })}
-            className="mt-1"
-          />
+          {editingTitleId === currentScene.id ? (
+            <Input 
+              id="scene-title"
+              value={currentScene.title}
+              onChange={(e) => handleUpdateScene({ title: e.target.value })}
+              className="mt-1"
+              autoFocus
+              onBlur={() => setEditingTitleId(null)}
+              onKeyDown={(e) => e.key === 'Enter' && setEditingTitleId(null)}
+            />
+          ) : (
+            <div 
+              className="p-2 mt-1 border rounded cursor-pointer hover:bg-muted"
+              onDoubleClick={() => handleTitleDoubleClick(currentScene.id)}
+            >
+              {currentScene.title}
+            </div>
+          )}
         </div>
         
         <div className="text-sm text-muted-foreground">

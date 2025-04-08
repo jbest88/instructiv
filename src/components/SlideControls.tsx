@@ -31,6 +31,12 @@ export function SlideControls({
 }: SlideControlsProps) {
   const [activeTab, setActiveTab] = useState("insert");
   
+  // Helper function for position updates that allows clearing values
+  const handlePositionChange = (elementId: string, field: string, value: string) => {
+    const numValue = value === '' ? 0 : parseInt(value);
+    onUpdateElement(elementId, { [field]: numValue });
+  };
+  
   return (
     <div className="h-full flex flex-col border-b border-border">
       <div className="flex items-center p-2 border-b border-border">
