@@ -1,4 +1,5 @@
 
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,7 +28,6 @@ export function Toolbar({ onPreview }: ToolbarProps) {
   } = useProject();
 
   const { user, signOut } = useAuth();
-  const { ribbonOpen } = usePanels();
 
   return (
     <div className="flex flex-col border-b">

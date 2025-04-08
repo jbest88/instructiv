@@ -4,17 +4,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProject } from "@/contexts/ProjectContext";
 import { FileMenuDropdown } from "@/components/FileMenuDropdown";
 import { 
-  TextIcon, 
-  ImageIcon, 
-  SquareIcon, 
-  MousePointerIcon,
   Type,
   Image,
   Square,
   MousePointer,
-  CircleIcon,
-  Palette,
-  Layout
+  Layout,
+  Palette
 } from "lucide-react";
 import { 
   Tooltip,
@@ -32,7 +27,6 @@ import { Label } from "@/components/ui/label";
 
 export function RibbonMenuUpdated() {
   const { 
-    handleAddElement, 
     canvasSize, 
     setCanvasSize 
   } = useProject();
@@ -64,81 +58,9 @@ export function RibbonMenuUpdated() {
       </div>
       
       <div className="pt-1 pb-1">
-        {/* Insert Tab Content */}
-        <div className="flex flex-wrap gap-2">
-          <TooltipProvider>
-            <div className="flex items-center gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-20 w-16 flex flex-col items-center justify-center gap-1"
-                    onClick={() => handleAddElement("text")}
-                  >
-                    <Type className="h-5 w-5" />
-                    <span className="text-xs">Text</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add text element</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-20 w-16 flex flex-col items-center justify-center gap-1"
-                    onClick={() => handleAddElement("image")}
-                  >
-                    <Image className="h-5 w-5" />
-                    <span className="text-xs">Image</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add image element</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-20 w-16 flex flex-col items-center justify-center gap-1"
-                    onClick={() => handleAddElement("button")}
-                  >
-                    <Square className="h-5 w-5" />
-                    <span className="text-xs">Button</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add button element</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-20 w-16 flex flex-col items-center justify-center gap-1"
-                    onClick={() => handleAddElement("hotspot")}
-                  >
-                    <MousePointer className="h-5 w-5" />
-                    <span className="text-xs">Hotspot</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add hotspot element</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            
-            <div className="h-16 border-l mx-2"></div>
-            
+        {/* Canvas Size Controls */}
+        <TooltipProvider>
+          <div className="flex flex-wrap gap-2">
             <div>
               <Popover>
                 <PopoverTrigger asChild>
@@ -212,8 +134,8 @@ export function RibbonMenuUpdated() {
                 </PopoverContent>
               </Popover>
             </div>
-          </TooltipProvider>
-        </div>
+          </div>
+        </TooltipProvider>
       </div>
     </div>
   );

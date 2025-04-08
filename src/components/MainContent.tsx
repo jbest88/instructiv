@@ -3,7 +3,6 @@ import { useProject } from "@/contexts/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
 import { Timeline } from "@/components/Timeline";
-import { RibbonMenuUpdated } from "@/components/RibbonMenuUpdated";
 import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";

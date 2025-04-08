@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { useProject } from "@/contexts/ProjectContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,8 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Save, FolderOpen, Upload, Download, FileJson, Cloud } from "lucide-react";
+import { Save, FolderOpen, Upload, Download, Cloud } from "lucide-react";
 
 export function FileMenuDropdown() {
   const { 
@@ -89,6 +87,7 @@ export function FileMenuDropdown() {
       setIsSaving(false);
     }
   };
+  
   
   return (
     <>
