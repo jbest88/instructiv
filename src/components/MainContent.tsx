@@ -16,7 +16,8 @@ export function MainContent() {
     handleUpdateElement,
     handleAddSlide,
     canvasZoom,
-    setCanvasZoom
+    setCanvasZoom,
+    handleDeleteElement
   } = useProject();
 
   const handleZoomIn = () => {
@@ -30,9 +31,6 @@ export function MainContent() {
   const handleResetZoom = () => {
     setCanvasZoom(1);
   };
-
-  // Add handleDeleteElement from the project context
-  const { handleAddElement } = useProject();
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#f3f2f1]">
@@ -51,15 +49,7 @@ export function MainContent() {
               selectedElementId={selectedElementId}
               onSelectElement={setSelectedElementId}
               onUpdateElement={handleUpdateElement}
-              onDeleteElement={(elementId) => {
-                if (handleAddElement) {
-                  // Use handleAddElement to access SlideElement functions
-                  const elementFunctions = useProject();
-                  if (elementFunctions.handleDeleteElement) {
-                    elementFunctions.handleDeleteElement(elementId);
-                  }
-                }
-              }}
+              onDeleteElement={handleDeleteElement}
             />
           </div>
           

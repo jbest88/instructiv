@@ -195,31 +195,24 @@ export function createTelSlide(): Slide {
 }
 
 export function createDefaultScene(title: string, order: number): Scene {
-  let firstSlide: Slide;
-  
-  if (title === "HOME" && order === 1) {
-    firstSlide = createTelSlide();
-  } else {
-    firstSlide = createDefaultSlide(`${title} Slide 1`, 1);
-  }
-  
-  const secondSlide = createDefaultSlide(`${title} Slide 2`, 2);
-  
+  // Create an empty scene with no default slides
   return {
     id: `scene-${uuidv4()}`,
     title,
-    slides: [firstSlide, secondSlide],
+    slides: [],
     order
   };
 }
 
 export function createDefaultProject(): Project {
-  // Create an empty project with no default scenes
+  // Create a project with one empty scene
+  const firstScene = createDefaultScene("HOME", 1);
+  
   return {
     id: `project-${uuidv4()}`,
     title: "New Project",
-    scenes: [],
-    currentSceneId: "",
+    scenes: [firstScene],
+    currentSceneId: firstScene.id,
     currentSlideId: ""
   };
 }

@@ -29,14 +29,70 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
 
   const [activeTab, setActiveTab] = useState("elements");
 
+  // Helper function for position updates
+  const handlePositionChange = (elementId: string, field: 'x' | 'y' | 'width' | 'height', value: string) => {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue)) {
+      handleUpdateElement(elementId, { [field]: numValue });
+    }
+  };
+
   // Helper function to render properties based on element type
   const renderElementProperties = () => {
     if (!selectedElement) return null;
+
+    // Position controls - common for all elements
+    const positionControls = (
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <div>
+          <Label htmlFor="position-x">X Position</Label>
+          <Input 
+            id="position-x"
+            type="number"
+            value={selectedElement.x}
+            onChange={(e) => handlePositionChange(selectedElement.id, 'x', e.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="position-y">Y Position</Label>
+          <Input 
+            id="position-y"
+            type="number"
+            value={selectedElement.y}
+            onChange={(e) => handlePositionChange(selectedElement.id, 'y', e.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="element-width">Width</Label>
+          <Input 
+            id="element-width"
+            type="number"
+            value={selectedElement.width}
+            onChange={(e) => handlePositionChange(selectedElement.id, 'width', e.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="element-height">Height</Label>
+          <Input 
+            id="element-height"
+            type="number"
+            value={selectedElement.height}
+            onChange={(e) => handlePositionChange(selectedElement.id, 'height', e.target.value)}
+            className="mt-1"
+          />
+        </div>
+      </div>
+    );
 
     switch (selectedElement.type) {
       case "text":
         return (
           <div className="space-y-4">
+            {positionControls}
+            
             <div>
               <Label htmlFor="text-content">Text Content</Label>
               <Textarea 
@@ -105,6 +161,8 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
       case "image":
         return (
           <div className="space-y-4">
+            {positionControls}
+            
             <div>
               <Label htmlFor="image-src">Image Source</Label>
               <Input 
@@ -130,6 +188,8 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
       case "button":
         return (
           <div className="space-y-4">
+            {positionControls}
+            
             <div>
               <Label htmlFor="button-label">Button Text</Label>
               <Input 
@@ -180,6 +240,8 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
       case "hotspot":
         return (
           <div className="space-y-4">
+            {positionControls}
+            
             <div>
               <Label htmlFor="hotspot-tooltip">Tooltip Text</Label>
               <Input 
@@ -351,14 +413,6 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
               {selectedElement ? (
                 <div>
                   <h3 className="text-sm font-medium mb-4">Element Properties</h3>
-                  <div className="space-y-2 mb-4">
-                    <div className="bg-muted p-3 rounded-md">
-                      <p className="text-sm"><strong>Type:</strong> {selectedElement.type}</p>
-                      <p className="text-sm"><strong>Position:</strong> X: {selectedElement.x}, Y: {selectedElement.y}</p>
-                      <p className="text-sm"><strong>Size:</strong> {selectedElement.width} x {selectedElement.height}</p>
-                    </div>
-                  </div>
-                  
                   {renderElementProperties()}
                 </div>
               ) : currentSlide ? (

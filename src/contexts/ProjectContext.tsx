@@ -600,19 +600,27 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     });
   };
   
-  // Function to delete an element
+  // Function to delete an element - fixed implementation
   const handleDeleteElement = (elementId: string) => {
-    if (!project || !project.scenes) return;
+    if (!project || !project.scenes || !currentScene || !currentSlide) {
+      toast.error("Cannot delete element: No active slide");
+      return;
+    }
+    
+    // Find the element to ensure it exists
+    const elementToDelete = currentSlide.elements.find(el => el.id === elementId);
+    if (!elementToDelete) {
+      toast.error("Element not found");
+      return;
+    }
     
     setProject(prev => {
       if (!prev || !prev.scenes) return prev;
       
-      // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
           if (!scene.slides) return scene;
           
-          // Create a properly typed array of updated slides
           const updatedSlides: Slide[] = scene.slides.map(slide => {
             if (slide.id === prev.currentSlideId) {
               if (!slide.elements) return slide;
@@ -620,27 +628,22 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
               // Filter out the element to delete
               const updatedElements = slide.elements.filter(el => el.id !== elementId);
               
-              // Create a new slide with the element removed
-              const updatedSlide: Slide = {
+              return {
                 ...slide,
                 elements: updatedElements
               };
-              return updatedSlide;
             }
             return slide;
           });
           
-          // Create a new scene with the updated slides
-          const updatedScene: Scene = {
+          return {
             ...scene,
             slides: updatedSlides
           };
-          return updatedScene;
         }
         return scene;
       });
       
-      // Return a properly typed Project object
       return {
         ...prev,
         scenes: updatedScenes
@@ -648,7 +651,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     });
     
     setSelectedElementId(null);
-    toast.success("Element deleted");
+    toast.success(`Element deleted`);
   };
   
   // Function to update slide properties
