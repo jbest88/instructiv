@@ -1,9 +1,10 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, X, User, LogOut } from "lucide-react";
-import { useProject } from "@/contexts/project/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { usePanels } from "@/contexts/PanelContext";
 import { RibbonMenuUpdated } from "./RibbonMenuUpdated";
 import {

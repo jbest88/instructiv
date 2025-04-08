@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   Dialog, 

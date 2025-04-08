@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Palette, Type, Image, Square, CircleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";

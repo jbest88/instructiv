@@ -1,6 +1,6 @@
 
 import { usePanels } from "@/contexts/PanelContext";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { 
   Menubar, 
   MenubarMenu, 

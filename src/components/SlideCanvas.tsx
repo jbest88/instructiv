@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Slide, SlideElement } from "@/utils/slideTypes";
 import { cn } from "@/lib/utils";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { 
   ContextMenu,
   ContextMenuContent,

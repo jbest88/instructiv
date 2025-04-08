@@ -1,5 +1,6 @@
+
 import React, { useState, useRef } from "react";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { X, ArrowLeft, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 
 interface PreviewModalProps {
   isOpen: boolean;

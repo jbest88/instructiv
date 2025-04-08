@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { FileMenuDropdown } from "@/components/FileMenuDropdown";
 import { 
   Type,

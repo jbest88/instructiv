@@ -1,7 +1,7 @@
 
-import { ProjectProvider } from "@/contexts/ProjectContext";
+import { ProjectProvider } from "@/contexts/project";
 import { PanelProvider } from "@/contexts/PanelContext";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { usePanels } from "@/contexts/PanelContext";
 
 import { Sidebar } from "@/components/Sidebar";

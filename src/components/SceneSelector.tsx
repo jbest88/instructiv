@@ -1,5 +1,5 @@
 
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { Button } from "@/components/ui/button";
 import { ChevronsLeft, ChevronsRight, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";

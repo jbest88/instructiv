@@ -9,7 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
-import { ProjectProvider } from "@/contexts/project/ProjectContext";
+import { ProjectProvider } from "@/contexts/project";
 
 // Create the query client instance outside of the component
 const queryClient = new QueryClient({

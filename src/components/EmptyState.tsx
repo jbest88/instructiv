@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 
 export function EmptyState() {
   const { handleAddScene } = useProject();
@@ -25,3 +24,4 @@ export function EmptyState() {
     </div>
   );
 }
+

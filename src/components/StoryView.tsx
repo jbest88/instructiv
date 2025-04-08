@@ -1,4 +1,4 @@
-import { useProject } from "@/contexts/project/ProjectContext";
+import { useProject } from "@/contexts/project";
 import { usePanels } from "@/contexts/PanelContext";
 import { Button } from "@/components/ui/button";
 import { CircleCheck, X } from "lucide-react";
@@ -56,3 +56,4 @@ export function StoryView() {
     </div>
   );
 }
+

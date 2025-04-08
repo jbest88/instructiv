@@ -1,5 +1,5 @@
 
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project";
 import {
   AlertDialog,
   AlertDialogAction,
