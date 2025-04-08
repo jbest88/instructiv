@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -35,6 +34,7 @@ type ProjectContextType = {
   handleCancelDelete: () => void;
   handleAddElement: (type: SlideElement['type']) => void;
   handleUpdateElement: (elementId: string, updates: Partial<SlideElement>) => void;
+  handleDeleteElement: (elementId: string) => void; // Add this line
   handleUpdateSlide: (updates: Partial<Slide>) => void;
   handleUpdateScene: (updates: Partial<Scene>) => void;
   handleSaveProject: () => void;
@@ -600,6 +600,57 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     });
   };
   
+  // Function to delete an element
+  const handleDeleteElement = (elementId: string) => {
+    if (!project || !project.scenes) return;
+    
+    setProject(prev => {
+      if (!prev || !prev.scenes) return prev;
+      
+      // Create a properly typed array of updated scenes
+      const updatedScenes: Scene[] = prev.scenes.map(scene => {
+        if (scene.id === prev.currentSceneId) {
+          if (!scene.slides) return scene;
+          
+          // Create a properly typed array of updated slides
+          const updatedSlides: Slide[] = scene.slides.map(slide => {
+            if (slide.id === prev.currentSlideId) {
+              if (!slide.elements) return slide;
+              
+              // Filter out the element to delete
+              const updatedElements = slide.elements.filter(el => el.id !== elementId);
+              
+              // Create a new slide with the element removed
+              const updatedSlide: Slide = {
+                ...slide,
+                elements: updatedElements
+              };
+              return updatedSlide;
+            }
+            return slide;
+          });
+          
+          // Create a new scene with the updated slides
+          const updatedScene: Scene = {
+            ...scene,
+            slides: updatedSlides
+          };
+          return updatedScene;
+        }
+        return scene;
+      });
+      
+      // Return a properly typed Project object
+      return {
+        ...prev,
+        scenes: updatedScenes
+      };
+    });
+    
+    setSelectedElementId(null);
+    toast.success("Element deleted");
+  };
+  
   // Function to update slide properties
   const handleUpdateSlide = (updates: Partial<Slide>) => {
     if (!project || !project.scenes) return;
@@ -843,6 +894,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     handleCancelDelete,
     handleAddElement,
     handleUpdateElement,
+    handleDeleteElement, // Add this line
     handleUpdateSlide,
     handleUpdateScene,
     handleSaveProject,
