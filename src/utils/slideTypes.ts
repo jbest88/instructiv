@@ -71,4 +71,6 @@ export interface Project {
   scenes: Scene[];
   currentSceneId: string;
   currentSlideId: string;
+  createdAt?: string; // Added createdAt field
+  updatedAt?: string; // Added updatedAt field
 }
