@@ -608,8 +608,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
     
     // Find the element to ensure it exists
-    const elementToDelete = currentSlide.elements.find(el => el.id === elementId);
-    if (!elementToDelete) {
+    const elementExists = currentSlide.elements && currentSlide.elements.find(el => el.id === elementId);
+    if (!elementExists) {
       toast.error("Element not found");
       return;
     }
@@ -850,23 +850,28 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Load saved project on initial render
   useEffect(() => {
-    const savedData = localStorage.getItem('narratifyProject');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        if (parsed.project) {
-          setProject(parsed.project);
-          if (parsed.canvasSize) {
-            setCanvasSize(parsed.canvasSize);
+    try {
+      const savedData = localStorage.getItem('narratifyProject');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          if (parsed && parsed.project && parsed.project.id) {
+            setProject(parsed.project);
+            if (parsed.canvasSize) {
+              setCanvasSize(parsed.canvasSize);
+            }
+          } else {
+            console.warn("Invalid project data in localStorage, using default project instead");
+            setProject(createDefaultProject());
           }
-        } else {
-          console.warn("Invalid project data in localStorage, using default project instead");
+        } catch (error) {
+          console.error("Error loading saved project:", error);
           setProject(createDefaultProject());
         }
-      } catch (error) {
-        console.error("Error loading saved project:", error);
-        setProject(createDefaultProject());
       }
+    } catch (error) {
+      console.error("Failed to access localStorage:", error);
+      setProject(createDefaultProject());
     }
   }, []);
 

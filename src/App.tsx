@@ -11,7 +11,14 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 // Create the query client instance outside of the component
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   return (
