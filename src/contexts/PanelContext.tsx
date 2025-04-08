@@ -6,6 +6,13 @@ type PanelContextType = {
   setToolboxOpen: (open: boolean) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
+  ribbonOpen: boolean;
+  setRibbonOpen: (open: boolean) => void;
+  storyViewOpen: boolean;
+  setStoryViewOpen: (open: boolean) => void;
+  timelineOpen: boolean;
+  setTimelineOpen: (open: boolean) => void;
 };
 
 const PanelContext = createContext<PanelContextType | undefined>(undefined);
@@ -14,6 +21,12 @@ export function PanelProvider({ children }: { children: ReactNode }) {
   // Start with panels closed
   const [toolboxOpen, setToolboxOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [ribbonOpen, setRibbonOpen] = useState(false);
+  const [storyViewOpen, setStoryViewOpen] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+
+  // Helper function to toggle sidebar
+  const toggleSidebar = () => setSidebarOpen(prev => !prev);
 
   return (
     <PanelContext.Provider
@@ -22,6 +35,13 @@ export function PanelProvider({ children }: { children: ReactNode }) {
         setToolboxOpen,
         sidebarOpen,
         setSidebarOpen,
+        toggleSidebar,
+        ribbonOpen,
+        setRibbonOpen,
+        storyViewOpen,
+        setStoryViewOpen,
+        timelineOpen,
+        setTimelineOpen,
       }}
     >
       {children}
