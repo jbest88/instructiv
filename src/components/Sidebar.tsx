@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Plus, Trash2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProject } from "@/contexts/project/ProjectContext";
 import { usePanels } from "@/contexts/PanelContext";
 
 export function Sidebar() {
