@@ -10,7 +10,6 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator
 } from "@/components/ui/context-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bold, Italic, AlignLeft, AlignCenter, AlignRight, Trash2 } from "lucide-react";
 
 interface SlideCanvasProps {
@@ -33,9 +32,6 @@ export function SlideCanvas({
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [canvasPosition, setCanvasPosition] = useState({ x: 0, y: 0 });
-  const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
-  const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 });
   
   const { canvasSize, canvasZoom, setCanvasZoom } = useProject();
 
@@ -51,19 +47,6 @@ export function SlideCanvas({
       // Limit zoom range
       newZoom = Math.max(0.1, Math.min(3, newZoom));
       
-      // Calculate mouse position relative to canvas
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        
-        // Adjust canvas position to zoom toward/away from mouse position
-        const newX = mouseX - (mouseX - canvasPosition.x) * (newZoom / canvasZoom);
-        const newY = mouseY - (mouseY - canvasPosition.y) * (newZoom / canvasZoom);
-        
-        setCanvasPosition({ x: newX, y: newY });
-      }
-      
       setCanvasZoom(newZoom);
     }
   };
@@ -78,59 +61,7 @@ export function SlideCanvas({
     return () => {
       container.removeEventListener('wheel', handleWheel);
     };
-  }, [canvasZoom, canvasPosition]);
-  
-  // Handle canvas panning with middle mouse button or space + left mouse button
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    // Middle mouse button (button 1) or space key + left mouse button
-    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
-      e.preventDefault();
-      setIsDraggingCanvas(true);
-      setStartDragPos({ x: e.clientX, y: e.clientY });
-    }
-  };
-  
-  const handleCanvasMouseMove = (e: MouseEvent) => {
-    if (isDraggingCanvas) {
-      const dx = e.clientX - startDragPos.x;
-      const dy = e.clientY - startDragPos.y;
-      
-      setCanvasPosition(prev => ({
-        x: prev.x + dx,
-        y: prev.y + dy
-      }));
-      
-      setStartDragPos({ x: e.clientX, y: e.clientY });
-    }
-  };
-  
-  const handleCanvasMouseUp = () => {
-    setIsDraggingCanvas(false);
-  };
-  
-  // Add event listeners for canvas panning
-  useEffect(() => {
-    if (isDraggingCanvas) {
-      document.addEventListener('mousemove', handleCanvasMouseMove);
-      document.addEventListener('mouseup', handleCanvasMouseUp);
-    }
-    
-    return () => {
-      document.removeEventListener('mousemove', handleCanvasMouseMove);
-      document.removeEventListener('mouseup', handleCanvasMouseUp);
-    };
-  }, [isDraggingCanvas, startDragPos]);
-
-  // Center canvas on initial render and when size changes
-  useEffect(() => {
-    if (!containerRef.current) return;
-    
-    const container = containerRef.current;
-    const centerX = container.clientWidth / 2 - (canvasSize.width * canvasZoom) / 2;
-    const centerY = container.clientHeight / 2 - (canvasSize.height * canvasZoom) / 2;
-    
-    setCanvasPosition({ x: centerX, y: centerY });
-  }, [canvasSize, containerRef.current?.clientWidth, containerRef.current?.clientHeight]);
+  }, [canvasZoom]);
   
   // Handle element selection
   const handleElementClick = (e: React.MouseEvent, elementId: string) => {
@@ -514,19 +445,15 @@ export function SlideCanvas({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-neutral-200"
-      onMouseDown={handleCanvasMouseDown}
-      style={{ cursor: isDraggingCanvas ? 'grabbing' : 'default' }}
+      className="relative w-full h-full overflow-auto bg-neutral-200 flex items-center justify-center"
     >
       <div
         ref={canvasRef}
-        className="absolute shadow-lg"
+        className="relative shadow-lg flex items-center justify-center"
         style={{ 
           transform: `scale(${canvasZoom})`,
-          transformOrigin: '0 0',
-          left: `${canvasPosition.x}px`,
-          top: `${canvasPosition.y}px`,
-          transition: isDraggingCanvas ? 'none' : 'transform 0.1s ease-out',
+          transformOrigin: 'center',
+          transition: 'transform 0.1s ease-out',
         }}
       >
         <div 
@@ -540,12 +467,6 @@ export function SlideCanvas({
         >
           {slide.elements.map((element) => renderElement(element))}
         </div>
-      </div>
-      
-      {/* Helper text overlay */}
-      <div className="absolute bottom-16 left-4 bg-black/50 text-white text-sm px-3 py-1 rounded-md pointer-events-none opacity-70">
-        <div>Ctrl + Drag: Pan Canvas</div>
-        <div>Shift + Scroll: Zoom</div>
       </div>
     </div>
   );

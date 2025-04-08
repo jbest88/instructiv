@@ -1,4 +1,3 @@
-
 import { useProject } from "@/contexts/project/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
