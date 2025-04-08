@@ -14,6 +14,7 @@ export interface TextElement extends ElementBase {
   fontSize?: number;
   fontColor?: string;
   fontWeight?: string;
+  fontStyle?: string; // Added for italic support
   align?: "left" | "center" | "right";
 }
 

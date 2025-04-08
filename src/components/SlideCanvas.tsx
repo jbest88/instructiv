@@ -3,19 +3,29 @@ import { useState, useRef, useEffect } from "react";
 import { Slide, SlideElement } from "@/utils/slideTypes";
 import { cn } from "@/lib/utils";
 import { useProject } from "@/contexts/ProjectContext";
+import { 
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator
+} from "@/components/ui/context-menu";
+import { Bold, Italic, AlignLeft, AlignCenter, AlignRight, Trash2 } from "lucide-react";
 
 interface SlideCanvasProps {
   slide: Slide;
   selectedElementId: string | null;
   onSelectElement: (elementId: string | null) => void;
   onUpdateElement: (elementId: string, updates: Partial<SlideElement>) => void;
+  onDeleteElement?: (elementId: string) => void;
 }
 
 export function SlideCanvas({ 
   slide, 
   selectedElementId, 
   onSelectElement,
-  onUpdateElement
+  onUpdateElement,
+  onDeleteElement
 }: SlideCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -203,6 +213,14 @@ export function SlideCanvas({
     document.removeEventListener('mouseup', handleResizeEnd);
   };
 
+  // Handle element deletion
+  const handleDeleteElement = (elementId: string) => {
+    if (onDeleteElement) {
+      onDeleteElement(elementId);
+      onSelectElement(null);
+    }
+  };
+
   // Render resize handles for the selected element
   const renderResizeHandles = (element: SlideElement) => {
     if (selectedElementId !== element.id) return null;
@@ -237,6 +255,197 @@ export function SlideCanvas({
     ));
   };
 
+  // Render element with context menu
+  const renderElement = (element: SlideElement) => {
+    // Base styling for all elements
+    const baseStyle = {
+      left: `${element.x}px`,
+      top: `${element.y}px`,
+      width: `${element.width}px`,
+      height: `${element.height}px`
+    };
+
+    // Common classes for all elements
+    const baseClasses = cn(
+      "absolute cursor-move border-transparent border hover:border-gray-400",
+      selectedElementId === element.id && "border-2 border-blue-500"
+    );
+
+    if (element.type === "text") {
+      return (
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <div
+              key={element.id}
+              className={baseClasses}
+              style={{
+                ...baseStyle,
+                fontSize: `${element.fontSize || 16}px`,
+                color: element.fontColor || '#000000',
+                fontWeight: element.fontWeight || 'normal',
+                fontStyle: element.fontStyle || 'normal',
+                textAlign: element.align || 'left'
+              }}
+              onClick={(e) => handleElementClick(e, element.id)}
+              onMouseDown={(e) => handleDragStart(e, element)}
+            >
+              {element.content}
+              {renderResizeHandles(element)}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
+              Select
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => {
+              const currentWeight = element.fontWeight || "normal";
+              onUpdateElement(element.id, { fontWeight: currentWeight === "bold" ? "normal" : "bold" });
+            }}>
+              <Bold className="mr-2 h-4 w-4" />
+              {element.fontWeight === "bold" ? "Remove Bold" : "Bold"}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => {
+              const currentStyle = element.fontStyle || "normal";
+              onUpdateElement(element.id, { fontStyle: currentStyle === "italic" ? "normal" : "italic" });
+            }}>
+              <Italic className="mr-2 h-4 w-4" />
+              {element.fontStyle === "italic" ? "Remove Italic" : "Italic"}
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => onUpdateElement(element.id, { align: "left" })}>
+              <AlignLeft className="mr-2 h-4 w-4" />
+              Align Left
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => onUpdateElement(element.id, { align: "center" })}>
+              <AlignCenter className="mr-2 h-4 w-4" />
+              Align Center
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => onUpdateElement(element.id, { align: "right" })}>
+              <AlignRight className="mr-2 h-4 w-4" />
+              Align Right
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      );
+    }
+    
+    if (element.type === "image") {
+      return (
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <div
+              key={element.id}
+              className={baseClasses}
+              style={baseStyle}
+              onClick={(e) => handleElementClick(e, element.id)}
+              onMouseDown={(e) => handleDragStart(e, element)}
+            >
+              <img 
+                src={element.src} 
+                alt={element.alt || 'Slide image'} 
+                className="w-full h-full object-contain"
+              />
+              {renderResizeHandles(element)}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
+              Select
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      );
+    }
+    
+    if (element.type === "button") {
+      let buttonClass = "bg-primary text-white";
+      if (element.style === "secondary") {
+        buttonClass = "bg-secondary text-secondary-foreground";
+      } else if (element.style === "outline") {
+        buttonClass = "bg-transparent border border-primary text-primary";
+      }
+      
+      return (
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <div
+              key={element.id}
+              className={cn(
+                "absolute flex items-center justify-center rounded cursor-move",
+                buttonClass,
+                selectedElementId === element.id && "ring-2 ring-blue-500"
+              )}
+              style={baseStyle}
+              onClick={(e) => handleElementClick(e, element.id)}
+              onMouseDown={(e) => handleDragStart(e, element)}
+            >
+              {element.label}
+              {renderResizeHandles(element)}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
+              Select
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      );
+    }
+    
+    if (element.type === "hotspot") {
+      const isCircle = element.shape === "circle";
+      
+      return (
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <div
+              key={element.id}
+              className={cn(
+                "absolute bg-blue-400/30 border-2 border-blue-500 cursor-move",
+                isCircle ? "rounded-full" : "rounded",
+                selectedElementId === element.id && "ring-2 ring-blue-500"
+              )}
+              style={baseStyle}
+              onClick={(e) => handleElementClick(e, element.id)}
+              onMouseDown={(e) => handleDragStart(e, element)}
+              title={element.tooltip}
+            >
+              {renderResizeHandles(element)}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
+              Select
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -260,120 +469,7 @@ export function SlideCanvas({
           }}
           onClick={handleBackgroundClick}
         >
-          {slide.elements.map((element) => {
-            // Render different elements based on type
-            if (element.type === "text") {
-              return (
-                <div
-                  key={element.id}
-                  className={cn(
-                    "absolute cursor-move border-transparent border hover:border-gray-400",
-                    selectedElementId === element.id && "border-2 border-blue-500"
-                  )}
-                  style={{
-                    left: `${element.x}px`,
-                    top: `${element.y}px`,
-                    width: `${element.width}px`,
-                    height: `${element.height}px`,
-                    fontSize: `${element.fontSize || 16}px`,
-                    color: element.fontColor || '#000000',
-                    fontWeight: element.fontWeight || 'normal'
-                  }}
-                  onClick={(e) => handleElementClick(e, element.id)}
-                  onMouseDown={(e) => handleDragStart(e, element)}
-                >
-                  {element.content}
-                  {renderResizeHandles(element)}
-                </div>
-              );
-            }
-            
-            if (element.type === "image") {
-              return (
-                <div
-                  key={element.id}
-                  className={cn(
-                    "absolute cursor-move border-transparent border hover:border-gray-400",
-                    selectedElementId === element.id && "border-2 border-blue-500"
-                  )}
-                  style={{
-                    left: `${element.x}px`,
-                    top: `${element.y}px`,
-                    width: `${element.width}px`,
-                    height: `${element.height}px`
-                  }}
-                  onClick={(e) => handleElementClick(e, element.id)}
-                  onMouseDown={(e) => handleDragStart(e, element)}
-                >
-                  <img 
-                    src={element.src} 
-                    alt={element.alt || 'Slide image'} 
-                    className="w-full h-full object-contain"
-                  />
-                  {renderResizeHandles(element)}
-                </div>
-              );
-            }
-            
-            if (element.type === "button") {
-              let buttonClass = "bg-primary text-white";
-              if (element.style === "secondary") {
-                buttonClass = "bg-secondary text-secondary-foreground";
-              } else if (element.style === "outline") {
-                buttonClass = "bg-transparent border border-primary text-primary";
-              }
-              
-              return (
-                <div
-                  key={element.id}
-                  className={cn(
-                    "absolute flex items-center justify-center rounded cursor-move",
-                    buttonClass,
-                    selectedElementId === element.id && "ring-2 ring-blue-500"
-                  )}
-                  style={{
-                    left: `${element.x}px`,
-                    top: `${element.y}px`,
-                    width: `${element.width}px`,
-                    height: `${element.height}px`
-                  }}
-                  onClick={(e) => handleElementClick(e, element.id)}
-                  onMouseDown={(e) => handleDragStart(e, element)}
-                >
-                  {element.label}
-                  {renderResizeHandles(element)}
-                </div>
-              );
-            }
-            
-            if (element.type === "hotspot") {
-              const isCircle = element.shape === "circle";
-              
-              return (
-                <div
-                  key={element.id}
-                  className={cn(
-                    "absolute bg-blue-400/30 border-2 border-blue-500 cursor-move",
-                    isCircle ? "rounded-full" : "rounded",
-                    selectedElementId === element.id && "ring-2 ring-blue-500"
-                  )}
-                  style={{
-                    left: `${element.x}px`,
-                    top: `${element.y}px`,
-                    width: `${element.width}px`,
-                    height: `${element.height}px`
-                  }}
-                  onClick={(e) => handleElementClick(e, element.id)}
-                  onMouseDown={(e) => handleDragStart(e, element)}
-                  title={element.tooltip}
-                >
-                  {renderResizeHandles(element)}
-                </div>
-              );
-            }
-            
-            return null;
-          })}
+          {slide.elements.map((element) => renderElement(element))}
         </div>
       </div>
     </div>

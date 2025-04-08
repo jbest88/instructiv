@@ -15,6 +15,7 @@ export function MainContent() {
     setSelectedElementId, 
     handleUpdateElement,
     handleAddSlide,
+    handleDeleteElement,
     canvasZoom,
     setCanvasZoom
   } = useProject();
@@ -48,6 +49,7 @@ export function MainContent() {
               selectedElementId={selectedElementId}
               onSelectElement={setSelectedElementId}
               onUpdateElement={handleUpdateElement}
+              onDeleteElement={handleDeleteElement}
             />
           </div>
           

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { 
   Bold, Italic, AlignLeft, AlignCenter, AlignRight, 
   Image, Square, Circle, MousePointer, Type, 
-  FileText, Save, Upload, Play
+  FileText, Save, Upload, Play, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ interface SlideControlsProps {
   selectedElement: SlideElement | null;
   onUpdateElement: (elementId: string, updates: Partial<SlideElement>) => void;
   onAddElement: (type: SlideElement['type']) => void;
+  onDeleteElement: (elementId: string) => void;
   onPreview: () => void;
   onSaveProject: () => void;
   onLoadProject: () => void;
@@ -23,6 +24,7 @@ export function SlideControls({
   selectedElement, 
   onUpdateElement,
   onAddElement,
+  onDeleteElement,
   onPreview,
   onSaveProject,
   onLoadProject
@@ -99,23 +101,74 @@ export function SlideControls({
         </TabsContent>
         
         <TabsContent value="format" className="p-4 h-full">
+          {selectedElement && (
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-medium">Element Options</h3>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => {
+                  onDeleteElement(selectedElement.id);
+                }}
+              >
+                <Trash2 size={14} className="mr-1" />
+                Remove
+              </Button>
+            </div>
+          )}
+
           {selectedElement?.type === "text" && (
             <div className="space-y-4">
               <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => {
+                    const currentWeight = selectedElement.fontWeight || "normal";
+                    onUpdateElement(selectedElement.id, { 
+                      fontWeight: currentWeight === "bold" ? "normal" : "bold" 
+                    });
+                  }}
+                  className={selectedElement.fontWeight === "bold" ? "bg-accent" : ""}
+                >
                   <Bold size={16} />
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => {
+                    const currentStyle = selectedElement.fontStyle || "normal";
+                    onUpdateElement(selectedElement.id, { 
+                      fontStyle: currentStyle === "italic" ? "normal" : "italic" 
+                    });
+                  }}
+                  className={selectedElement.fontStyle === "italic" ? "bg-accent" : ""}
+                >
                   <Italic size={16} />
                 </Button>
                 <Separator orientation="vertical" className="mx-1 h-6" />
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => onUpdateElement(selectedElement.id, { align: "left" })}
+                  className={selectedElement.align === "left" ? "bg-accent" : ""}
+                >
                   <AlignLeft size={16} />
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => onUpdateElement(selectedElement.id, { align: "center" })}
+                  className={selectedElement.align === "center" ? "bg-accent" : ""}
+                >
                   <AlignCenter size={16} />
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => onUpdateElement(selectedElement.id, { align: "right" })}
+                  className={selectedElement.align === "right" ? "bg-accent" : ""}
+                >
                   <AlignRight size={16} />
                 </Button>
               </div>
