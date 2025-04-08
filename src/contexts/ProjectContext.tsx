@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -72,13 +73,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   
   // Get current scene, slide and element
-  const currentScene = project.currentSceneId 
+  // Fix the potential undefined access by ensuring project exists and has scenes
+  const currentScene = project && project.scenes && project.currentSceneId 
     ? project.scenes.find(scene => scene.id === project.currentSceneId) 
-    : project.scenes[0] || null;
+    : project.scenes && project.scenes.length > 0 ? project.scenes[0] : null;
     
   const currentSlide = currentScene && project.currentSlideId
     ? currentScene.slides.find(slide => slide.id === project.currentSlideId)
-    : currentScene?.slides[0] || null;
+    : currentScene?.slides && currentScene.slides.length > 0 ? currentScene.slides[0] : null;
     
   const selectedElement = selectedElementId && currentSlide
     ? currentSlide.elements.find(element => element.id === selectedElementId) || null
