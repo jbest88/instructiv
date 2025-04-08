@@ -52,7 +52,7 @@ type ProjectContextType = {
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
-  // Project state
+  // Project state - Initialize with a default project to avoid undefined errors
   const [project, setProject] = useState<Project>(createDefaultProject());
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
@@ -75,14 +75,18 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // Get current scene, slide and element
   // Fix the potential undefined access by ensuring project exists and has scenes
   const currentScene = project && project.scenes && project.currentSceneId 
-    ? project.scenes.find(scene => scene.id === project.currentSceneId) 
-    : project.scenes && project.scenes.length > 0 ? project.scenes[0] : null;
+    ? project.scenes.find(scene => scene.id === project.currentSceneId) || null
+    : project.scenes && project.scenes.length > 0 
+      ? project.scenes[0] 
+      : null;
     
-  const currentSlide = currentScene && project.currentSlideId
-    ? currentScene.slides.find(slide => slide.id === project.currentSlideId)
-    : currentScene?.slides && currentScene.slides.length > 0 ? currentScene.slides[0] : null;
+  const currentSlide = currentScene && currentScene.slides && project.currentSlideId
+    ? currentScene.slides.find(slide => slide.id === project.currentSlideId) || null
+    : currentScene && currentScene.slides && currentScene.slides.length > 0 
+      ? currentScene.slides[0] 
+      : null;
     
-  const selectedElement = selectedElementId && currentSlide
+  const selectedElement = selectedElementId && currentSlide && currentSlide.elements
     ? currentSlide.elements.find(element => element.id === selectedElementId) || null
     : null;
   
@@ -221,19 +225,23 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to select a scene
   const handleSelectScene = (sceneId: string) => {
+    if (!project || !project.scenes) return;
+    
     const scene = project.scenes.find(s => s.id === sceneId);
     if (!scene) return;
     
     setProject(prev => ({
       ...prev,
       currentSceneId: sceneId,
-      currentSlideId: scene.slides[0]?.id || prev.currentSlideId
+      currentSlideId: scene.slides && scene.slides[0] ? scene.slides[0].id : prev.currentSlideId
     }));
     setSelectedElementId(null);
   };
   
   // Function to add a new scene
   const handleAddScene = () => {
+    if (!project || !project.scenes) return;
+    
     const newSceneOrder = project.scenes.length + 1;
     const newScene = createDefaultScene(`Scene ${newSceneOrder}`, newSceneOrder);
     
@@ -252,6 +260,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to delete a scene
   const handleDeleteScene = (sceneId: string) => {
+    if (!project || !project.scenes) return;
+    
     if (project.scenes.length <= 1) {
       toast.error("Cannot delete the last scene");
       return;
@@ -282,6 +292,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to select a slide
   const handleSelectSlide = (slideId: string) => {
+    if (!project) return;
+    
     setProject(prev => ({
       ...prev,
       currentSlideId: slideId
@@ -291,6 +303,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to close a slide tab
   const handleCloseSlide = (slideId: string) => {
+    if (!project) return;
+    
     setOpenSlides(prev => prev.filter(slide => slide.id !== slideId));
     
     // If closing the current slide, switch to another open slide or clear current slide
@@ -314,7 +328,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    const slidesInCurrentScene = currentScene.slides.length;
+    const slidesInCurrentScene = currentScene.slides ? currentScene.slides.length : 0;
     const newSlide: Slide = {
       id: `slide-${uuidv4()}`,
       title: `Slide ${slidesInCurrentScene + 1}`,
@@ -324,13 +338,15 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     };
     
     setProject(prev => {
+      if (!prev || !prev.scenes) return prev;
+      
       // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
           // Create a new scene with the slide added
           const updatedScene: Scene = {
             ...scene,
-            slides: [...scene.slides, newSlide]
+            slides: [...(scene.slides || []), newSlide]
           };
           return updatedScene;
         }
@@ -355,9 +371,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to delete a slide after confirmation
   const handleDeleteSlideConfirmed = () => {
-    if (!slideToDelete || !currentScene) return;
+    if (!slideToDelete || !currentScene || !project || !project.scenes) return;
     
-    if (currentScene.slides.length <= 1) {
+    if (!currentScene.slides || currentScene.slides.length <= 1) {
       toast.error("Cannot delete the last slide in a scene");
       setIsDeleteConfirmOpen(false);
       setSlideToDelete(null);
@@ -370,9 +386,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setOpenSlides(prev => prev.filter(slide => slide.id !== slideToDelete));
     
     setProject(prev => {
+      if (!prev || !prev.scenes) return prev;
+      
       // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
+          if (!scene.slides) return scene;
+          
           const newSlides = scene.slides.filter(slide => slide.id !== slideToDelete);
           
           // Create a new scene with the slide removed
@@ -389,7 +409,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       let newCurrentSlideId = prev.currentSlideId;
       if (slideToDelete === prev.currentSlideId) {
         const sceneToUpdate = updatedScenes.find(s => s.id === prev.currentSceneId);
-        if (sceneToUpdate) {
+        if (sceneToUpdate && sceneToUpdate.slides) {
           const newIndex = slideIndex > 0 ? slideIndex - 1 : 0;
           newCurrentSlideId = sceneToUpdate.slides[newIndex]?.id || "";
         }
@@ -415,6 +435,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   // Function to add an element to the current slide
   const handleAddElement = (type: SlideElement['type']) => {
+    if (!currentSlide || !project || !project.scenes) return;
+    
     let newElement: SlideElement;
     
     // Create the appropriate element type based on the 'type' parameter
@@ -474,16 +496,20 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
     
     setProject(prev => {
+      if (!prev || !prev.scenes) return prev;
+      
       // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
+          if (!scene.slides) return scene;
+          
           // Create a properly typed array of updated slides
           const updatedSlides: Slide[] = scene.slides.map(slide => {
             if (slide.id === prev.currentSlideId) {
               // Create a new slide with the element added
               const updatedSlide: Slide = {
                 ...slide,
-                elements: [...slide.elements, newElement]
+                elements: [...(slide.elements || []), newElement]
               };
               return updatedSlide;
             }
@@ -513,13 +539,21 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to update an element
   const handleUpdateElement = (elementId: string, updates: Partial<SlideElement>) => {
+    if (!project || !project.scenes) return;
+    
     setProject(prev => {
+      if (!prev || !prev.scenes) return prev;
+      
       // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
+          if (!scene.slides) return scene;
+          
           // Create a properly typed array of updated slides
           const updatedSlides: Slide[] = scene.slides.map(slide => {
             if (slide.id === prev.currentSlideId) {
+              if (!slide.elements) return slide;
+              
               // First, find the element we need to update
               const elementToUpdate = slide.elements.find(el => el.id === elementId);
               
@@ -568,10 +602,16 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to update slide properties
   const handleUpdateSlide = (updates: Partial<Slide>) => {
+    if (!project || !project.scenes) return;
+    
     setProject(prev => {
+      if (!prev || !prev.scenes) return prev;
+      
       // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
+          if (!scene.slides) return scene;
+          
           // Create a properly typed array of updated slides
           const updatedSlides: Slide[] = scene.slides.map(slide => {
             if (slide.id === prev.currentSlideId) {
@@ -605,7 +645,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   
   // Function to update scene properties
   const handleUpdateScene = (updates: Partial<Scene>) => {
+    if (!project || !project.scenes) return;
+    
     setProject(prev => {
+      if (!prev || !prev.scenes) return prev;
+      
       // Create a properly typed array of updated scenes
       const updatedScenes: Scene[] = prev.scenes.map(scene => {
         if (scene.id === prev.currentSceneId) {
@@ -756,12 +800,18 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        setProject(parsed.project);
-        if (parsed.canvasSize) {
-          setCanvasSize(parsed.canvasSize);
+        if (parsed.project) {
+          setProject(parsed.project);
+          if (parsed.canvasSize) {
+            setCanvasSize(parsed.canvasSize);
+          }
+        } else {
+          console.warn("Invalid project data in localStorage, using default project instead");
+          setProject(createDefaultProject());
         }
       } catch (error) {
         console.error("Error loading saved project:", error);
+        setProject(createDefaultProject());
       }
     }
   }, []);
