@@ -20,6 +20,7 @@ export function SlideCanvas({
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [resizing, setResizing] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const { canvasSize, canvasZoom, setCanvasZoom } = useProject();
@@ -107,6 +108,135 @@ export function SlideCanvas({
     document.removeEventListener('mouseup', handleDragEnd);
   };
 
+  // Handle resize start
+  const handleResizeStart = (e: React.MouseEvent, element: SlideElement, handle: string) => {
+    e.stopPropagation();
+    if (e.button !== 0) return; // Only left mouse button
+    
+    setResizing(handle);
+    
+    // Select this element if not already selected
+    if (selectedElementId !== element.id) {
+      onSelectElement(element.id);
+    }
+    
+    // Add temporary event listeners for resize
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+  };
+  
+  // Handle resize move
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!resizing || !selectedElementId || !canvasRef.current) return;
+    
+    const element = slide.elements.find(el => el.id === selectedElementId);
+    if (!element) return;
+    
+    // Get canvas rect
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    
+    // Calculate position relative to canvas, accounting for zoom
+    const mouseX = (e.clientX - canvasRect.left) / canvasZoom;
+    const mouseY = (e.clientY - canvasRect.top) / canvasZoom;
+    
+    // Calculate new dimensions based on which handle is being dragged
+    let newWidth = element.width;
+    let newHeight = element.height;
+    let newX = element.x;
+    let newY = element.y;
+    
+    // Update dimensions based on which handle is being dragged
+    switch (resizing) {
+      case 'top-left':
+        newWidth = element.x + element.width - mouseX;
+        newHeight = element.y + element.height - mouseY;
+        newX = mouseX;
+        newY = mouseY;
+        break;
+      case 'top-right':
+        newWidth = mouseX - element.x;
+        newHeight = element.y + element.height - mouseY;
+        newY = mouseY;
+        break;
+      case 'bottom-left':
+        newWidth = element.x + element.width - mouseX;
+        newHeight = mouseY - element.y;
+        newX = mouseX;
+        break;
+      case 'bottom-right':
+        newWidth = mouseX - element.x;
+        newHeight = mouseY - element.y;
+        break;
+      case 'top':
+        newHeight = element.y + element.height - mouseY;
+        newY = mouseY;
+        break;
+      case 'right':
+        newWidth = mouseX - element.x;
+        break;
+      case 'bottom':
+        newHeight = mouseY - element.y;
+        break;
+      case 'left':
+        newWidth = element.x + element.width - mouseX;
+        newX = mouseX;
+        break;
+    }
+    
+    // Enforce minimum size
+    newWidth = Math.max(20, newWidth);
+    newHeight = Math.max(20, newHeight);
+    
+    // Update element dimensions
+    onUpdateElement(selectedElementId, { 
+      width: newWidth, 
+      height: newHeight,
+      x: newX,
+      y: newY
+    });
+  };
+  
+  // Handle resize end
+  const handleResizeEnd = () => {
+    setResizing(null);
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', handleResizeEnd);
+  };
+
+  // Render resize handles for the selected element
+  const renderResizeHandles = (element: SlideElement) => {
+    if (selectedElementId !== element.id) return null;
+    
+    // Define handle positions
+    const handles = [
+      { position: 'top-left', cursor: 'nwse-resize', top: -4, left: -4 },
+      { position: 'top-right', cursor: 'nesw-resize', top: -4, right: -4 },
+      { position: 'bottom-left', cursor: 'nesw-resize', bottom: -4, left: -4 },
+      { position: 'bottom-right', cursor: 'nwse-resize', bottom: -4, right: -4 },
+      { position: 'top', cursor: 'ns-resize', top: -4, left: '50%', transform: 'translateX(-50%)' },
+      { position: 'right', cursor: 'ew-resize', top: '50%', right: -4, transform: 'translateY(-50%)' },
+      { position: 'bottom', cursor: 'ns-resize', bottom: -4, left: '50%', transform: 'translateX(-50%)' },
+      { position: 'left', cursor: 'ew-resize', top: '50%', left: -4, transform: 'translateY(-50%)' }
+    ];
+    
+    return handles.map(handle => (
+      <div
+        key={handle.position}
+        className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full"
+        style={{
+          top: handle.top,
+          left: handle.left,
+          right: handle.right,
+          bottom: handle.bottom,
+          cursor: handle.cursor,
+          transform: handle.transform,
+          zIndex: 10
+        }}
+        onMouseDown={(e) => handleResizeStart(e, element, handle.position)}
+      />
+    ));
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -153,6 +283,7 @@ export function SlideCanvas({
                   onMouseDown={(e) => handleDragStart(e, element)}
                 >
                   {element.content}
+                  {renderResizeHandles(element)}
                 </div>
               );
             }
@@ -179,6 +310,7 @@ export function SlideCanvas({
                     alt={element.alt || 'Slide image'} 
                     className="w-full h-full object-contain"
                   />
+                  {renderResizeHandles(element)}
                 </div>
               );
             }
@@ -209,6 +341,7 @@ export function SlideCanvas({
                   onMouseDown={(e) => handleDragStart(e, element)}
                 >
                   {element.label}
+                  {renderResizeHandles(element)}
                 </div>
               );
             }
@@ -233,7 +366,9 @@ export function SlideCanvas({
                   onClick={(e) => handleElementClick(e, element.id)}
                   onMouseDown={(e) => handleDragStart(e, element)}
                   title={element.tooltip}
-                />
+                >
+                  {renderResizeHandles(element)}
+                </div>
               );
             }
             
