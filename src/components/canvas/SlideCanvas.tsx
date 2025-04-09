@@ -232,11 +232,13 @@ export function SlideCanvas({
     onContextMenu={handleElementRightClick}
     onDoubleClick={handleElementDoubleClick}
     onFinishEditing={(updatedValue?: string) => {
-      if (updatedValue !== undefined && editingElementId) {
+      if (editingElementId && typeof updatedValue === "string") {
         onUpdateElement(editingElementId, { content: updatedValue });
       }
-      finishEditing();
+      // Don't call finishEditing here — it uses ref.value (which may be stale)
+      setEditingElementId(null); // just end editing mode
     }}
+    
     
     onCut={handleCut}
     onCopy={handleCopy}

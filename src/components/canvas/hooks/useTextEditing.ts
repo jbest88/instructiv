@@ -34,19 +34,9 @@ export function useTextEditing(onUpdateElement: (id: string, updates: Partial<Sl
 
   // Function to finish editing and apply changes
   const finishEditing = () => {
-    if (editingElementId && editableInputRef.current) {
-      const newContent = editableInputRef.current.value;
-      
-      // Update the element depending on its type
-      if (editingElementId) {
-        onUpdateElement(editingElementId, { 
-          ...(editableInputRef.current.tagName === "TEXTAREA" ? { content: newContent } : { label: newContent })
-        });
-      }
-      
-      setEditingElementId(null);
-    }
+    setEditingElementId(null); // remove this from handling content saving
   };
+  
 
   return {
     editingElementId,
