@@ -1,3 +1,4 @@
+
 import { useProject } from "@/contexts/project/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
@@ -79,6 +80,36 @@ export function MainContent() {
       window.removeEventListener('resize', handleResize);
     };
   }, [canvasZoom, currentSlide]);
+
+  // Prevent browser zoom on Ctrl+wheel
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        
+        // Custom zoom handling
+        if (e.deltaY < 0) {
+          // Zoom in
+          handleZoomIn();
+        } else {
+          // Zoom out
+          handleZoomOut();
+        }
+      }
+    };
+    
+    // Add event listener to prevent default browser zoom
+    const canvasContainer = canvasContainerRef.current;
+    if (canvasContainer) {
+      canvasContainer.addEventListener('wheel', handleWheel, { passive: false });
+    }
+    
+    return () => {
+      if (canvasContainer) {
+        canvasContainer.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [canvasZoom]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#f3f2f1]">

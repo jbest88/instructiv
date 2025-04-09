@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 
 interface SlideCanvasProps {
   slide: Slide;
@@ -57,6 +64,7 @@ export function SlideCanvas({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [contextMenuElement, setContextMenuElement] = useState<SlideElement | null>(null);
 
   const selectedElement = selectedElementId 
     ? slide.elements.find(el => el.id === selectedElementId) 
@@ -175,6 +183,43 @@ export function SlideCanvas({
     });
     
     document.body.style.cursor = "grabbing";
+  };
+
+  // Handle element right-click for context menu
+  const handleElementRightClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    element: SlideElement
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuElement(element);
+    onSelectElement(element.id);
+  };
+
+  // Handle context menu actions
+  const handleDuplicate = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    // Duplicate functionality would be implemented here
+    // Currently just logging to show the action would work
+    console.log("Duplicate element", element);
+  };
+
+  const handleBringToFront = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    // Bring to front functionality would be implemented here
+    console.log("Bring to front", element);
+  };
+
+  const handleSendToBack = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    // Send to back functionality would be implemented here
+    console.log("Send to back", element);
   };
 
   // Handle mouse move for dragging or resizing elements
@@ -303,6 +348,11 @@ export function SlideCanvas({
     };
   }, [dragState, resizeState, isPanning]);
 
+  // Canvas right-click handler to prevent default context menu
+  const handleCanvasContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+  };
+
   // Render resize handles for the selected element
   const renderResizeHandles = (element: SlideElement) => {
     const handles = [
@@ -340,82 +390,100 @@ export function SlideCanvas({
     // Add common event listeners to all elements
     const commonProps = {
       onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => handleElementMouseDown(e, element),
+      onContextMenu: (e: React.MouseEvent<HTMLDivElement>) => handleElementRightClick(e, element),
       style: baseStyle,
       className: `element ${isSelected ? 'outline outline-2 outline-primary' : ''}`
     };
 
-    switch (element.type) {
-      case "text":
-        return (
-          <div
-            key={element.id}
-            {...commonProps}
-            className={`${commonProps.className} bg-white p-2 overflow-hidden select-none`}
-            style={{
-              ...baseStyle,
-              fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
-              color: element.fontColor || 'inherit',
-              fontWeight: element.fontWeight || 'inherit',
-              fontStyle: element.fontStyle || 'normal',
-              textAlign: element.align || 'left'
-            }}
-          >
-            {element.content}
-            {isSelected && renderResizeHandles(element)}
-          </div>
-        );
+    const renderElementContent = () => {
+      switch (element.type) {
+        case "text":
+          return (
+            <div
+              key={element.id}
+              {...commonProps}
+              className={`${commonProps.className} bg-white p-2 overflow-hidden select-none`}
+              style={{
+                ...baseStyle,
+                fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
+                color: element.fontColor || 'inherit',
+                fontWeight: element.fontWeight || 'inherit',
+                fontStyle: element.fontStyle || 'normal',
+                textAlign: element.align || 'left'
+              }}
+            >
+              {element.content}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
 
-      case "image":
-        return (
-          <div
-            key={element.id}
-            {...commonProps}
-            className={`${commonProps.className} overflow-hidden select-none`}
-          >
-            <img
-              src={element.src}
-              alt={element.alt || "Image"}
-              className="w-full h-full object-contain pointer-events-none"
-            />
-            {isSelected && renderResizeHandles(element)}
-          </div>
-        );
+        case "image":
+          return (
+            <div
+              key={element.id}
+              {...commonProps}
+              className={`${commonProps.className} overflow-hidden select-none`}
+            >
+              <img
+                src={element.src}
+                alt={element.alt || "Image"}
+                className="w-full h-full object-contain pointer-events-none"
+              />
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
 
-      case "button":
-        return (
-          <div
-            key={element.id}
-            {...commonProps}
-            className={`${commonProps.className} flex items-center justify-center select-none 
-              ${element.style === 'primary' ? 'bg-primary text-primary-foreground' : 
-                element.style === 'secondary' ? 'bg-secondary text-secondary-foreground' : 
-                'bg-background border border-input'}`}
-          >
-            {element.label}
-            {isSelected && renderResizeHandles(element)}
-          </div>
-        );
+        case "button":
+          return (
+            <div
+              key={element.id}
+              {...commonProps}
+              className={`${commonProps.className} flex items-center justify-center select-none 
+                ${element.style === 'primary' ? 'bg-primary text-primary-foreground' : 
+                  element.style === 'secondary' ? 'bg-secondary text-secondary-foreground' : 
+                  'bg-background border border-input'}`}
+            >
+              {element.label}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
 
-      case "hotspot":
-        return (
-          <div
-            key={element.id}
-            {...commonProps}
-            className={`${commonProps.className} select-none border-2 border-dashed border-blue-500 
-              ${element.shape === 'circle' ? 'rounded-full' : ''}`}
-          >
-            {isSelected && (
-              <div className="absolute inset-0 flex items-center justify-center text-blue-500 font-medium">
-                Hotspot
-              </div>
-            )}
-            {isSelected && renderResizeHandles(element)}
-          </div>
-        );
+        case "hotspot":
+          return (
+            <div
+              key={element.id}
+              {...commonProps}
+              className={`${commonProps.className} select-none border-2 border-dashed border-blue-500 
+                ${element.shape === 'circle' ? 'rounded-full' : ''}`}
+            >
+              {isSelected && (
+                <div className="absolute inset-0 flex items-center justify-center text-blue-500 font-medium">
+                  Hotspot
+                </div>
+              )}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
 
-      default:
-        return null;
-    }
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <ContextMenu key={element.id}>
+        <ContextMenuTrigger>{renderElementContent()}</ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={() => onSelectElement(element.id)}>Select</ContextMenuItem>
+          <ContextMenuItem onClick={() => handleDuplicate(element.id)}>Duplicate</ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => handleBringToFront(element.id)}>Bring to Front</ContextMenuItem>
+          <ContextMenuItem onClick={() => handleSendToBack(element.id)}>Send to Back</ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => onDeleteElement(element.id)} className="text-red-500">Delete</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    );
   };
 
   return (
@@ -424,6 +492,7 @@ export function SlideCanvas({
       className="slide-canvas-container"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onContextMenu={handleCanvasContextMenu}
     >
       <div
         ref={canvasRef}
