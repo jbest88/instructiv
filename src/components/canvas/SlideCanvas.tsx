@@ -235,9 +235,9 @@ export function SlideCanvas({
       if (editingElementId && typeof updatedValue === "string") {
         onUpdateElement(editingElementId, { content: updatedValue });
       }
-      // Don't call finishEditing here — it uses ref.value (which may be stale)
-      setEditingElementId(null); // just end editing mode
+      setEditingElementId(null);
     }}
+    
     
     
     onCut={handleCut}
