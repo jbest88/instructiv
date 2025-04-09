@@ -43,7 +43,7 @@ export type SlideElement = TextElement | ImageElement | ButtonElement | HotspotE
 export interface TimelineItem {
   id: string;
   name: string;
-  type: "button" | "image" | "text";
+  type: "button" | "image" | "text" | "hotspot";
   startTime: number; // in seconds
   duration: number; // in seconds
   linkedElementId?: string;

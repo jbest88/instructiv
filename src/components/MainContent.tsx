@@ -1,3 +1,4 @@
+
 import { useProject } from "@/contexts/project/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
@@ -42,7 +43,7 @@ export function MainContent() {
       {/* Editor canvas */}
       {currentSlide ? (
         <div className="flex-1 overflow-hidden relative">
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 overflow-auto">
             <SlideCanvas 
               slide={currentSlide}
               selectedElementId={selectedElementId}

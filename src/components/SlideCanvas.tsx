@@ -32,8 +32,31 @@ export function SlideCanvas({
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   
   const { canvasSize, canvasZoom, setCanvasZoom } = useProject();
+
+  // Set up the canvas with proper padding for panning to edges
+  useEffect(() => {
+    if (containerRef.current && canvasRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+      const canvasWidth = canvasSize.width * canvasZoom;
+      const canvasHeight = canvasSize.height * canvasZoom;
+      
+      // Add padding around canvas to allow scrolling beyond edges
+      const paddingX = Math.max(containerWidth - canvasWidth, 100);
+      const paddingY = Math.max(containerHeight - canvasHeight, 100);
+      
+      // Apply padding to the canvas wrapper for scrollability
+      if (canvasRef.current.parentElement) {
+        canvasRef.current.parentElement.style.padding = `${paddingY}px ${paddingX}px`;
+        canvasRef.current.parentElement.style.width = `${canvasWidth + paddingX * 2}px`;
+        canvasRef.current.parentElement.style.height = `${canvasHeight + paddingY * 2}px`;
+      }
+    }
+  }, [canvasSize, canvasZoom]);
 
   // Handle wheel event for zooming
   const handleWheel = (e: WheelEvent) => {
@@ -48,6 +71,39 @@ export function SlideCanvas({
       newZoom = Math.max(0.1, Math.min(3, newZoom));
       
       setCanvasZoom(newZoom);
+    }
+  };
+
+  // Add middle-mouse button panning
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Middle mouse button (button 1) for panning
+    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+      
+      if (containerRef.current) {
+        containerRef.current.style.cursor = 'grabbing';
+      }
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isPanning && containerRef.current) {
+      const deltaX = e.clientX - panStart.x;
+      const deltaY = e.clientY - panStart.y;
+      
+      containerRef.current.scrollLeft -= deltaX;
+      containerRef.current.scrollTop -= deltaY;
+      
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isPanning && containerRef.current) {
+      setIsPanning(false);
+      containerRef.current.style.cursor = 'default';
     }
   };
   
@@ -445,11 +501,15 @@ export function SlideCanvas({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full overflow-auto bg-neutral-200 flex items-center justify-center"
+      className="relative w-full h-full overflow-auto bg-neutral-200"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
     >
       <div
         ref={canvasRef}
-        className="relative shadow-lg flex items-center justify-center"
+        className="relative shadow-lg mx-auto my-auto"
         style={{ 
           transform: `scale(${canvasZoom})`,
           transformOrigin: 'center',
