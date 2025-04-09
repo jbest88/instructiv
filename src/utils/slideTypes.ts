@@ -1,4 +1,3 @@
-
 export interface ElementBase {
   id: string;
   type: "text" | "image" | "button" | "hotspot";
@@ -22,6 +21,7 @@ export interface ImageElement extends ElementBase {
   type: "image";
   src: string;
   alt?: string;
+  objectFit?: "contain" | "cover" | "fill" | "none" | "scale-down"; // Added objectFit property
 }
 
 export interface ButtonElement extends ElementBase {
