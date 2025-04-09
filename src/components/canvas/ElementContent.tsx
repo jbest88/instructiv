@@ -59,9 +59,12 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         justifyContent: 'flex-start'
       }}
     >
-      {element.content}
+      <div style={{ width: '100%' }}>
+        {element.content}
+      </div>
     </div>
   );
+  
 }
 
 interface ButtonContentProps {
