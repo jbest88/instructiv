@@ -10,6 +10,7 @@ import {
   ContextMenuSub,
   ContextMenuSubTrigger,
   ContextMenuSubContent,
+  ContextMenuHighlightGroup,
 } from "@/components/ui/context-menu";
 import {
   AlertDialog,
@@ -34,7 +35,7 @@ import {
   Clipboard, 
   ClipboardPaste, 
   FilePlus, 
-  SquareEdit, 
+  PenSquare, 
   Type, 
   AlignLeft, 
   AlignCenter, 
@@ -614,19 +615,18 @@ export function SlideCanvas({
       </ContextMenuItem>
       
       {/* Paste Options section */}
-      <div className="bg-muted/50 -mx-1 px-1 py-1 rounded-sm">
-        <div className="text-xs text-muted-foreground px-2 mb-1">Paste Options:</div>
+      <ContextMenuHighlightGroup title="Paste Options:">
         <ContextMenuItem onClick={() => handlePaste(element.id)}>
           <ClipboardPaste className="mr-2 h-4 w-4 text-orange-400" />
           Paste
         </ContextMenuItem>
-      </div>
+      </ContextMenuHighlightGroup>
       
       <ContextMenuSeparator />
       
       {/* Exit Edit Text option */}
       <ContextMenuItem onClick={() => handleExitEditText(element.id)}>
-        <SquareEdit className="mr-2 h-4 w-4 text-muted-foreground" />
+        <PenSquare className="mr-2 h-4 w-4 text-muted-foreground" />
         Exit Edit Text
       </ContextMenuItem>
       
