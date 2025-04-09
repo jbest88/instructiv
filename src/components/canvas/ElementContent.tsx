@@ -52,9 +52,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         padding: '4px',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        backgroundColor: '#fffae6',
-        border: '1px solid red',
-        display: 'block'
+               display: 'block'
       }}
     >
       <div
