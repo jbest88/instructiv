@@ -1,188 +1,128 @@
 
-import React, { useState, useRef } from "react";
+import { 
+  Save, 
+  FilePlus, 
+  FileDown, 
+  FileUp, 
+  Cloud,
+  Upload,
+  FileX
+} from "lucide-react";
+import { useState } from "react";
 import { useProject } from "@/contexts/project";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ProjectsList } from "@/components/ProjectsList";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Save, FolderOpen, Upload, Download, Cloud } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function FileMenuDropdown() {
   const { 
     handleSaveProject, 
-    handleLoadProject, 
-    handleExportProject, 
-    handleImportProject,
+    handleLoadProject,
     handleSaveProjectToSupabase,
-    project
+    handleExportProject,
+    handleImportProject
   } = useProject();
   
-  const { user } = useAuth();
+  const [isProjectsListOpen, setIsProjectsListOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   
-  const [isCloudProjectsOpen, setIsCloudProjectsOpen] = useState(false);
-  const [isSaveAsOpen, setIsSaveAsOpen] = useState(false);
-  const [projectTitle, setProjectTitle] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  
-  // File input ref for importing projects
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     
     try {
-      await handleImportProject(files[0]);
+      setIsImporting(true);
+      await handleImportProject(file);
     } catch (error) {
-      console.error("Import failed:", error);
+      console.error("Import error", error);
     } finally {
-      // Reset the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      setIsImporting(false);
+      // Reset the input so the same file can be selected again
+      e.target.value = '';
     }
   };
-  
-  const handleSaveToCloud = async () => {
-    if (!user) {
-      setIsSaveAsOpen(true);
-      return;
-    }
-    
-    try {
-      setIsSaving(true);
-      await handleSaveProjectToSupabase();
-    } catch (error) {
-      console.error("Failed to save to cloud:", error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-  
-  const handleSaveAsToCloud = async () => {
-    if (!projectTitle.trim()) return;
-    
-    try {
-      setIsSaving(true);
-      await handleSaveProjectToSupabase(projectTitle);
-      setIsSaveAsOpen(false);
-      setProjectTitle("");
-    } catch (error) {
-      console.error("Failed to save to cloud:", error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-  
   
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost">File</Button>
+          <Button variant="ghost" className="h-8 text-sm">File</Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuContent align="start" className="w-52">
+          <DropdownMenuItem onClick={() => window.location.reload()}>
+            <FilePlus className="mr-2 h-4 w-4" />
+            New Project
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* Import from file */}
+          <DropdownMenuItem asChild disabled={isImporting}>
+            <label className="flex items-center cursor-pointer">
+              <FileDown className="mr-2 h-4 w-4" />
+              <span>Import</span>
+              <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleImport}
+                disabled={isImporting}
+              />
+            </label>
+          </DropdownMenuItem>
+          
+          {/* Export to file */}
+          <DropdownMenuItem onClick={handleExportProject}>
+            <FileUp className="mr-2 h-4 w-4" />
+            Export
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* Save local */}
           <DropdownMenuItem onClick={handleSaveProject}>
             <Save className="mr-2 h-4 w-4" />
             Save
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleLoadProject}>
-            <FolderOpen className="mr-2 h-4 w-4" />
-            Load
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleExportProject}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+          
+          {/* Save As (to cloud) */}
+          <DropdownMenuItem onClick={() => handleSaveProjectToSupabase()}>
             <Upload className="mr-2 h-4 w-4" />
-            Import
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept=".json"
-              style={{ display: "none" }}
-            />
+            Save As
           </DropdownMenuItem>
+          
+          {/* Open from local */}
+          <DropdownMenuItem onClick={handleLoadProject}>
+            <FileDown className="mr-2 h-4 w-4" />
+            Open
+          </DropdownMenuItem>
+          
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsCloudProjectsOpen(true)}>
+          
+          {/* Cloud projects */}
+          <DropdownMenuItem onClick={() => setIsProjectsListOpen(true)}>
             <Cloud className="mr-2 h-4 w-4" />
             Cloud Projects
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem>
+            <Upload className="mr-2 h-4 w-4" />
+            Publish
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       
-      {/* Cloud Projects Dialog */}
+      {/* Cloud Projects Modal */}
       <ProjectsList 
-        isOpen={isCloudProjectsOpen} 
-        onClose={() => setIsCloudProjectsOpen(false)}
+        isOpen={isProjectsListOpen}
+        onClose={() => setIsProjectsListOpen(false)}
       />
-      
-      {/* Save As Dialog */}
-      <Dialog open={isSaveAsOpen} onOpenChange={setIsSaveAsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save Project</DialogTitle>
-            <DialogDescription>
-              {user ? 
-                "Enter a title for your project" : 
-                "You need to sign in to save projects to the cloud"}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {user ? (
-            <>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <label htmlFor="projectTitle" className="text-sm font-medium">
-                    Project Title
-                  </label>
-                  <Input
-                    id="projectTitle"
-                    placeholder={project.title || "My Project"}
-                    value={projectTitle}
-                    onChange={(e) => setProjectTitle(e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsSaveAsOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveAsToCloud} disabled={isSaving || !projectTitle.trim()}>
-                  {isSaving ? "Saving..." : "Save"}
-                </Button>
-              </DialogFooter>
-            </>
-          ) : (
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsSaveAsOpen(false)}>
-                Cancel
-              </Button>
-              <Button asChild>
-                <a href="/auth">Sign In</a>
-              </Button>
-            </DialogFooter>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
