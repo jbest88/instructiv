@@ -15,7 +15,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onKey
   if (isEditing) {
     return (
       <Textarea
-        ref={(ref) => { if (editableInputRef) editableInputRef.current = ref; }}
+        ref={editableInputRef as React.RefObject<HTMLTextAreaElement>}
         defaultValue={element.content}
         style={{
           fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
@@ -68,7 +68,7 @@ export function ButtonElementContent({ element, isEditing, editableInputRef, onK
   if (isEditing) {
     return (
       <Input
-        ref={(ref) => { if (editableInputRef) editableInputRef.current = ref; }}
+        ref={editableInputRef as React.RefObject<HTMLInputElement>}
         defaultValue={element.label}
         style={{
           width: '100%',
