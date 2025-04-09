@@ -63,11 +63,8 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         boxSizing: 'border-box',
 
         // Flexbox for Vertical Alignment of Content Block
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start', // Ensure content starts at the left
-        justifyContent: 'flex-start', // Ensure content starts at the top
-
+        display: 'block', // Changed from 'flex' to 'block' to keep text flow natural
+        
         // Whitespace Handling (Crucial for Newlines)
         whiteSpace: 'pre-wrap', // Respect newlines and spaces, allow wrapping
         wordBreak: 'break-word' // Allow breaking long words
