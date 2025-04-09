@@ -20,6 +20,7 @@ export function MainContent() {
     handleDeleteElement
   } = useProject();
 
+  // Zoom controls with better step values for smooth zooming
   const handleZoomIn = () => {
     setCanvasZoom(Math.min(canvasZoom + 0.1, 3));
   };
@@ -28,6 +29,7 @@ export function MainContent() {
     setCanvasZoom(Math.max(canvasZoom - 0.1, 0.1));
   };
 
+  // Reset zoom to 100% (centers canvas automatically)
   const handleResetZoom = () => {
     setCanvasZoom(1);
   };

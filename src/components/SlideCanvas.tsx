@@ -39,36 +39,42 @@ export function SlideCanvas({
 
   // Center canvas on initial load and when zoom changes
   useEffect(() => {
+    centerCanvas();
+  }, [canvasZoom, canvasSize]);
+
+  // Center canvas function that can be called whenever needed
+  const centerCanvas = () => {
     if (containerRef.current && canvasRef.current) {
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
       const canvasWidth = canvasSize.width * canvasZoom;
       const canvasHeight = canvasSize.height * canvasZoom;
       
-      // Center the canvas in the viewport
+      // Calculate padding to center the canvas in the viewport
       const paddingX = Math.max((containerWidth - canvasWidth) / 2, 100);
       const paddingY = Math.max((containerHeight - canvasHeight) / 2, 100);
       
+      // Apply padding to the parent element of the canvas
       if (canvasRef.current.parentElement) {
         canvasRef.current.parentElement.style.padding = `${paddingY}px ${paddingX}px`;
         canvasRef.current.parentElement.style.minWidth = `${canvasWidth + (paddingX * 2)}px`;
         canvasRef.current.parentElement.style.minHeight = `${canvasHeight + (paddingY * 2)}px`;
         
-        // Set scrollbars to center canvas on initial load
-        if (viewportPosition.x === 0 && viewportPosition.y === 0) {
-          setTimeout(() => {
-            if (containerRef.current) {
-              const scrollX = (canvasRef.current.parentElement!.offsetWidth - containerWidth) / 2;
-              const scrollY = (canvasRef.current.parentElement!.offsetHeight - containerHeight) / 2;
-              containerRef.current.scrollLeft = scrollX;
-              containerRef.current.scrollTop = scrollY;
-              setViewportPosition({ x: scrollX, y: scrollY });
-            }
-          }, 10);
-        }
+        // Center the canvas by setting scroll position
+        setTimeout(() => {
+          if (containerRef.current) {
+            const scrollX = (canvasWidth + (paddingX * 2) - containerWidth) / 2;
+            const scrollY = (canvasHeight + (paddingY * 2) - containerHeight) / 2;
+            
+            containerRef.current.scrollLeft = scrollX;
+            containerRef.current.scrollTop = scrollY;
+            
+            setViewportPosition({ x: scrollX, y: scrollY });
+          }
+        }, 10);
       }
     }
-  }, [canvasSize, canvasZoom]);
+  };
 
   // Handle zoom with mouse positioning
   const handleWheel = (e: WheelEvent) => {
@@ -77,7 +83,7 @@ export function SlideCanvas({
       
       if (!containerRef.current || !canvasRef.current) return;
       
-      // Get mouse position relative to canvas
+      // Get mouse position relative to container
       const rect = containerRef.current.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
@@ -86,9 +92,9 @@ export function SlideCanvas({
       const scrollLeft = containerRef.current.scrollLeft;
       const scrollTop = containerRef.current.scrollTop;
       
-      // Calculate mouse position relative to scroll position
-      const mouseXInCanvas = mouseX + scrollLeft;
-      const mouseYInCanvas = mouseY + scrollTop;
+      // Calculate point on which to zoom (relative to the content, not just the visible viewport)
+      const mouseXInContent = mouseX + scrollLeft;
+      const mouseYInContent = mouseY + scrollTop;
       
       // Calculate zoom change
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
@@ -99,22 +105,27 @@ export function SlideCanvas({
       newZoom = Math.max(0.1, Math.min(3, newZoom));
       if (newZoom === prevZoom) return;
       
-      // Calculate new scroll position
-      const zoomRatio = newZoom / prevZoom;
-      const newScrollLeft = mouseXInCanvas * zoomRatio - mouseX;
-      const newScrollTop = mouseYInCanvas * zoomRatio - mouseY;
-      
-      // Update zoom
+      // Update zoom first
       setCanvasZoom(newZoom);
       
-      // Set new scroll position after zoom is applied
+      // After the zoom is applied and has taken effect, update the scroll position
       setTimeout(() => {
-        if (containerRef.current) {
-          containerRef.current.scrollLeft = newScrollLeft;
-          containerRef.current.scrollTop = newScrollTop;
-          setViewportPosition({ x: newScrollLeft, y: newScrollTop });
-        }
-      }, 10);
+        if (!containerRef.current || !canvasRef.current) return;
+        
+        // Calculate the point that should stay fixed under the cursor after zooming
+        const zoomRatio = newZoom / prevZoom;
+        
+        // Calculate the new position that keeps the point under the mouse cursor fixed
+        const newScrollLeft = mouseXInContent * zoomRatio - mouseX;
+        const newScrollTop = mouseYInContent * zoomRatio - mouseY;
+        
+        // Set the new scroll position
+        containerRef.current.scrollLeft = newScrollLeft;
+        containerRef.current.scrollTop = newScrollTop;
+        
+        // Update state
+        setViewportPosition({ x: newScrollLeft, y: newScrollTop });
+      }, 0);
     }
   };
 
@@ -210,6 +221,13 @@ export function SlideCanvas({
     container.addEventListener('wheel', handleWheel, { passive: false });
     document.addEventListener('keydown', handleKeyDown);
     
+    // Handle window resize to recenter canvas
+    const handleResize = () => {
+      centerCanvas();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
     return () => {
       container.removeEventListener('wheel', handleWheel);
       document.removeEventListener('keydown', handleKeyDown);
@@ -217,6 +235,7 @@ export function SlideCanvas({
       document.removeEventListener('mouseup', handleDocumentMouseUp);
       document.removeEventListener('mousemove', handleSpaceBarPan);
       document.removeEventListener('mouseup', handleSpaceBarPanEnd);
+      window.removeEventListener('resize', handleResize);
     };
   }, [canvasZoom, isPanning, panStart]);
   
