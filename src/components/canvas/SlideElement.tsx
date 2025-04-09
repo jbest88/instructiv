@@ -78,13 +78,19 @@ export function SlideElementComponent({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div
-          onMouseDown={(e) => onMouseDown(e, element)}
-          onContextMenu={(e) => onContextMenu(e, element)}
-          onDoubleClick={(e) => onDoubleClick(e, element)}
-          style={baseStyle}
-          className={`element ${isSelected ? 'outline outline-2 outline-primary' : ''}`}
-        >
+      <div
+  onMouseDown={(e) => onMouseDown(e, element)}
+  onContextMenu={(e) => onContextMenu(e, element)}
+  onDoubleClick={(e) => onDoubleClick(e, element)}
+  style={{
+    ...baseStyle,
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+  }}
+  className={`element ${isSelected ? 'outline outline-2 outline-primary' : ''}`}
+>
+
           <ElementContent 
             element={element} 
             isEditing={isEditing} 
