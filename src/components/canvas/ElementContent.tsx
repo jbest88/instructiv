@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { SlideElement, TextElement, ButtonElement, ImageElement, HotspotElement } from "@/utils/slideTypes";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -77,7 +77,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
           backgroundColor: '#e6fffa'
         }}
       >
-        {value || '\u00A0'}
+        {element.content || '\u00A0'}
       </div>
     </div>
   );
