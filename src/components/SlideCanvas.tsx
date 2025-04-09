@@ -836,11 +836,13 @@ export function SlideCanvas({
     
     const baseStyle: React.CSSProperties = {
       position: 'absolute',
-      left: `${element.x}px`,
-      top: `${element.y}px`,
-      width: `${element.width}px`,
-      height: `${element.height}px`
+      left: `100px`,
+      top: `100px`,
+      width: `300px`,
+      height: `200px`,
+      backgroundColor: '#f0f0ff' // 👈 to debug size
     };
+    
 
     // Add common event listeners to all elements
     const commonProps = {
