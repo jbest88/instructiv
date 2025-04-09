@@ -231,7 +231,13 @@ export function SlideCanvas({
     onMouseDown={handleElementMouseDown}
     onContextMenu={handleElementRightClick}
     onDoubleClick={handleElementDoubleClick}
-    onFinishEditing={finishEditing}
+    onFinishEditing={(updatedValue?: string) => {
+      if (updatedValue !== undefined && editingElementId) {
+        onUpdateElement(editingElementId, { content: updatedValue });
+      }
+      finishEditing();
+    }}
+    
     onCut={handleCut}
     onCopy={handleCopy}
     onPaste={handlePaste}
