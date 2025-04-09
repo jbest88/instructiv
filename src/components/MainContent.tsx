@@ -6,7 +6,8 @@ import { Timeline } from "@/components/Timeline";
 import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Maximize2, Move } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function MainContent() {
   const { 
@@ -27,55 +28,17 @@ export function MainContent() {
   const handleZoomIn = () => {
     const newZoom = Math.min(canvasZoom + 0.1, 3);
     setCanvasZoom(newZoom);
-    centerCanvas(newZoom);
   };
 
   const handleZoomOut = () => {
     const newZoom = Math.max(canvasZoom - 0.1, 0.1);
     setCanvasZoom(newZoom);
-    centerCanvas(newZoom);
   };
 
   // Reset zoom to 100% (centers canvas automatically)
   const handleResetZoom = () => {
     setCanvasZoom(1);
-    centerCanvas(1);
   };
-  
-  // Function to center the canvas in the viewport
-  const centerCanvas = (zoom: number) => {
-    if (!canvasContainerRef.current || !currentSlide) return;
-    
-    const container = canvasContainerRef.current;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-    
-    // Calculate the center position
-    const scrollLeft = (1920 - containerWidth / zoom) / 2;
-    const scrollTop = (1200 - containerHeight / zoom) / 2;
-    
-    // Apply the scroll position
-    container.scrollLeft = Math.max(0, scrollLeft);
-    container.scrollTop = Math.max(0, scrollTop);
-  };
-  
-  // Center canvas when zoom changes or on window resize
-  useEffect(() => {
-    if (currentSlide) {
-      centerCanvas(canvasZoom);
-    }
-    
-    const handleResize = () => {
-      if (currentSlide) {
-        centerCanvas(canvasZoom);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [canvasZoom, currentSlide]);
 
   // Prevent browser zoom on Ctrl+wheel
   useEffect(() => {
@@ -119,24 +82,34 @@ export function MainContent() {
       {currentSlide ? (
         <div className="flex-1 overflow-hidden relative">
           <div 
-            ref={canvasContainerRef} 
+            ref={canvasContainerRef}
             className="absolute inset-0 overflow-auto"
-            style={{ 
+            style={{
               position: 'relative',
-              transform: `scale(${canvasZoom})`, 
-              transformOrigin: '0 0',
-              width: `${100 / canvasZoom}%`,
-              height: `${100 / canvasZoom}%`
+              height: '100%',
+              width: '100%'
             }}
           >
-            <SlideCanvas 
-              slide={currentSlide}
-              selectedElementId={selectedElementId}
-              onSelectElement={setSelectedElementId}
-              onUpdateElement={handleUpdateElement}
-              onDeleteElement={handleDeleteElement}
-              zoom={canvasZoom}
-            />
+            <div
+              style={{
+                transform: `scale(${canvasZoom})`,
+                transformOrigin: '0 0',
+                width: `${1920}px`,
+                height: `${1200}px`,
+                background: currentSlide.background || '#ffffff',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                margin: '20px'
+              }}
+            >
+              <SlideCanvas 
+                slide={currentSlide}
+                selectedElementId={selectedElementId}
+                onSelectElement={setSelectedElementId}
+                onUpdateElement={handleUpdateElement}
+                onDeleteElement={handleDeleteElement}
+                zoom={canvasZoom}
+              />
+            </div>
           </div>
           
           {/* Zoom controls with keyboard shortcuts and percentage */}
@@ -174,7 +147,7 @@ export function MainContent() {
           {/* Shortcut hints */}
           <div className="absolute bottom-4 left-4 bg-white/80 rounded p-1 text-xs text-gray-600 shadow-sm z-10">
             <div className="flex items-center gap-1">
-              <Move className="h-3 w-3" /> Pan: Space + Drag or Middle Mouse
+              <Move className="h-3 w-3" /> Pan: Drag or Middle Mouse
             </div>
             <div>Zoom: Ctrl + Mouse Wheel</div>
           </div>

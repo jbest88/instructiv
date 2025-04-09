@@ -78,7 +78,7 @@ export function SlideCanvas({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [contextMenuElement, setContextMenuElement] = useState<SlideElement | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [elementToDelete, setElementToDelete] = useState<string | null>(null);
@@ -129,35 +129,119 @@ export function SlideCanvas({
     };
   }, [selectedElementId, selectedElement, onUpdateElement, onDeleteElement]);
 
-  // Handle spacebar panning
+  // Handle mouse events for pan/drag
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && canvasRef.current && !isPanning) {
-        e.preventDefault();
-        document.body.style.cursor = "grab";
-        canvasRef.current.style.cursor = "grab";
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isPanning && containerRef.current && containerRef.current.parentElement) {
+        const parentElement = containerRef.current.parentElement;
+        parentElement.scrollLeft += panStart.x - e.clientX;
+        parentElement.scrollTop += panStart.y - e.clientY;
+        setPanStart({ x: e.clientX, y: e.clientY });
       }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
-        document.body.style.cursor = "";
-        if (canvasRef.current) {
-          canvasRef.current.style.cursor = "";
+      
+      // Handle element dragging
+      if (dragState.isDragging && selectedElementId) {
+        const deltaX = (e.clientX - dragState.startX) / zoom;
+        const deltaY = (e.clientY - dragState.startY) / zoom;
+        
+        onUpdateElement(selectedElementId, {
+          x: dragState.startElementX + deltaX,
+          y: dragState.startElementY + deltaY
+        });
+      }
+      
+      // Handle element resizing
+      if (resizeState.isResizing && selectedElementId) {
+        const deltaX = (e.clientX - resizeState.startX) / zoom;
+        const deltaY = (e.clientY - resizeState.startY) / zoom;
+        const element = slide.elements.find(el => el.id === selectedElementId);
+        
+        if (!element) return;
+        
+        let newWidth = resizeState.startWidth;
+        let newHeight = resizeState.startHeight;
+        let newX = resizeState.startElementX;
+        let newY = resizeState.startElementY;
+        
+        // Adjust based on the handle being dragged
+        switch (resizeState.handle) {
+          case "n":
+            newHeight = Math.max(10, resizeState.startHeight - deltaY);
+            newY = resizeState.startElementY + deltaY;
+            break;
+          case "s":
+            newHeight = Math.max(10, resizeState.startHeight + deltaY);
+            break;
+          case "e":
+            newWidth = Math.max(10, resizeState.startWidth + deltaX);
+            break;
+          case "w":
+            newWidth = Math.max(10, resizeState.startWidth - deltaX);
+            newX = resizeState.startElementX + deltaX;
+            break;
+          case "ne":
+            newWidth = Math.max(10, resizeState.startWidth + deltaX);
+            newHeight = Math.max(10, resizeState.startHeight - deltaY);
+            newY = resizeState.startElementY + deltaY;
+            break;
+          case "nw":
+            newWidth = Math.max(10, resizeState.startWidth - deltaX);
+            newHeight = Math.max(10, resizeState.startHeight - deltaY);
+            newX = resizeState.startElementX + deltaX;
+            newY = resizeState.startElementY + deltaY;
+            break;
+          case "se":
+            newWidth = Math.max(10, resizeState.startWidth + deltaX);
+            newHeight = Math.max(10, resizeState.startHeight + deltaY);
+            break;
+          case "sw":
+            newWidth = Math.max(10, resizeState.startWidth - deltaX);
+            newHeight = Math.max(10, resizeState.startHeight + deltaY);
+            newX = resizeState.startElementX + deltaX;
+            break;
         }
-        setIsPanning(false);
+        
+        onUpdateElement(selectedElementId, {
+          width: newWidth,
+          height: newHeight,
+          x: newX,
+          y: newY
+        });
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    const handleMouseUp = () => {
+      if (dragState.isDragging || resizeState.isResizing) {
+        setDragState({ ...dragState, isDragging: false });
+        setResizeState({ ...resizeState, isResizing: false });
+        document.body.style.cursor = "";
+      }
+      
+      if (isPanning) {
+        setIsPanning(false);
+        document.body.style.cursor = "";
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
     
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      document.body.style.cursor = "";
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isPanning]);
+  }, [dragState, resizeState, isPanning, panStart, zoom, onUpdateElement, slide.elements]);
+
+  // Enable panning with middle mouse button or by dragging the canvas
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Middle mouse button or drag canvas background
+    if (e.button === 1 || (e.button === 0 && e.target === canvasRef.current)) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+      document.body.style.cursor = "grabbing";
+    }
+  };
 
   // Handle background canvas click to deselect
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -166,7 +250,18 @@ export function SlideCanvas({
     }
   };
 
-  // Element drag handlers
+  // Handle element right-click for context menu
+  const handleElementRightClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    element: SlideElement
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuElement(element);
+    onSelectElement(element.id);
+  };
+
+  // Handle element mouse down for selection, dragging, resizing
   const handleElementMouseDown = (
     e: React.MouseEvent<HTMLDivElement>,
     element: SlideElement
@@ -205,49 +300,6 @@ export function SlideCanvas({
     });
     
     document.body.style.cursor = "grabbing";
-  };
-
-  // Handle element right-click for context menu
-  const handleElementRightClick = (
-    e: React.MouseEvent<HTMLDivElement>,
-    element: SlideElement
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenuElement(element);
-    onSelectElement(element.id);
-  };
-
-  // Handle context menu actions
-  const handleDuplicate = (elementId: string) => {
-    const element = slide.elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    // Duplicate functionality would be implemented here
-    // Currently just logging to show the action would work
-    console.log("Duplicate element", element);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (elementToDelete) {
-      onDeleteElement(elementToDelete);
-      setElementToDelete(null);
-    }
-    setIsDeleteDialogOpen(false);
-  };
-
-  const handleBringToFront = (elementId: string) => {
-    const element = slide.elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    console.log("Bring to front", element);
-  };
-
-  const handleSendToBack = (elementId: string) => {
-    const element = slide.elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    console.log("Send to back", element);
   };
 
   // Handle mouse move for dragging or resizing elements
@@ -321,64 +373,38 @@ export function SlideCanvas({
         y: newY
       });
     }
-    
-    // Handle canvas panning with space + drag or middle mouse button
-    if (isPanning && containerRef.current) {
-      containerRef.current.scrollLeft += panStart.x - e.clientX;
-      containerRef.current.scrollTop += panStart.y - e.clientY;
-      setPanStart({ x: e.clientX, y: e.clientY });
-    }
   };
 
-  // Handle mouse up to end dragging or resizing
-  const handleMouseUp = () => {
-    if (dragState.isDragging || resizeState.isResizing) {
-      setDragState({ ...dragState, isDragging: false });
-      setResizeState({ ...resizeState, isResizing: false });
-      document.body.style.cursor = "";
-    }
+  // Handle context menu actions
+  const handleDuplicate = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
     
-    if (isPanning) {
-      setIsPanning(false);
-      document.body.style.cursor = "";
-      if (canvasRef.current) {
-        canvasRef.current.style.cursor = "";
-      }
-    }
+    // Duplicate functionality would be implemented here
+    // Currently just logging to show the action would work
+    console.log("Duplicate element", element);
   };
 
-  // Handle mouse down on canvas (for panning)
-  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Middle mouse button or space key + left click for panning
-    const isMiddleButton = e.button === 1;
-    const isSpacePressed = e.nativeEvent.getModifierState("Space");
-    
-    if ((isMiddleButton || isSpacePressed) && e.target === canvasRef.current) {
-      e.preventDefault();
-      setIsPanning(true);
-      setPanStart({ x: e.clientX, y: e.clientY });
-      document.body.style.cursor = "grabbing";
-      if (canvasRef.current) {
-        canvasRef.current.style.cursor = "grabbing";
-      }
+  const handleDeleteConfirm = () => {
+    if (elementToDelete) {
+      onDeleteElement(elementToDelete);
+      setElementToDelete(null);
     }
+    setIsDeleteDialogOpen(false);
   };
 
-  // Set up global event listeners for when mouse leaves the canvas
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      handleMouseUp();
-    };
+  const handleBringToFront = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    console.log("Bring to front", element);
+  };
 
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener("mouseup", handleGlobalMouseUp);
-    };
-  }, [dragState, resizeState, isPanning]);
-
-  // Canvas right-click handler to prevent default context menu
-  const handleCanvasContextMenu = (e: React.MouseEvent) => {
-    // Allow context menu to appear - don't prevent default
+  const handleSendToBack = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    console.log("Send to back", element);
   };
 
   // Render resize handles for the selected element
@@ -524,24 +550,22 @@ export function SlideCanvas({
 
   return (
     <>
-      <div
+      <div 
         ref={containerRef}
-        className="slide-canvas-container w-full h-full overflow-auto"
+        className="h-full w-full"
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
       >
         <div
           ref={canvasRef}
-          className="slide-canvas relative bg-white shadow-md mx-auto"
+          className="slide-canvas relative"
           style={{
-            width: `${1920}px`,
-            height: `${1200}px`,
-            transformOrigin: '0 0',
+            width: '100%',
+            height: '100%',
             background: slide.background || '#ffffff'
           }}
           onClick={handleCanvasClick}
           onMouseDown={handleCanvasMouseDown}
-          onContextMenu={handleCanvasContextMenu}
+          onContextMenu={(e) => e.preventDefault()}
         >
           {slide.elements.map(renderElement)}
         </div>
