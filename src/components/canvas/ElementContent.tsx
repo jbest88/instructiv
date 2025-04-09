@@ -1,4 +1,3 @@
-
 import React from "react";
 import { SlideElement, TextElement, ButtonElement } from "@/utils/slideTypes";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,10 +7,10 @@ interface TextContentProps {
   element: TextElement;
   isEditing: boolean;
   editableInputRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
-  onKeyDown: (e: React.KeyboardEvent) => void;
+  onFinishEditing: () => void;
 }
 
-export function TextElementContent({ element, isEditing, editableInputRef, onKeyDown }: TextContentProps) {
+export function TextElementContent({ element, isEditing, editableInputRef, onFinishEditing }: TextContentProps) {
   if (isEditing) {
     return (
       <Textarea
@@ -29,9 +28,16 @@ export function TextElementContent({ element, isEditing, editableInputRef, onKey
           border: 'none',
           outline: 'none',
           backgroundColor: 'transparent',
-          padding: '4px'
+          padding: '4px',
+          verticalAlign: 'top',
+          alignSelf: 'flex-start'
         }}
-        onKeyDown={onKeyDown}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            onFinishEditing();
+            e.preventDefault();
+          }
+        }}
       />
     );
   }
@@ -49,7 +55,8 @@ export function TextElementContent({ element, isEditing, editableInputRef, onKey
         padding: '4px',
         overflow: 'hidden',
         display: 'flex',
-        alignItems: 'center'
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start'
       }}
     >
       {element.content}
@@ -61,10 +68,10 @@ interface ButtonContentProps {
   element: ButtonElement;
   isEditing: boolean;
   editableInputRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
-  onKeyDown: (e: React.KeyboardEvent) => void;
+  onFinishEditing: () => void;
 }
 
-export function ButtonElementContent({ element, isEditing, editableInputRef, onKeyDown }: ButtonContentProps) {
+export function ButtonElementContent({ element, isEditing, editableInputRef, onFinishEditing }: ButtonContentProps) {
   if (isEditing) {
     return (
       <Input
@@ -76,7 +83,16 @@ export function ButtonElementContent({ element, isEditing, editableInputRef, onK
           textAlign: 'center',
           padding: '4px'
         }}
-        onKeyDown={onKeyDown}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            onFinishEditing();
+            e.preventDefault();
+          }
+          if (e.key === 'Enter') {
+            onFinishEditing();
+            e.preventDefault();
+          }
+        }}
       />
     );
   }
@@ -160,7 +176,7 @@ export function ElementContent({ element, isEditing, editableInputRef, onFinishE
           element={element} 
           isEditing={isEditing} 
           editableInputRef={editableInputRef}
-          onKeyDown={handleKeyDown}
+          onFinishEditing={onFinishEditing}
         />
       );
     case "image":
@@ -171,7 +187,7 @@ export function ElementContent({ element, isEditing, editableInputRef, onFinishE
           element={element} 
           isEditing={isEditing} 
           editableInputRef={editableInputRef}
-          onKeyDown={handleKeyDown}
+          onFinishEditing={onFinishEditing}
         />
       );
     case "hotspot":
