@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -126,12 +125,20 @@ export function SlideCanvas({
   const finishEditing = () => {
     if (editingElementId && editableInputRef.current) {
       const newContent = editableInputRef.current.value;
-      onUpdateElement(editingElementId, { content: newContent });
+      const element = slide.elements.find(el => el.id === editingElementId);
+      
+      if (element) {
+        if (element.type === "text") {
+          onUpdateElement(editingElementId, { content: newContent });
+        } else if (element.type === "button") {
+          onUpdateElement(editingElementId, { label: newContent });
+        }
+      }
+      
       setEditingElementId(null);
     }
   };
 
-  // Effect to focus the input when editing starts
   useEffect(() => {
     if (editingElementId && editableInputRef.current) {
       editableInputRef.current.focus();
@@ -859,140 +866,4 @@ export function SlideCanvas({
                 style={{
                   fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
                   color: element.fontColor || 'inherit',
-                  fontWeight: element.fontWeight || 'inherit',
-                  fontStyle: element.fontStyle || 'normal',
-                  textAlign: element.align || 'left',
-                  border: 'none',
-                  width: '100%',
-                  height: '100%',
-                  resize: 'none',
-                  padding: '2px',
-                }}
-              />
-            </div>
-          ) : (
-            <div
-              {...commonProps}
-              className={`${commonProps.className} p-2 overflow-hidden`}
-              style={{
-                ...baseStyle,
-                fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
-                color: element.fontColor || 'inherit',
-                fontWeight: element.fontWeight || 'inherit',
-                fontStyle: element.fontStyle || 'normal',
-                textAlign: element.align || 'left',
-              }}
-            >
-              {element.content}
-              {isSelected && renderResizeHandles(element)}
-            </div>
-          );
-        case "image":
-          return (
-            <div {...commonProps} className={`${commonProps.className} overflow-hidden`}>
-              <img 
-                src={element.src} 
-                alt={element.alt || "Slide element"} 
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              />
-              {isSelected && renderResizeHandles(element)}
-            </div>
-          );
-        case "button":
-          return isEditing ? (
-            <div
-              key={element.id}
-              style={baseStyle}
-              className={`${commonProps.className} bg-white overflow-hidden`}
-            >
-              <Input
-                ref={ref => { editableInputRef.current = ref; }}
-                defaultValue={element.label}
-                style={{
-                  border: 'none',
-                  width: '100%',
-                  height: '100%',
-                  padding: '2px',
-                  textAlign: 'center',
-                }}
-              />
-            </div>
-          ) : (
-            <div
-              {...commonProps}
-              className={`${commonProps.className} bg-primary text-primary-foreground flex items-center justify-center rounded-md`}
-            >
-              {element.label}
-              {isSelected && renderResizeHandles(element)}
-            </div>
-          );
-        case "hotspot":
-          return (
-            <div
-              {...commonProps}
-              className={`${commonProps.className} ${element.shape === "circle" ? "rounded-full" : ""} border-2 border-dashed border-blue-400 bg-blue-100/30`}
-            >
-              {isSelected && renderResizeHandles(element)}
-            </div>
-          );
-        default:
-          return (
-            <div {...commonProps} className={`${commonProps.className} bg-gray-200`}>
-              Unknown element type: {element.type}
-              {isSelected && renderResizeHandles(element)}
-            </div>
-          );
-      }
-    };
-
-    return (
-      <ContextMenu key={element.id}>
-        <ContextMenuTrigger asChild>
-          {renderElementContent()}
-        </ContextMenuTrigger>
-        {element.type === "text" ? renderTextContextMenu(element) : renderDefaultContextMenu(element)}
-      </ContextMenu>
-    );
-  };
-
-  return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-full overflow-hidden"
-      onMouseDown={handleCanvasMouseDown}
-    >
-      <div 
-        ref={canvasRef}
-        className="absolute bg-white shadow-md"
-        style={{ 
-          width: `${slide.width || 1920}px`, 
-          height: `${slide.height || 1080}px`,
-          transform: `scale(${zoom})`,
-          transformOrigin: 'top left',
-        }}
-        onClick={handleCanvasClick}
-        onMouseMove={handleMouseMove}
-      >
-        {slide.elements.map(element => renderElement(element))}
-      </div>
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the selected element.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-}
+                  fontWeight
