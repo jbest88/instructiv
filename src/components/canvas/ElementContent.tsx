@@ -52,9 +52,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         padding: '4px',
         overflow: 'auto',
         boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start',
+        // Removed display: flex and alignment
       }}
     >
       <div
@@ -73,6 +71,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
       </div>
     </div>
   );
+  
 }
 
 // --- ButtonElementContent ---
