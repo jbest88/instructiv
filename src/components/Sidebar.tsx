@@ -46,9 +46,9 @@ export function Sidebar() {
         </Button>
       </div>
       
-      {sidebarOpen && (
+      {sidebarOpen ? (
         <>
-          {/* Scene selector dropdown */}
+          {/* Scene selector dropdown - Only visible when open */}
           <div className="p-3 border-b">
             <Select 
               value={currentScene.id} 
@@ -159,6 +159,39 @@ export function Sidebar() {
             </Button>
           </div>
         </>
+      ) : (
+        /* Mini version when sidebar is collapsed */
+        <div className="flex flex-col items-center gap-2 py-2 overflow-y-auto">
+          {sortedSlides.map((slide) => (
+            <Button
+              key={slide.id}
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-8 w-8 rounded-md border border-transparent",
+                currentSlide?.id === slide.id ? "border-primary bg-primary/10" : "hover:bg-accent"
+              )}
+              onClick={() => handleSelectSlide(slide.id)}
+              title={slide.title}
+            >
+              <div 
+                className="w-6 h-4 rounded-sm"
+                style={{ background: slide.background || '#ffffff' }}
+              />
+            </Button>
+          ))}
+          
+          {/* Add slide button - Mini version */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleAddSlide}
+            className="h-8 w-8 rounded-md text-muted-foreground hover:text-foreground"
+            title="Add Slide"
+          >
+            <Plus size={16} />
+          </Button>
+        </div>
       )}
     </div>
   );

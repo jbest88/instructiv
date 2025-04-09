@@ -27,7 +27,24 @@ export function Toolbar({ onPreview }: ToolbarProps) {
     handleCloseSlide,
   } = useProject();
 
+  const { sidebarOpen, toolboxOpen } = usePanels();
   const { user, signOut } = useAuth();
+
+  // Calculate available space for tabs based on sidebar state
+  const getTabsClass = () => {
+    let baseClass = "w-auto";
+    
+    // Add responsive classes based on sidebar/toolbox state
+    if (!sidebarOpen && !toolboxOpen) {
+      baseClass += " md:max-w-[80%]";
+    } else if (!sidebarOpen || !toolboxOpen) {
+      baseClass += " md:max-w-[70%]";
+    } else {
+      baseClass += " md:max-w-[60%]";
+    }
+    
+    return baseClass;
+  };
 
   return (
     <div className="flex flex-col border-b">
@@ -40,12 +57,12 @@ export function Toolbar({ onPreview }: ToolbarProps) {
           <span className="font-semibold text-lg mr-4">Instructiv</span>
         </div>
         
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex justify-center overflow-x-auto">
           {openSlides.length > 0 && (
             <Tabs 
               value={currentSlide?.id} 
               onValueChange={handleSelectSlide}
-              className="w-auto"
+              className={getTabsClass()}
             >
               <TabsList className="bg-background">
                 {openSlides.map(slide => (

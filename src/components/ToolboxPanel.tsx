@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Palette, Type, Image, Square, CircleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ToolboxPanelProps {
   isOpen: boolean;
@@ -433,9 +438,17 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
     );
   };
 
+  // Element types data for both full and mini views
+  const elementTypes = [
+    { type: "text", icon: <Type />, label: "Text" },
+    { type: "image", icon: <Image />, label: "Image" },
+    { type: "button", icon: <Square />, label: "Button" },
+    { type: "hotspot", icon: <CircleAlert />, label: "Hotspot" }
+  ];
+
   return (
     <div 
-      className={`bg-sidebar border-l border-sidebar-border transition-all duration-300 h-full flex flex-col ${
+      className={`h-full bg-sidebar border-l border-sidebar-border transition-all duration-300 ${
         isOpen ? "w-72" : "w-10"
       }`}
     >
@@ -450,7 +463,7 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
         </Button>
       </div>
 
-      {isOpen && (
+      {isOpen ? (
         <div className="flex-1 p-4 overflow-y-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -463,41 +476,19 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
                 <h3 className="text-sm font-medium">Add Elements</h3>
                 
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col items-center justify-center"
-                    onClick={() => handleAddElement("text")}
-                  >
-                    <Type className="h-8 w-8 mb-1" />
-                    <span className="text-xs">Text</span>
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col items-center justify-center"
-                    onClick={() => handleAddElement("image")}
-                  >
-                    <Image className="h-8 w-8 mb-1" />
-                    <span className="text-xs">Image</span>
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col items-center justify-center"
-                    onClick={() => handleAddElement("button")}
-                  >
-                    <Square className="h-8 w-8 mb-1" />
-                    <span className="text-xs">Button</span>
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col items-center justify-center"
-                    onClick={() => handleAddElement("hotspot")}
-                  >
-                    <CircleAlert className="h-8 w-8 mb-1" />
-                    <span className="text-xs">Hotspot</span>
-                  </Button>
+                  {elementTypes.map((element) => (
+                    <Button 
+                      key={element.type}
+                      variant="outline" 
+                      className="h-auto py-4 flex flex-col items-center justify-center"
+                      onClick={() => handleAddElement(element.type as any)}
+                    >
+                      <div className="h-8 w-8 mb-1 flex items-center justify-center">
+                        {element.icon}
+                      </div>
+                      <span className="text-xs">{element.label}</span>
+                    </Button>
+                  ))}
                 </div>
               </div>
             </TabsContent>
@@ -526,6 +517,29 @@ export function ToolboxPanel({ isOpen, onToggle }: ToolboxPanelProps) {
             </TabsContent>
           </Tabs>
         </div>
+      ) : (
+        /* Mini element buttons when collapsed */
+        <TooltipProvider delayDuration={300}>
+          <div className="flex flex-col items-center gap-2 py-2">
+            {elementTypes.map((element) => (
+              <Tooltip key={element.type}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleAddElement(element.type as any)}
+                  >
+                    {element.icon}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  Add {element.label}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        </TooltipProvider>
       )}
     </div>
   );
