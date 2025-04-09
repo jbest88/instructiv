@@ -7,6 +7,9 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
   ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubTrigger,
+  ContextMenuSubContent,
 } from "@/components/ui/context-menu";
 import {
   AlertDialog,
@@ -18,9 +21,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Trash } from "lucide-react";
+import { 
+  Scissors, 
+  Copy, 
+  Clipboard, 
+  ClipboardPaste, 
+  FilePlus, 
+  SquareEdit, 
+  Type, 
+  AlignLeft, 
+  AlignCenter, 
+  AlignRight, 
+  Plus, 
+  Palette, 
+  Link, 
+  Square,
+  Trash 
+} from "lucide-react";
 
 interface SlideCanvasProps {
   slide: Slide;
@@ -79,6 +103,9 @@ export function SlideCanvas({
 
   // Add a state for tracking which text element is being edited
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [isFontPopoverOpen, setIsFontPopoverOpen] = useState(false);
+  const [isParagraphPopoverOpen, setIsParagraphPopoverOpen] = useState(false);
+  const [isHyperlinkPopoverOpen, setIsHyperlinkPopoverOpen] = useState(false);
 
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
@@ -485,6 +512,72 @@ export function SlideCanvas({
     console.log("Send to back", element);
   };
 
+  // Add new text formatting actions
+  const handleCut = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element || element.type !== "text") return;
+    
+    // Store text in clipboard
+    navigator.clipboard.writeText(element.content)
+      .then(() => {
+        onUpdateElement(elementId, { content: "" });
+      })
+      .catch(err => {
+        console.error("Failed to cut text: ", err);
+      });
+  };
+
+  const handleCopy = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element || element.type !== "text") return;
+    
+    navigator.clipboard.writeText(element.content)
+      .catch(err => {
+        console.error("Failed to copy text: ", err);
+      });
+  };
+
+  const handlePaste = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element || element.type !== "text") return;
+    
+    navigator.clipboard.readText()
+      .then(clipText => {
+        onUpdateElement(elementId, { content: element.content + clipText });
+      })
+      .catch(err => {
+        console.error("Failed to paste text: ", err);
+      });
+  };
+
+  const handleExitEditText = (elementId: string) => {
+    if (editingElementId === elementId) {
+      finishEditing();
+    }
+  };
+
+  const applyFontStyle = (elementId: string, fontStyle: Partial<any>) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element || element.type !== "text") return;
+    
+    onUpdateElement(elementId, fontStyle);
+    setIsFontPopoverOpen(false);
+  };
+
+  const applyParagraphStyle = (elementId: string, align: "left" | "center" | "right") => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element || element.type !== "text") return;
+    
+    onUpdateElement(elementId, { align });
+    setIsParagraphPopoverOpen(false);
+  };
+
+  const applyHyperlink = (elementId: string, url: string) => {
+    console.log(`Applying hyperlink ${url} to element ${elementId}`);
+    // This would need more implementation to actually store and render hyperlinks
+    setIsHyperlinkPopoverOpen(false);
+  };
+
   // Render resize handles for the selected element
   const renderResizeHandles = (element: SlideElement) => {
     const handles = [
@@ -506,6 +599,227 @@ export function SlideCanvas({
       />
     ));
   };
+
+  // Render text context menu
+  const renderTextContextMenu = (element: SlideElement) => (
+    <ContextMenuContent className="w-64">
+      {/* Cut, Copy, Paste section */}
+      <ContextMenuItem onClick={() => handleCut(element.id)}>
+        <Scissors className="mr-2 h-4 w-4 text-muted-foreground" />
+        <span className="underline">C</span>ut
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => handleCopy(element.id)}>
+        <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
+        <span className="underline">C</span>opy
+      </ContextMenuItem>
+      
+      {/* Paste Options section */}
+      <div className="bg-muted/50 -mx-1 px-1 py-1 rounded-sm">
+        <div className="text-xs text-muted-foreground px-2 mb-1">Paste Options:</div>
+        <ContextMenuItem onClick={() => handlePaste(element.id)}>
+          <ClipboardPaste className="mr-2 h-4 w-4 text-orange-400" />
+          Paste
+        </ContextMenuItem>
+      </div>
+      
+      <ContextMenuSeparator />
+      
+      {/* Exit Edit Text option */}
+      <ContextMenuItem onClick={() => handleExitEditText(element.id)}>
+        <SquareEdit className="mr-2 h-4 w-4 text-muted-foreground" />
+        Exit Edit Text
+      </ContextMenuItem>
+      
+      <ContextMenuSeparator />
+      
+      {/* Font section */}
+      <Popover open={isFontPopoverOpen} onOpenChange={setIsFontPopoverOpen}>
+        <PopoverTrigger asChild>
+          <ContextMenuItem onClick={() => setIsFontPopoverOpen(true)} className="cursor-default">
+            <Type className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span className="underline">F</span>ont...
+          </ContextMenuItem>
+        </PopoverTrigger>
+        <PopoverContent className="w-64">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Font Settings</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-sm">Size</label>
+                  <Input 
+                    type="number" 
+                    min={8} 
+                    max={72} 
+                    defaultValue={element.type === "text" ? element.fontSize || 16 : 16}
+                    onChange={(e) => applyFontStyle(element.id, { fontSize: parseInt(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm">Color</label>
+                  <Input 
+                    type="color" 
+                    defaultValue={element.type === "text" ? element.fontColor || "#000000" : "#000000"}
+                    onChange={(e) => applyFontStyle(element.id, { fontColor: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  className={`px-2 py-1 border rounded ${element.type === "text" && element.fontWeight === "bold" ? "bg-primary text-primary-foreground" : ""}`}
+                  onClick={() => applyFontStyle(element.id, { fontWeight: element.type === "text" && element.fontWeight === "bold" ? "normal" : "bold" })}
+                >
+                  B
+                </button>
+                <button 
+                  className={`px-2 py-1 border rounded ${element.type === "text" && element.fontStyle === "italic" ? "bg-primary text-primary-foreground" : ""}`}
+                  onClick={() => applyFontStyle(element.id, { fontStyle: element.type === "text" && element.fontStyle === "italic" ? "normal" : "italic" })}
+                >
+                  I
+                </button>
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+      
+      {/* Paragraph section */}
+      <Popover open={isParagraphPopoverOpen} onOpenChange={setIsParagraphPopoverOpen}>
+        <PopoverTrigger asChild>
+          <ContextMenuItem onClick={() => setIsParagraphPopoverOpen(true)} className="cursor-default">
+            <AlignLeft className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span className="underline">P</span>aragraph...
+          </ContextMenuItem>
+        </PopoverTrigger>
+        <PopoverContent className="w-64">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Paragraph Settings</h4>
+              <div className="flex gap-2">
+                <button 
+                  className={`px-2 py-1 border rounded ${element.type === "text" && element.align === "left" ? "bg-primary text-primary-foreground" : ""}`}
+                  onClick={() => applyParagraphStyle(element.id, "left")}
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </button>
+                <button 
+                  className={`px-2 py-1 border rounded ${element.type === "text" && element.align === "center" ? "bg-primary text-primary-foreground" : ""}`}
+                  onClick={() => applyParagraphStyle(element.id, "center")}
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </button>
+                <button 
+                  className={`px-2 py-1 border rounded ${element.type === "text" && element.align === "right" ? "bg-primary text-primary-foreground" : ""}`}
+                  onClick={() => applyParagraphStyle(element.id, "right")}
+                >
+                  <AlignRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+      
+      <ContextMenuSeparator />
+      
+      {/* Style options */}
+      <ContextMenuItem>
+        <Palette className="mr-2 h-4 w-4 text-muted-foreground" />
+        Apply style
+      </ContextMenuItem>
+      <ContextMenuItem>
+        <Palette className="mr-2 h-4 w-4 text-muted-foreground" />
+        Update style from selection
+      </ContextMenuItem>
+      <ContextMenuItem>
+        <Plus className="mr-2 h-4 w-4 text-muted-foreground" />
+        Create custom style from selection...
+      </ContextMenuItem>
+      
+      <ContextMenuSeparator />
+      
+      {/* Hyperlink section */}
+      <Popover open={isHyperlinkPopoverOpen} onOpenChange={setIsHyperlinkPopoverOpen}>
+        <PopoverTrigger asChild>
+          <ContextMenuItem onClick={() => setIsHyperlinkPopoverOpen(true)} className="cursor-default">
+            <Link className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span className="underline">H</span>yperlink...
+          </ContextMenuItem>
+        </PopoverTrigger>
+        <PopoverContent className="w-64">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Insert Hyperlink</h4>
+              <Input 
+                placeholder="https://example.com" 
+                onChange={(e) => {}}
+              />
+              <div className="flex justify-end">
+                <button 
+                  className="px-2 py-1 bg-primary text-primary-foreground rounded"
+                  onClick={() => {
+                    const input = document.querySelector('input[placeholder="https://example.com"]') as HTMLInputElement;
+                    if (input) {
+                      applyHyperlink(element.id, input.value);
+                    }
+                  }}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+      
+      {/* Format Shape option */}
+      <ContextMenuItem>
+        <Square className="mr-2 h-4 w-4 text-muted-foreground" />
+        Format Shape
+      </ContextMenuItem>
+      
+      <ContextMenuSeparator />
+      
+      {/* Delete option */}
+      <ContextMenuItem 
+        onClick={() => {
+          setElementToDelete(element.id);
+          setIsDeleteDialogOpen(true);
+        }} 
+        className="text-red-500"
+      >
+        <Trash className="mr-2 h-4 w-4" />
+        Delete
+      </ContextMenuItem>
+    </ContextMenuContent>
+  );
+
+  // Render default context menu for non-text elements
+  const renderDefaultContextMenu = (element: SlideElement) => (
+    <ContextMenuContent>
+      <ContextMenuItem onClick={() => onSelectElement(element.id)}>Select</ContextMenuItem>
+      {element.type === "text" && (
+        <ContextMenuItem onClick={() => setEditingElementId(element.id)}>Edit Text</ContextMenuItem>
+      )}
+      {element.type === "button" && (
+        <ContextMenuItem onClick={() => setEditingElementId(element.id)}>Edit Button</ContextMenuItem>
+      )}
+      <ContextMenuItem onClick={() => handleDuplicate(element.id)}>Duplicate</ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem onClick={() => handleBringToFront(element.id)}>Bring to Front</ContextMenuItem>
+      <ContextMenuItem onClick={() => handleSendToBack(element.id)}>Send to Back</ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem 
+        onClick={() => {
+          setElementToDelete(element.id);
+          setIsDeleteDialogOpen(true);
+        }} 
+        className="text-red-500"
+      >
+        Delete
+      </ContextMenuItem>
+    </ContextMenuContent>
+  );
 
   // Render individual element based on its type
   const renderElement = (element: SlideElement) => {
@@ -683,29 +997,7 @@ export function SlideCanvas({
     return (
       <ContextMenu key={element.id}>
         <ContextMenuTrigger className="w-full h-full">{renderElementContent()}</ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem onClick={() => onSelectElement(element.id)}>Select</ContextMenuItem>
-          {element.type === "text" && (
-            <ContextMenuItem onClick={() => setEditingElementId(element.id)}>Edit Text</ContextMenuItem>
-          )}
-          {element.type === "button" && (
-            <ContextMenuItem onClick={() => setEditingElementId(element.id)}>Edit Button</ContextMenuItem>
-          )}
-          <ContextMenuItem onClick={() => handleDuplicate(element.id)}>Duplicate</ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem onClick={() => handleBringToFront(element.id)}>Bring to Front</ContextMenuItem>
-          <ContextMenuItem onClick={() => handleSendToBack(element.id)}>Send to Back</ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem 
-            onClick={() => {
-              setElementToDelete(element.id);
-              setIsDeleteDialogOpen(true);
-            }} 
-            className="text-red-500"
-          >
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
+        {element.type === "text" ? renderTextContextMenu(element) : renderDefaultContextMenu(element)}
       </ContextMenu>
     );
   };
