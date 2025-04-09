@@ -84,12 +84,12 @@ export function SlideElementComponent({
   onDoubleClick={(e) => onDoubleClick(e, element)}
   style={{
     ...baseStyle,
-    display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    display: 'block', // ✅ This is the real fix
+    // Remove alignItems/justifyContent — they are irrelevant
   }}
   className={`element ${isSelected ? 'outline outline-2 outline-primary' : ''}`}
 >
+
 
           <ElementContent 
             element={element} 
