@@ -37,7 +37,7 @@ export function Toolbar({ onPreview }: ToolbarProps) {
       {/* Main toolbar content */}
       <div className="flex items-center justify-between gap-4 p-2">
         <div className="flex items-center">
-          <span className="font-semibold text-lg mr-4">Narratify</span>
+          <span className="font-semibold text-lg mr-4">Instructiv</span>
         </div>
         
         <div className="flex-1 flex justify-center">

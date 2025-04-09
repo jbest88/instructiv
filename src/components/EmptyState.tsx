@@ -8,7 +8,7 @@ export function EmptyState() {
   return (
     <div className="flex flex-col h-screen items-center justify-center bg-background">
       <div className="text-center space-y-4 max-w-md p-8 rounded-lg">
-        <h1 className="text-2xl font-bold">Welcome to Narratify</h1>
+        <h1 className="text-2xl font-bold">Welcome to Instructiv</h1>
         <p className="text-muted-foreground">
           No scenes have been created yet. Create your first scene to get started.
         </p>
