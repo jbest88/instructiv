@@ -52,11 +52,9 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         padding: '4px',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        backgroundColor: '#fffae6', // 👈 yellow highlight to debug
-        border: '1px solid red', // 👈 red border to show container edges
-        display: 'block',
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
+        backgroundColor: '#fffae6',
+        border: '1px solid red',
+        display: 'block'
       }}
     >
       <div
@@ -69,14 +67,13 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
           width: '100%',
-          backgroundColor: '#e6fffa' // 👈 greenish to show text box
+          backgroundColor: '#e6fffa'
         }}
       >
         {element.content || '\u00A0'}
       </div>
     </div>
   );
-  
 }
 
 // --- ButtonElementContent ---
