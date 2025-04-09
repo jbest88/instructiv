@@ -1,4 +1,3 @@
-
 import { useProject } from "@/contexts/project/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
@@ -25,19 +24,15 @@ export function MainContent() {
 
   // Zoom controls with better step values for smooth zooming
   const handleZoomIn = () => {
-    setCanvasZoom(prev => {
-      const newZoom = Math.min(prev + 0.1, 3);
-      centerCanvas(newZoom);
-      return newZoom;
-    });
+    const newZoom = Math.min(canvasZoom + 0.1, 3);
+    setCanvasZoom(newZoom);
+    centerCanvas(newZoom);
   };
 
   const handleZoomOut = () => {
-    setCanvasZoom(prev => {
-      const newZoom = Math.max(prev - 0.1, 0.1);
-      centerCanvas(newZoom);
-      return newZoom;
-    });
+    const newZoom = Math.max(canvasZoom - 0.1, 0.1);
+    setCanvasZoom(newZoom);
+    centerCanvas(newZoom);
   };
 
   // Reset zoom to 100% (centers canvas automatically)
