@@ -1,4 +1,3 @@
-
 import { useProject } from "@/contexts/project/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
@@ -6,7 +5,7 @@ import { Timeline } from "@/components/Timeline";
 import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Maximize2, Move } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function MainContent() {
   const { 
@@ -22,24 +21,64 @@ export function MainContent() {
   } = useProject();
   
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [canvasCenter, setCanvasCenter] = useState({ x: 0, y: 0 });
+
+  // Keep track of the canvas scroll position relative to the center
+  useEffect(() => {
+    if (currentSlide && canvasContainerRef.current) {
+      const container = canvasContainerRef.current;
+      
+      const centerX = container.scrollLeft + container.clientWidth / 2;
+      const centerY = container.scrollTop + container.clientHeight / 2;
+      
+      // Calculate position relative to canvas
+      const canvasWidth = 1920 * canvasZoom;
+      const canvasHeight = 1200 * canvasZoom;
+      
+      // Store as percentage of canvas dimensions
+      const centerPctX = centerX / canvasWidth;
+      const centerPctY = centerY / canvasHeight;
+      
+      setCanvasCenter({ x: centerPctX, y: centerPctY });
+    }
+  }, [currentSlide]);
 
   // Zoom controls with better step values for smooth zooming
   const handleZoomIn = () => {
     const newZoom = Math.min(canvasZoom + 0.1, 3);
     setCanvasZoom(newZoom);
-    centerCanvas(newZoom);
+    maintainCenterOnZoom(newZoom);
   };
 
   const handleZoomOut = () => {
     const newZoom = Math.max(canvasZoom - 0.1, 0.1);
     setCanvasZoom(newZoom);
-    centerCanvas(newZoom);
+    maintainCenterOnZoom(newZoom);
   };
 
   // Reset zoom to 100% (centers canvas automatically)
   const handleResetZoom = () => {
     setCanvasZoom(1);
     centerCanvas(1);
+  };
+  
+  // Function to maintain the same center point when zooming
+  const maintainCenterOnZoom = (newZoom: number) => {
+    if (!canvasContainerRef.current || !currentSlide) return;
+    
+    const container = canvasContainerRef.current;
+    
+    // Calculate new canvas dimensions
+    const newCanvasWidth = 1920 * newZoom;
+    const newCanvasHeight = 1200 * newZoom;
+    
+    // Apply the new scroll position to maintain the same center point
+    const newScrollX = (newCanvasWidth * canvasCenter.x) - (container.clientWidth / 2);
+    const newScrollY = (newCanvasHeight * canvasCenter.y) - (container.clientHeight / 2);
+    
+    // Apply the scroll position
+    container.scrollLeft = Math.max(0, newScrollX);
+    container.scrollTop = Math.max(0, newScrollY);
   };
   
   // Function to center the canvas in the viewport
@@ -57,17 +96,20 @@ export function MainContent() {
     // Apply the scroll position
     container.scrollLeft = Math.max(0, scrollLeft);
     container.scrollTop = Math.max(0, scrollTop);
+    
+    // Update the center point
+    setCanvasCenter({ x: 0.5, y: 0.5 });
   };
   
   // Center canvas when zoom changes or on window resize
   useEffect(() => {
     if (currentSlide) {
-      centerCanvas(canvasZoom);
+      maintainCenterOnZoom(canvasZoom);
     }
     
     const handleResize = () => {
       if (currentSlide) {
-        centerCanvas(canvasZoom);
+        maintainCenterOnZoom(canvasZoom);
       }
     };
     
@@ -121,7 +163,6 @@ export function MainContent() {
           <div 
             ref={canvasContainerRef} 
             className="absolute inset-0 overflow-auto"
-            style={{ position: 'relative' }}
           >
             <SlideCanvas 
               slide={currentSlide}
