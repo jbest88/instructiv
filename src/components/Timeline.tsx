@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Eye, ChevronUp, ChevronDown, Lock, Unlock } from "lucide-react";
 import { Slide, TimelineItem, SlideElement } from "@/utils/slideTypes";
@@ -14,16 +13,6 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from "@/components/ui/context-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface TimelineProps {
   currentSlide: Slide;
@@ -43,10 +32,6 @@ export function Timeline({ currentSlide }: TimelineProps) {
   const [timelineScale, setTimelineScale] = useState(40); // pixels per second
   const [timelineDuration, setTimelineDuration] = useState(30); // seconds
   
-  // Delete confirmation dialog
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [elementToDelete, setElementToDelete] = useState<string | null>(null);
-
   // Create or update timeline items from elements if needed
   useEffect(() => {
     // If slide has no timeline items, create them from elements
@@ -267,24 +252,9 @@ export function Timeline({ currentSlide }: TimelineProps) {
     console.log("Duplicate element from timeline", elementId);
   };
 
-  // Handle element deletion (Show confirmation first)
+  // Handle element deletion
   const handleTimelineElementDelete = (elementId: string) => {
-    setElementToDelete(elementId);
-    setIsDeleteDialogOpen(true);
-  };
-  
-  // Handle delete confirmation
-  const handleDeleteConfirm = () => {
-    if (elementToDelete) {
-      handleDeleteElement(elementToDelete);
-      setElementToDelete(null);
-    }
-    setIsDeleteDialogOpen(false);
-  };
-
-  // Prevent default context menu on timeline elements
-  const handleTimelineContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
+    handleDeleteElement(elementId);
   };
   
   return (
@@ -399,12 +369,11 @@ export function Timeline({ currentSlide }: TimelineProps) {
                       
                       {/* Element name */}
                       <ContextMenu>
-                        <ContextMenuTrigger asChild>
+                        <ContextMenuTrigger>
                           <div 
                             className={`w-16 text-xs p-1 border-r truncate cursor-pointer ${
                               item.linkedElementId === selectedElementId ? 'bg-blue-50 font-medium' : ''
                             }`}
-                            onContextMenu={handleTimelineContextMenu}
                             onClick={() => handleTimelineElementSelect(item.linkedElementId)}
                           >
                             {item.name}
@@ -437,7 +406,7 @@ export function Timeline({ currentSlide }: TimelineProps) {
                       
                       {/* Timeline bar with draggable edges */}
                       <ContextMenu>
-                        <ContextMenuTrigger asChild>
+                        <ContextMenuTrigger>
                           <div className="flex-1 relative h-full pl-1">
                             <div 
                               className={`absolute top-1.5 h-6 bg-blue-100 border border-blue-500 rounded flex items-center text-[10px] ${
@@ -448,7 +417,6 @@ export function Timeline({ currentSlide }: TimelineProps) {
                                 width: `${width}px`,
                                 cursor: item.isLocked ? 'not-allowed' : 'move'
                               }}
-                              onContextMenu={handleTimelineContextMenu}
                               onMouseDown={(e) => handleDragStart(e, item.id, 'move')}
                             >
                               <div className="px-1 truncate flex-1">
@@ -507,24 +475,6 @@ export function Timeline({ currentSlide }: TimelineProps) {
           </div>
         </div>
       </CollapsibleContent>
-      
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Element</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this element? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Collapsible>
   );
 }

@@ -80,6 +80,7 @@ export function SlideCanvas({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [contextMenuElement, setContextMenuElement] = useState<SlideElement | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [elementToDelete, setElementToDelete] = useState<string | null>(null);
 
@@ -208,12 +209,24 @@ export function SlideCanvas({
   };
 
   // Handle element right-click for context menu
-  const handleElementContextMenu = (e: React.MouseEvent, element: SlideElement) => {
-    // This just prevents the browser's default context menu
+  const handleElementRightClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    element: SlideElement
+  ) => {
     e.preventDefault();
+    e.stopPropagation();
+    setContextMenuElement(element);
     onSelectElement(element.id);
+  };
+
+  // Handle context menu actions
+  const handleDuplicate = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
     
-    // The actual menu is shown by the ContextMenuTrigger component
+    // Duplicate functionality would be implemented here
+    // Currently just logging to show the action would work
+    console.log("Duplicate element", element);
   };
 
   const handleDeleteConfirm = () => {
@@ -237,31 +250,24 @@ export function SlideCanvas({
     
     console.log("Send to back", element);
   };
-  
-  const handleDuplicate = (elementId: string) => {
-    const element = slide.elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    console.log("Duplicate element", element);
-  };
 
   // Handle mouse move for dragging or resizing elements
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     // Handle element dragging
     if (dragState.isDragging && selectedElementId) {
-      const deltaX = e.clientX - dragState.startX;
-      const deltaY = e.clientY - dragState.startY;
+      const deltaX = (e.clientX - dragState.startX) / zoom;
+      const deltaY = (e.clientY - dragState.startY) / zoom;
       
       onUpdateElement(selectedElementId, {
-        x: dragState.startElementX + (deltaX / zoom),
-        y: dragState.startElementY + (deltaY / zoom)
+        x: dragState.startElementX + deltaX,
+        y: dragState.startElementY + deltaY
       });
     }
     
     // Handle element resizing
     if (resizeState.isResizing && selectedElementId) {
-      const deltaX = e.clientX - resizeState.startX;
-      const deltaY = e.clientY - resizeState.startY;
+      const deltaX = (e.clientX - resizeState.startX) / zoom;
+      const deltaY = (e.clientY - resizeState.startY) / zoom;
       const element = slide.elements.find(el => el.id === selectedElementId);
       
       if (!element) return;
@@ -274,38 +280,38 @@ export function SlideCanvas({
       // Adjust based on the handle being dragged
       switch (resizeState.handle) {
         case "n":
-          newHeight = Math.max(10, resizeState.startHeight - (deltaY / zoom));
-          newY = resizeState.startElementY + (deltaY / zoom);
+          newHeight = Math.max(10, resizeState.startHeight - deltaY);
+          newY = resizeState.startElementY + deltaY;
           break;
         case "s":
-          newHeight = Math.max(10, resizeState.startHeight + (deltaY / zoom));
+          newHeight = Math.max(10, resizeState.startHeight + deltaY);
           break;
         case "e":
-          newWidth = Math.max(10, resizeState.startWidth + (deltaX / zoom));
+          newWidth = Math.max(10, resizeState.startWidth + deltaX);
           break;
         case "w":
-          newWidth = Math.max(10, resizeState.startWidth - (deltaX / zoom));
-          newX = resizeState.startElementX + (deltaX / zoom);
+          newWidth = Math.max(10, resizeState.startWidth - deltaX);
+          newX = resizeState.startElementX + deltaX;
           break;
         case "ne":
-          newWidth = Math.max(10, resizeState.startWidth + (deltaX / zoom));
-          newHeight = Math.max(10, resizeState.startHeight - (deltaY / zoom));
-          newY = resizeState.startElementY + (deltaY / zoom);
+          newWidth = Math.max(10, resizeState.startWidth + deltaX);
+          newHeight = Math.max(10, resizeState.startHeight - deltaY);
+          newY = resizeState.startElementY + deltaY;
           break;
         case "nw":
-          newWidth = Math.max(10, resizeState.startWidth - (deltaX / zoom));
-          newHeight = Math.max(10, resizeState.startHeight - (deltaY / zoom));
-          newX = resizeState.startElementX + (deltaX / zoom);
-          newY = resizeState.startElementY + (deltaY / zoom);
+          newWidth = Math.max(10, resizeState.startWidth - deltaX);
+          newHeight = Math.max(10, resizeState.startHeight - deltaY);
+          newX = resizeState.startElementX + deltaX;
+          newY = resizeState.startElementY + deltaY;
           break;
         case "se":
-          newWidth = Math.max(10, resizeState.startWidth + (deltaX / zoom));
-          newHeight = Math.max(10, resizeState.startHeight + (deltaY / zoom));
+          newWidth = Math.max(10, resizeState.startWidth + deltaX);
+          newHeight = Math.max(10, resizeState.startHeight + deltaY);
           break;
         case "sw":
-          newWidth = Math.max(10, resizeState.startWidth - (deltaX / zoom));
-          newHeight = Math.max(10, resizeState.startHeight + (deltaY / zoom));
-          newX = resizeState.startElementX + (deltaX / zoom);
+          newWidth = Math.max(10, resizeState.startWidth - deltaX);
+          newHeight = Math.max(10, resizeState.startHeight + deltaY);
+          newX = resizeState.startElementX + deltaX;
           break;
       }
       
@@ -319,12 +325,8 @@ export function SlideCanvas({
     
     // Handle canvas panning with space + drag or middle mouse button
     if (isPanning && containerRef.current) {
-      const deltaX = e.clientX - panStart.x;
-      const deltaY = e.clientY - panStart.y;
-      
-      containerRef.current.scrollLeft -= deltaX;
-      containerRef.current.scrollTop -= deltaY;
-      
+      containerRef.current.scrollLeft += panStart.x - e.clientX;
+      containerRef.current.scrollTop += panStart.y - e.clientY;
       setPanStart({ x: e.clientX, y: e.clientY });
     }
   };
@@ -377,10 +379,8 @@ export function SlideCanvas({
 
   // Canvas right-click handler to prevent default context menu
   const handleCanvasContextMenu = (e: React.MouseEvent) => {
-    // Only prevent default if it's the background canvas, not an element
-    if (e.target === canvasRef.current) {
-      e.preventDefault();
-    }
+    // We're no longer preventing the default event - let context menu work
+    // e.preventDefault();
   };
 
   // Render resize handles for the selected element
@@ -420,6 +420,7 @@ export function SlideCanvas({
     // Add common event listeners to all elements
     const commonProps = {
       onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => handleElementMouseDown(e, element),
+      onContextMenu: (e: React.MouseEvent<HTMLDivElement>) => handleElementRightClick(e, element),
       style: baseStyle,
       className: `element ${isSelected ? 'outline outline-2 outline-primary' : ''}`
     };
@@ -501,14 +502,7 @@ export function SlideCanvas({
 
     return (
       <ContextMenu key={element.id}>
-        <ContextMenuTrigger asChild>
-          <div 
-            onContextMenu={(e) => handleElementContextMenu(e, element)}
-            className="w-full h-full"
-          >
-            {renderElementContent()}
-          </div>
-        </ContextMenuTrigger>
+        <ContextMenuTrigger className="w-full h-full">{renderElementContent()}</ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onClick={() => onSelectElement(element.id)}>Select</ContextMenuItem>
           <ContextMenuItem onClick={() => handleDuplicate(element.id)}>Duplicate</ContextMenuItem>
@@ -534,7 +528,7 @@ export function SlideCanvas({
     <>
       <div
         ref={containerRef}
-        className="slide-canvas-container flex-1 overflow-auto"
+        className="slide-canvas-container"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
@@ -550,7 +544,6 @@ export function SlideCanvas({
           }}
           onClick={handleCanvasClick}
           onMouseDown={handleCanvasMouseDown}
-          onContextMenu={handleCanvasContextMenu}
         >
           {slide.elements.map(renderElement)}
         </div>
