@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Eye, ChevronUp, ChevronDown, Lock, Unlock } from "lucide-react";
 import { Slide, TimelineItem, SlideElement } from "@/utils/slideTypes";
@@ -7,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { usePanels } from "@/contexts/PanelContext";
 import { useProject } from "@/contexts/project";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 
 interface TimelineProps {
   currentSlide: Slide;
@@ -15,7 +21,7 @@ interface TimelineProps {
 export function Timeline({ currentSlide }: TimelineProps) {
   const [tab, setTab] = useState("timeline");
   const { timelineOpen, setTimelineOpen } = usePanels();
-  const { handleUpdateSlide, selectedElementId } = useProject();
+  const { handleUpdateSlide, selectedElementId, setSelectedElementId, handleDeleteElement } = useProject();
   
   // Refs for timeline item dragging
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -234,6 +240,22 @@ export function Timeline({ currentSlide }: TimelineProps) {
   function zoomOutTimeline() {
     setTimelineScale(prev => Math.max(prev - 10, 20));
   }
+
+  // Handle element selection in timeline
+  const handleTimelineElementSelect = (elementId: string) => {
+    setSelectedElementId(elementId);
+  };
+
+  // Handle element duplication
+  const handleTimelineElementDuplicate = (elementId: string) => {
+    // Duplicate functionality would be implemented here
+    console.log("Duplicate element from timeline", elementId);
+  };
+
+  // Handle element deletion
+  const handleTimelineElementDelete = (elementId: string) => {
+    handleDeleteElement(elementId);
+  };
   
   return (
     <Collapsible
@@ -346,50 +368,105 @@ export function Timeline({ currentSlide }: TimelineProps) {
                       </div>
                       
                       {/* Element name */}
-                      <div 
-                        className={`w-16 text-xs p-1 border-r truncate ${
-                          item.linkedElementId === selectedElementId ? 'bg-blue-50 font-medium' : ''
-                        }`}
-                      >
-                        {item.name}
-                      </div>
+                      <ContextMenu>
+                        <ContextMenuTrigger>
+                          <div 
+                            className={`w-16 text-xs p-1 border-r truncate cursor-pointer ${
+                              item.linkedElementId === selectedElementId ? 'bg-blue-50 font-medium' : ''
+                            }`}
+                            onClick={() => handleTimelineElementSelect(item.linkedElementId)}
+                          >
+                            {item.name}
+                          </div>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleTimelineElementSelect(item.linkedElementId)}>
+                            Select
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleTimelineElementDuplicate(item.linkedElementId)}>
+                            Duplicate
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
+                          <ContextMenuItem onClick={() => {}} disabled={item.isLocked}>
+                            Bring to Front
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => {}} disabled={item.isLocked}>
+                            Send to Back
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
+                          <ContextMenuItem 
+                            onClick={() => handleTimelineElementDelete(item.linkedElementId)}
+                            className="text-red-500"
+                            disabled={item.isLocked}
+                          >
+                            Delete
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
                       
                       {/* Timeline bar with draggable edges */}
-                      <div className="flex-1 relative h-full pl-1">
-                        <div 
-                          className={`absolute top-1.5 h-6 bg-blue-100 border border-blue-500 rounded flex items-center text-[10px] ${
-                            item.linkedElementId === selectedElementId ? 'border-blue-700 bg-blue-200' : ''
-                          } ${item.isLocked ? 'opacity-50' : ''}`} 
-                          style={{ 
-                            left: `${startPosition}px`, 
-                            width: `${width}px`,
-                            cursor: item.isLocked ? 'not-allowed' : 'move'
-                          }}
-                          onMouseDown={(e) => handleDragStart(e, item.id, 'move')}
-                        >
-                          <div className="px-1 truncate flex-1">
-                            {width > 50 ? item.name : ''}
+                      <ContextMenu>
+                        <ContextMenuTrigger>
+                          <div className="flex-1 relative h-full pl-1">
+                            <div 
+                              className={`absolute top-1.5 h-6 bg-blue-100 border border-blue-500 rounded flex items-center text-[10px] ${
+                                item.linkedElementId === selectedElementId ? 'border-blue-700 bg-blue-200' : ''
+                              } ${item.isLocked ? 'opacity-50' : ''}`} 
+                              style={{ 
+                                left: `${startPosition}px`, 
+                                width: `${width}px`,
+                                cursor: item.isLocked ? 'not-allowed' : 'move'
+                              }}
+                              onMouseDown={(e) => handleDragStart(e, item.id, 'move')}
+                            >
+                              <div className="px-1 truncate flex-1">
+                                {width > 50 ? item.name : ''}
+                              </div>
+                              
+                              {/* Left resizer for start time */}
+                              <div 
+                                className="absolute left-0 top-0 w-3 h-full cursor-ew-resize"
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  handleDragStart(e, item.id, 'start');
+                                }}
+                              ></div>
+                              
+                              {/* Right resizer for end time */}
+                              <div 
+                                className="absolute right-0 top-0 w-3 h-full cursor-ew-resize"
+                                onMouseDown={(e) => {
+                                  e.stopPropagation();
+                                  handleDragStart(e, item.id, 'end');
+                                }}
+                              ></div>
+                            </div>
                           </div>
-                          
-                          {/* Left resizer for start time */}
-                          <div 
-                            className="absolute left-0 top-0 w-3 h-full cursor-ew-resize"
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              handleDragStart(e, item.id, 'start');
-                            }}
-                          ></div>
-                          
-                          {/* Right resizer for end time */}
-                          <div 
-                            className="absolute right-0 top-0 w-3 h-full cursor-ew-resize"
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                              handleDragStart(e, item.id, 'end');
-                            }}
-                          ></div>
-                        </div>
-                      </div>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleTimelineElementSelect(item.linkedElementId)}>
+                            Select
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleTimelineElementDuplicate(item.linkedElementId)}>
+                            Duplicate
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
+                          <ContextMenuItem onClick={() => {}} disabled={item.isLocked}>
+                            Bring to Front
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => {}} disabled={item.isLocked}>
+                            Send to Back
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
+                          <ContextMenuItem 
+                            onClick={() => handleTimelineElementDelete(item.linkedElementId)}
+                            className="text-red-500"
+                            disabled={item.isLocked}
+                          >
+                            Delete
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
                     </div>
                   );
                 })

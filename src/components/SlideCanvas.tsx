@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -8,6 +9,17 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from "@/components/ui/context-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash } from "lucide-react";
 
 interface SlideCanvasProps {
   slide: Slide;
@@ -69,6 +81,8 @@ export function SlideCanvas({
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenuElement, setContextMenuElement] = useState<SlideElement | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [elementToDelete, setElementToDelete] = useState<string | null>(null);
 
   const selectedElement = selectedElementId 
     ? slide.elements.find(el => el.id === selectedElementId) 
@@ -85,7 +99,10 @@ export function SlideCanvas({
         switch (e.key) {
           case "Delete":
           case "Backspace":
-            onDeleteElement(selectedElementId);
+            // Show delete confirmation instead of immediate deletion
+            setElementToDelete(selectedElementId);
+            setIsDeleteDialogOpen(true);
+            e.preventDefault();
             break;
           case "ArrowLeft":
             onUpdateElement(selectedElementId, { x: selectedElement.x - MOVE_AMOUNT });
@@ -212,11 +229,18 @@ export function SlideCanvas({
     console.log("Duplicate element", element);
   };
 
+  const handleDeleteConfirm = () => {
+    if (elementToDelete) {
+      onDeleteElement(elementToDelete);
+      setElementToDelete(null);
+    }
+    setIsDeleteDialogOpen(false);
+  };
+
   const handleBringToFront = (elementId: string) => {
     const element = slide.elements.find(el => el.id === elementId);
     if (!element) return;
     
-    // Bring to front functionality would be implemented here
     console.log("Bring to front", element);
   };
 
@@ -224,7 +248,6 @@ export function SlideCanvas({
     const element = slide.elements.find(el => el.id === elementId);
     if (!element) return;
     
-    // Send to back functionality would be implemented here
     console.log("Send to back", element);
   };
 
@@ -356,7 +379,8 @@ export function SlideCanvas({
 
   // Canvas right-click handler to prevent default context menu
   const handleCanvasContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
+    // We're no longer preventing the default event - let context menu work
+    // e.preventDefault();
   };
 
   // Render resize handles for the selected element
@@ -478,7 +502,7 @@ export function SlideCanvas({
 
     return (
       <ContextMenu key={element.id}>
-        <ContextMenuTrigger>{renderElementContent()}</ContextMenuTrigger>
+        <ContextMenuTrigger className="w-full h-full">{renderElementContent()}</ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onClick={() => onSelectElement(element.id)}>Select</ContextMenuItem>
           <ContextMenuItem onClick={() => handleDuplicate(element.id)}>Duplicate</ContextMenuItem>
@@ -486,35 +510,62 @@ export function SlideCanvas({
           <ContextMenuItem onClick={() => handleBringToFront(element.id)}>Bring to Front</ContextMenuItem>
           <ContextMenuItem onClick={() => handleSendToBack(element.id)}>Send to Back</ContextMenuItem>
           <ContextMenuSeparator />
-          <ContextMenuItem onClick={() => onDeleteElement(element.id)} className="text-red-500">Delete</ContextMenuItem>
+          <ContextMenuItem 
+            onClick={() => {
+              setElementToDelete(element.id);
+              setIsDeleteDialogOpen(true);
+            }} 
+            className="text-red-500"
+          >
+            Delete
+          </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
     );
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="slide-canvas-container"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onContextMenu={handleCanvasContextMenu}
-    >
+    <>
       <div
-        ref={canvasRef}
-        className="slide-canvas relative bg-white shadow-md mx-auto"
-        style={{
-          width: 1920 * zoom,
-          height: 1200 * zoom,
-          transform: `scale(${zoom})`,
-          transformOrigin: '0 0',
-          background: slide.background || '#ffffff'
-        }}
-        onClick={handleCanvasClick}
-        onMouseDown={handleCanvasMouseDown}
+        ref={containerRef}
+        className="slide-canvas-container"
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
       >
-        {slide.elements.map(renderElement)}
+        <div
+          ref={canvasRef}
+          className="slide-canvas relative bg-white shadow-md mx-auto"
+          style={{
+            width: 1920 * zoom,
+            height: 1200 * zoom,
+            transform: `scale(${zoom})`,
+            transformOrigin: '0 0',
+            background: slide.background || '#ffffff'
+          }}
+          onClick={handleCanvasClick}
+          onMouseDown={handleCanvasMouseDown}
+        >
+          {slide.elements.map(renderElement)}
+        </div>
       </div>
-    </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Element</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this element? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
