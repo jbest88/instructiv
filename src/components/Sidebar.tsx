@@ -1,15 +1,24 @@
 
 import { useState } from "react";
-import { Plus, Trash2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Plus, Trash2, PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useProject } from "@/contexts/project/ProjectContext";
 import { usePanels } from "@/contexts/PanelContext";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function Sidebar() {
   const { 
+    project,
     currentScene, 
     currentSlide, 
+    handleSelectScene,
     handleSelectSlide, 
     handleAddSlide, 
     handleDeleteSlideInitiate 
@@ -26,7 +35,7 @@ export function Sidebar() {
   return (
     <div className={`h-full bg-background flex flex-col border-r transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-14'}`}>
       <div className="p-2 border-b flex items-center justify-between">
-        {sidebarOpen && <h2 className="text-lg font-medium">Slides</h2>}
+        {sidebarOpen && <h2 className="text-lg font-medium">Scenes</h2>}
         <Button 
           variant="ghost" 
           size="icon" 
@@ -39,6 +48,25 @@ export function Sidebar() {
       
       {sidebarOpen && (
         <>
+          {/* Scene selector dropdown */}
+          <div className="p-3 border-b">
+            <Select 
+              value={currentScene.id} 
+              onValueChange={handleSelectScene}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a scene" />
+              </SelectTrigger>
+              <SelectContent>
+                {project.scenes.map((scene) => (
+                  <SelectItem key={scene.id} value={scene.id}>
+                    {scene.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {sortedSlides.map((slide) => (
               <div 

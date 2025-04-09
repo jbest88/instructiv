@@ -1,671 +1,444 @@
-import { useState, useRef, useEffect } from "react";
-import { Slide, SlideElement } from "@/utils/slideTypes";
-import { cn } from "@/lib/utils";
-import { useProject } from "@/contexts/project";
-import { 
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-  ContextMenuSeparator
-} from "@/components/ui/context-menu";
-import { Bold, Italic, AlignLeft, AlignCenter, AlignRight, Trash2 } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { SlideElement } from "@/utils/slideTypes";
+import { Slide } from "@/utils/slideTypes";
 
 interface SlideCanvasProps {
   slide: Slide;
   selectedElementId: string | null;
-  onSelectElement: (elementId: string | null) => void;
-  onUpdateElement: (elementId: string, updates: Partial<SlideElement>) => void;
-  onDeleteElement?: (elementId: string) => void;
+  zoom: number;
+  onSelectElement: (id: string | null) => void;
+  onUpdateElement: (id: string, updates: Partial<SlideElement>) => void;
+  onDeleteElement: (id: string) => void;
+}
+
+interface DragState {
+  isDragging: boolean;
+  startX: number;
+  startY: number;
+  startElementX: number;
+  startElementY: number;
+}
+
+interface ResizeState {
+  isResizing: boolean;
+  handle: string;
+  startX: number;
+  startY: number;
+  startWidth: number;
+  startHeight: number;
 }
 
 export function SlideCanvas({ 
   slide, 
   selectedElementId, 
-  onSelectElement,
-  onUpdateElement,
-  onDeleteElement
+  zoom, 
+  onSelectElement, 
+  onUpdateElement, 
+  onDeleteElement 
 }: SlideCanvasProps) {
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
-  const [resizing, setResizing] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragState, setDragState] = useState<DragState>({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    startElementX: 0,
+    startElementY: 0
+  });
+  
+  const [resizeState, setResizeState] = useState<ResizeState>({
+    isResizing: false,
+    handle: "",
+    startX: 0,
+    startY: 0,
+    startWidth: 0,
+    startHeight: 0
+  });
+
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [viewportPosition, setViewportPosition] = useState({ x: 0, y: 0 });
-  
-  const { canvasSize, canvasZoom, setCanvasZoom } = useProject();
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Center canvas on initial load and when zoom changes
+  const selectedElement = selectedElementId 
+    ? slide.elements.find(el => el.id === selectedElementId) 
+    : null;
+
+  // Handle keyboard shortcuts and element movement/deletion
   useEffect(() => {
-    centerCanvas();
-  }, [canvasZoom, canvasSize]);
+    if (!selectedElementId) return;
 
-  // Center canvas function that can be called whenever needed
-  const centerCanvas = () => {
-    if (containerRef.current && canvasRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      const containerHeight = containerRef.current.clientHeight;
-      const canvasWidth = canvasSize.width * canvasZoom;
-      const canvasHeight = canvasSize.height * canvasZoom;
-      
-      // Calculate padding to center the canvas in the viewport
-      const paddingX = Math.max((containerWidth - canvasWidth) / 2, 100);
-      const paddingY = Math.max((containerHeight - canvasHeight) / 2, 100);
-      
-      // Apply padding to the parent element of the canvas
-      if (canvasRef.current.parentElement) {
-        canvasRef.current.parentElement.style.padding = `${paddingY}px ${paddingX}px`;
-        canvasRef.current.parentElement.style.minWidth = `${canvasWidth + (paddingX * 2)}px`;
-        canvasRef.current.parentElement.style.minHeight = `${canvasHeight + (paddingY * 2)}px`;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedElementId && selectedElement) {
+        const MOVE_AMOUNT = 1; // Pixels to move
         
-        // Center the canvas by setting scroll position
-        setTimeout(() => {
-          if (containerRef.current) {
-            const scrollX = (canvasWidth + (paddingX * 2) - containerWidth) / 2;
-            const scrollY = (canvasHeight + (paddingY * 2) - containerHeight) / 2;
-            
-            containerRef.current.scrollLeft = scrollX;
-            containerRef.current.scrollTop = scrollY;
-            
-            setViewportPosition({ x: scrollX, y: scrollY });
-          }
-        }, 10);
+        switch (e.key) {
+          case "Delete":
+          case "Backspace":
+            onDeleteElement(selectedElementId);
+            break;
+          case "ArrowLeft":
+            onUpdateElement(selectedElementId, { x: selectedElement.x - MOVE_AMOUNT });
+            e.preventDefault();
+            break;
+          case "ArrowRight":
+            onUpdateElement(selectedElementId, { x: selectedElement.x + MOVE_AMOUNT });
+            e.preventDefault();
+            break;
+          case "ArrowUp":
+            onUpdateElement(selectedElementId, { y: selectedElement.y - MOVE_AMOUNT });
+            e.preventDefault();
+            break;
+          case "ArrowDown":
+            onUpdateElement(selectedElementId, { y: selectedElement.y + MOVE_AMOUNT });
+            e.preventDefault();
+            break;
+        }
       }
-    }
-  };
-
-  // Handle zoom with mouse positioning
-  const handleWheel = (e: WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      
-      if (!containerRef.current || !canvasRef.current) return;
-      
-      // Get mouse position relative to container
-      const rect = containerRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      // Get current scroll position
-      const scrollLeft = containerRef.current.scrollLeft;
-      const scrollTop = containerRef.current.scrollTop;
-      
-      // Calculate point on which to zoom (relative to the content, not just the visible viewport)
-      const mouseXInContent = mouseX + scrollLeft;
-      const mouseYInContent = mouseY + scrollTop;
-      
-      // Calculate zoom change
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      const prevZoom = canvasZoom;
-      let newZoom = prevZoom + delta;
-      
-      // Limit zoom range
-      newZoom = Math.max(0.1, Math.min(3, newZoom));
-      if (newZoom === prevZoom) return;
-      
-      // Update zoom first
-      setCanvasZoom(newZoom);
-      
-      // After the zoom is applied and has taken effect, update the scroll position
-      setTimeout(() => {
-        if (!containerRef.current || !canvasRef.current) return;
-        
-        // Calculate the point that should stay fixed under the cursor after zooming
-        const zoomRatio = newZoom / prevZoom;
-        
-        // Calculate the new position that keeps the point under the mouse cursor fixed
-        const newScrollLeft = mouseXInContent * zoomRatio - mouseX;
-        const newScrollTop = mouseYInContent * zoomRatio - mouseY;
-        
-        // Set the new scroll position
-        containerRef.current.scrollLeft = newScrollLeft;
-        containerRef.current.scrollTop = newScrollTop;
-        
-        // Update state
-        setViewportPosition({ x: newScrollLeft, y: newScrollTop });
-      }, 0);
-    }
-  };
-
-  // Add space bar panning (like Articulate Storyline)
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.code === 'Space' && !isPanning && containerRef.current) {
-      e.preventDefault();
-      setIsPanning(true);
-      containerRef.current.style.cursor = 'grabbing';
-      document.addEventListener('mousemove', handleSpaceBarPan);
-      document.addEventListener('mouseup', handleSpaceBarPanEnd);
-    }
-  };
-  
-  const handleSpaceBarPan = (e: MouseEvent) => {
-    if (!isPanning || !containerRef.current) return;
-    
-    if (!panStart.x && !panStart.y) {
-      setPanStart({ x: e.clientX, y: e.clientY });
-      return;
-    }
-    
-    const deltaX = e.clientX - panStart.x;
-    const deltaY = e.clientY - panStart.y;
-    
-    containerRef.current.scrollLeft -= deltaX;
-    containerRef.current.scrollTop -= deltaY;
-    
-    setPanStart({ x: e.clientX, y: e.clientY });
-  };
-  
-  const handleSpaceBarPanEnd = () => {
-    if (!containerRef.current) return;
-    
-    setIsPanning(false);
-    containerRef.current.style.cursor = 'default';
-    setPanStart({ x: 0, y: 0 });
-    
-    document.removeEventListener('mousemove', handleSpaceBarPan);
-    document.removeEventListener('mouseup', handleSpaceBarPanEnd);
-  };
-  
-  // Middle-mouse button panning
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Middle mouse button (button 1) or Alt+Left click for panning
-    if (e.button === 1 || (e.button === 0 && (e.altKey || isPanning))) {
-      e.preventDefault();
-      setPanStart({ x: e.clientX, y: e.clientY });
-      
-      if (containerRef.current) {
-        containerRef.current.style.cursor = 'grabbing';
-      }
-      
-      // Add document-level event listeners
-      document.addEventListener('mousemove', handleDocumentMouseMove);
-      document.addEventListener('mouseup', handleDocumentMouseUp);
-    }
-  };
-
-  const handleDocumentMouseMove = (e: MouseEvent) => {
-    if (!containerRef.current || (!panStart.x && !panStart.y)) return;
-    
-    const deltaX = e.clientX - panStart.x;
-    const deltaY = e.clientY - panStart.y;
-    
-    containerRef.current.scrollLeft -= deltaX;
-    containerRef.current.scrollTop -= deltaY;
-    
-    setViewportPosition({
-      x: containerRef.current.scrollLeft,
-      y: containerRef.current.scrollTop
-    });
-    
-    setPanStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleDocumentMouseUp = () => {
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'default';
-    }
-    
-    setPanStart({ x: 0, y: 0 });
-    
-    document.removeEventListener('mousemove', handleDocumentMouseMove);
-    document.removeEventListener('mouseup', handleDocumentMouseUp);
-  };
-
-  // Cleanup event listeners
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    document.addEventListener('keydown', handleKeyDown);
-    
-    // Handle window resize to recenter canvas
-    const handleResize = () => {
-      centerCanvas();
     };
-    
-    window.addEventListener('resize', handleResize);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedElementId, selectedElement, onUpdateElement, onDeleteElement]);
+
+  // Handle spacebar panning
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && canvasRef.current && !isPanning) {
+        e.preventDefault();
+        document.body.style.cursor = "grab";
+        canvasRef.current.style.cursor = "grab";
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        document.body.style.cursor = "";
+        if (canvasRef.current) {
+          canvasRef.current.style.cursor = "";
+        }
+        setIsPanning(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     
     return () => {
-      container.removeEventListener('wheel', handleWheel);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('mousemove', handleDocumentMouseMove);
-      document.removeEventListener('mouseup', handleDocumentMouseUp);
-      document.removeEventListener('mousemove', handleSpaceBarPan);
-      document.removeEventListener('mouseup', handleSpaceBarPanEnd);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      document.body.style.cursor = "";
     };
-  }, [canvasZoom, isPanning, panStart]);
-  
-  // Handle scroll events to update viewport position
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const handleScroll = () => {
-      setViewportPosition({
-        x: container.scrollLeft,
-        y: container.scrollTop
-      });
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-  
-  // Handle element selection
-  const handleElementClick = (e: React.MouseEvent, elementId: string) => {
-    e.stopPropagation();
-    onSelectElement(elementId);
-  };
-  
-  // Handle background click (deselect)
-  const handleBackgroundClick = () => {
-    onSelectElement(null);
-  };
-  
-  // Handle drag start
-  const handleDragStart = (e: React.MouseEvent, element: SlideElement) => {
-    e.stopPropagation();
-    if (e.button !== 0) return; // Only left mouse button
-    
-    setDragging(true);
-    
-    // Calculate offset from mouse position to element corner
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-    
-    // Select this element
-    onSelectElement(element.id);
-    
-    // Add temporary event listeners for drag
-    document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('mouseup', handleDragEnd);
-  };
+  }, [isPanning]);
 
-  // Handle dragging
-  const handleDragMove = (e: MouseEvent) => {
-    if (!dragging || !selectedElementId || !canvasRef.current) return;
-    
-    // Get canvas rect
-    const canvasRect = canvasRef.current.getBoundingClientRect();
-    
-    // Calculate new position, accounting for zoom
-    const x = (e.clientX - canvasRect.left - dragOffset.x) / canvasZoom;
-    const y = (e.clientY - canvasRect.top - dragOffset.y) / canvasZoom;
-    
-    // Update element position
-    onUpdateElement(selectedElementId, { x, y });
-  };
-  
-  // Handle drag end
-  const handleDragEnd = () => {
-    setDragging(false);
-    document.removeEventListener('mousemove', handleDragMove);
-    document.removeEventListener('mouseup', handleDragEnd);
-  };
-
-  // Handle resize start
-  const handleResizeStart = (e: React.MouseEvent, element: SlideElement, handle: string) => {
-    e.stopPropagation();
-    if (e.button !== 0) return; // Only left mouse button
-    
-    setResizing(handle);
-    
-    // Select this element if not already selected
-    if (selectedElementId !== element.id) {
-      onSelectElement(element.id);
-    }
-    
-    // Add temporary event listeners for resize
-    document.addEventListener('mousemove', handleResizeMove);
-    document.addEventListener('mouseup', handleResizeEnd);
-  };
-  
-  // Handle resize move
-  const handleResizeMove = (e: MouseEvent) => {
-    if (!resizing || !selectedElementId || !canvasRef.current) return;
-    
-    const element = slide.elements.find(el => el.id === selectedElementId);
-    if (!element) return;
-    
-    // Get canvas rect
-    const canvasRect = canvasRef.current.getBoundingClientRect();
-    
-    // Calculate position relative to canvas, accounting for zoom
-    const mouseX = (e.clientX - canvasRect.left) / canvasZoom;
-    const mouseY = (e.clientY - canvasRect.top) / canvasZoom;
-    
-    // Calculate new dimensions based on which handle is being dragged
-    let newWidth = element.width;
-    let newHeight = element.height;
-    let newX = element.x;
-    let newY = element.y;
-    
-    // Update dimensions based on which handle is being dragged
-    switch (resizing) {
-      case 'top-left':
-        newWidth = element.x + element.width - mouseX;
-        newHeight = element.y + element.height - mouseY;
-        newX = mouseX;
-        newY = mouseY;
-        break;
-      case 'top-right':
-        newWidth = mouseX - element.x;
-        newHeight = element.y + element.height - mouseY;
-        newY = mouseY;
-        break;
-      case 'bottom-left':
-        newWidth = element.x + element.width - mouseX;
-        newHeight = mouseY - element.y;
-        newX = mouseX;
-        break;
-      case 'bottom-right':
-        newWidth = mouseX - element.x;
-        newHeight = mouseY - element.y;
-        break;
-      case 'top':
-        newHeight = element.y + element.height - mouseY;
-        newY = mouseY;
-        break;
-      case 'right':
-        newWidth = mouseX - element.x;
-        break;
-      case 'bottom':
-        newHeight = mouseY - element.y;
-        break;
-      case 'left':
-        newWidth = element.x + element.width - mouseX;
-        newX = mouseX;
-        break;
-    }
-    
-    // Enforce minimum size
-    newWidth = Math.max(20, newWidth);
-    newHeight = Math.max(20, newHeight);
-    
-    // Update element dimensions
-    onUpdateElement(selectedElementId, { 
-      width: newWidth, 
-      height: newHeight,
-      x: newX,
-      y: newY
-    });
-  };
-  
-  // Handle resize end
-  const handleResizeEnd = () => {
-    setResizing(null);
-    document.removeEventListener('mousemove', handleResizeMove);
-    document.removeEventListener('mouseup', handleResizeEnd);
-  };
-
-  // Handle element deletion
-  const handleDeleteElement = (elementId: string) => {
-    if (onDeleteElement) {
-      onDeleteElement(elementId);
+  // Handle background canvas click to deselect
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
       onSelectElement(null);
     }
   };
 
+  // Element drag handlers
+  const handleElementMouseDown = (
+    e: React.MouseEvent<HTMLDivElement>,
+    element: SlideElement
+  ) => {
+    if (e.button !== 0) return; // Only left click
+    
+    e.stopPropagation();
+    onSelectElement(element.id);
+    
+    // Check if we're clicking on a resize handle
+    const target = e.target as HTMLElement;
+    if (target.classList.contains("resize-handle")) {
+      const handle = target.getAttribute("data-handle") || "";
+      
+      setResizeState({
+        isResizing: true,
+        handle,
+        startX: e.clientX,
+        startY: e.clientY,
+        startWidth: element.width,
+        startHeight: element.height
+      });
+      
+      return;
+    }
+    
+    // Otherwise start dragging
+    setDragState({
+      isDragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      startElementX: element.x,
+      startElementY: element.y
+    });
+    
+    document.body.style.cursor = "grabbing";
+  };
+
+  // Handle mouse move for dragging or resizing elements
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Handle element dragging
+    if (dragState.isDragging && selectedElementId) {
+      const deltaX = (e.clientX - dragState.startX) / zoom;
+      const deltaY = (e.clientY - dragState.startY) / zoom;
+      
+      onUpdateElement(selectedElementId, {
+        x: dragState.startElementX + deltaX,
+        y: dragState.startElementY + deltaY
+      });
+    }
+    
+    // Handle element resizing
+    if (resizeState.isResizing && selectedElementId) {
+      const deltaX = (e.clientX - resizeState.startX) / zoom;
+      const deltaY = (e.clientY - resizeState.startY) / zoom;
+      const element = slide.elements.find(el => el.id === selectedElementId);
+      
+      if (!element) return;
+      
+      let newWidth = resizeState.startWidth;
+      let newHeight = resizeState.startHeight;
+      let newX = element.x;
+      let newY = element.y;
+      
+      // Adjust based on the handle being dragged
+      switch (resizeState.handle) {
+        case "n":
+          newHeight = Math.max(10, resizeState.startHeight - deltaY);
+          newY = resizeState.startHeight - deltaY < 10 ? element.y : element.y + deltaY;
+          break;
+        case "s":
+          newHeight = Math.max(10, resizeState.startHeight + deltaY);
+          break;
+        case "e":
+          newWidth = Math.max(10, resizeState.startWidth + deltaX);
+          break;
+        case "w":
+          newWidth = Math.max(10, resizeState.startWidth - deltaX);
+          newX = resizeState.startWidth - deltaX < 10 ? element.x : element.x + deltaX;
+          break;
+        case "ne":
+          newWidth = Math.max(10, resizeState.startWidth + deltaX);
+          newHeight = Math.max(10, resizeState.startHeight - deltaY);
+          newY = resizeState.startHeight - deltaY < 10 ? element.y : element.y + deltaY;
+          break;
+        case "nw":
+          newWidth = Math.max(10, resizeState.startWidth - deltaX);
+          newHeight = Math.max(10, resizeState.startHeight - deltaY);
+          newX = resizeState.startWidth - deltaX < 10 ? element.x : element.x + deltaX;
+          newY = resizeState.startHeight - deltaY < 10 ? element.y : element.y + deltaY;
+          break;
+        case "se":
+          newWidth = Math.max(10, resizeState.startWidth + deltaX);
+          newHeight = Math.max(10, resizeState.startHeight + deltaY);
+          break;
+        case "sw":
+          newWidth = Math.max(10, resizeState.startWidth - deltaX);
+          newHeight = Math.max(10, resizeState.startHeight + deltaY);
+          newX = resizeState.startWidth - deltaX < 10 ? element.x : element.x + deltaX;
+          break;
+      }
+      
+      onUpdateElement(selectedElementId, {
+        x: newX,
+        y: newY,
+        width: newWidth,
+        height: newHeight
+      });
+    }
+    
+    // Handle canvas panning with space + drag or middle mouse button
+    if (isPanning && containerRef.current) {
+      containerRef.current.scrollLeft += panStart.x - e.clientX;
+      containerRef.current.scrollTop += panStart.y - e.clientY;
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  // Handle mouse up to end dragging or resizing
+  const handleMouseUp = () => {
+    if (dragState.isDragging || resizeState.isResizing) {
+      setDragState({ ...dragState, isDragging: false });
+      setResizeState({ ...resizeState, isResizing: false });
+      document.body.style.cursor = "";
+    }
+    
+    if (isPanning) {
+      setIsPanning(false);
+      document.body.style.cursor = "";
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = "";
+      }
+    }
+  };
+
+  // Handle mouse down on canvas (for panning)
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Middle mouse button or space key + left click for panning
+    const isMiddleButton = e.button === 1;
+    const isSpacePressed = e.nativeEvent.getModifierState("Space");
+    
+    if ((isMiddleButton || isSpacePressed) && e.target === canvasRef.current) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+      document.body.style.cursor = "grabbing";
+      if (canvasRef.current) {
+        canvasRef.current.style.cursor = "grabbing";
+      }
+    }
+  };
+
+  // Set up global event listeners for when mouse leaves the canvas
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      handleMouseUp();
+    };
+
+    window.addEventListener("mouseup", handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
+    };
+  }, [dragState, resizeState, isPanning]);
+
   // Render resize handles for the selected element
   const renderResizeHandles = (element: SlideElement) => {
-    if (selectedElementId !== element.id) return null;
-    
-    // Define handle positions
     const handles = [
-      { position: 'top-left', cursor: 'nwse-resize', top: -4, left: -4 },
-      { position: 'top-right', cursor: 'nesw-resize', top: -4, right: -4 },
-      { position: 'bottom-left', cursor: 'nesw-resize', bottom: -4, left: -4 },
-      { position: 'bottom-right', cursor: 'nwse-resize', bottom: -4, right: -4 },
-      { position: 'top', cursor: 'ns-resize', top: -4, left: '50%', transform: 'translateX(-50%)' },
-      { position: 'right', cursor: 'ew-resize', top: '50%', right: -4, transform: 'translateY(-50%)' },
-      { position: 'bottom', cursor: 'ns-resize', bottom: -4, left: '50%', transform: 'translateX(-50%)' },
-      { position: 'left', cursor: 'ew-resize', top: '50%', left: -4, transform: 'translateY(-50%)' }
+      { position: 'n', style: 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-ns-resize' },
+      { position: 's', style: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 cursor-ns-resize' },
+      { position: 'e', style: 'top-1/2 right-0 translate-x-1/2 -translate-y-1/2 cursor-ew-resize' },
+      { position: 'w', style: 'top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize' },
+      { position: 'ne', style: 'top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-ne-resize' },
+      { position: 'nw', style: 'top-0 left-0 -translate-x-1/2 -translate-y-1/2 cursor-nw-resize' },
+      { position: 'se', style: 'bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-se-resize' },
+      { position: 'sw', style: 'bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-sw-resize' }
     ];
-    
+
     return handles.map(handle => (
       <div
-        key={`${element.id}-${handle.position}`}
-        className="absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full"
-        style={{
-          top: handle.top,
-          left: handle.left,
-          right: handle.right,
-          bottom: handle.bottom,
-          cursor: handle.cursor,
-          transform: handle.transform,
-          zIndex: 10
-        }}
-        onMouseDown={(e) => handleResizeStart(e, element, handle.position)}
+        key={handle.position}
+        className={`resize-handle absolute w-3 h-3 bg-primary rounded-full ${handle.style}`}
+        data-handle={handle.position}
       />
     ));
   };
 
-  // Render element with context menu
+  // Render individual element based on its type
   const renderElement = (element: SlideElement) => {
-    // Base styling for all elements
-    const baseStyle = {
+    const isSelected = selectedElementId === element.id;
+    
+    const baseStyle: React.CSSProperties = {
+      position: 'absolute',
       left: `${element.x}px`,
       top: `${element.y}px`,
       width: `${element.width}px`,
       height: `${element.height}px`
     };
 
-    // Common classes for all elements
-    const baseClasses = cn(
-      "absolute cursor-move border-transparent border hover:border-gray-400",
-      selectedElementId === element.id && "border-2 border-blue-500"
-    );
+    // Add common event listeners to all elements
+    const commonProps = {
+      onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => handleElementMouseDown(e, element),
+      style: baseStyle,
+      className: `element ${isSelected ? 'outline outline-2 outline-primary' : ''}`
+    };
 
-    if (element.type === "text") {
-      return (
-        <ContextMenu key={element.id}>
-          <ContextMenuTrigger>
-            <div
-              className={baseClasses}
-              style={{
-                ...baseStyle,
-                fontSize: `${element.fontSize || 16}px`,
-                color: element.fontColor || '#000000',
-                fontWeight: element.fontWeight || 'normal',
-                fontStyle: element.fontStyle || 'normal',
-                textAlign: element.align || 'left'
-              }}
-              onClick={(e) => handleElementClick(e, element.id)}
-              onMouseDown={(e) => handleDragStart(e, element)}
-            >
-              {element.content}
-              {renderResizeHandles(element)}
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
-              Select
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => {
-              const currentWeight = element.fontWeight || "normal";
-              onUpdateElement(element.id, { fontWeight: currentWeight === "bold" ? "normal" : "bold" });
-            }}>
-              <Bold className="mr-2 h-4 w-4" />
-              {element.fontWeight === "bold" ? "Remove Bold" : "Bold"}
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => {
-              const currentStyle = element.fontStyle || "normal";
-              onUpdateElement(element.id, { fontStyle: currentStyle === "italic" ? "normal" : "italic" });
-            }}>
-              <Italic className="mr-2 h-4 w-4" />
-              {element.fontStyle === "italic" ? "Remove Italic" : "Italic"}
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => onUpdateElement(element.id, { align: "left" })}>
-              <AlignLeft className="mr-2 h-4 w-4" />
-              Align Left
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => onUpdateElement(element.id, { align: "center" })}>
-              <AlignCenter className="mr-2 h-4 w-4" />
-              Align Center
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => onUpdateElement(element.id, { align: "right" })}>
-              <AlignRight className="mr-2 h-4 w-4" />
-              Align Right
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-      );
+    switch (element.type) {
+      case "text":
+        return (
+          <div
+            key={element.id}
+            {...commonProps}
+            className={`${commonProps.className} bg-white p-2 overflow-hidden select-none`}
+            style={{
+              ...baseStyle,
+              fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
+              color: element.fontColor || 'inherit',
+              fontWeight: element.fontWeight || 'inherit',
+              fontStyle: element.fontStyle || 'normal',
+              textAlign: element.align || 'left'
+            }}
+          >
+            {element.content}
+            {isSelected && renderResizeHandles(element)}
+          </div>
+        );
+
+      case "image":
+        return (
+          <div
+            key={element.id}
+            {...commonProps}
+            className={`${commonProps.className} overflow-hidden select-none`}
+          >
+            <img
+              src={element.src}
+              alt={element.alt || "Image"}
+              className="w-full h-full object-contain pointer-events-none"
+            />
+            {isSelected && renderResizeHandles(element)}
+          </div>
+        );
+
+      case "button":
+        return (
+          <div
+            key={element.id}
+            {...commonProps}
+            className={`${commonProps.className} flex items-center justify-center select-none 
+              ${element.style === 'primary' ? 'bg-primary text-primary-foreground' : 
+                element.style === 'secondary' ? 'bg-secondary text-secondary-foreground' : 
+                'bg-background border border-input'}`}
+          >
+            {element.label}
+            {isSelected && renderResizeHandles(element)}
+          </div>
+        );
+
+      case "hotspot":
+        return (
+          <div
+            key={element.id}
+            {...commonProps}
+            className={`${commonProps.className} select-none border-2 border-dashed border-blue-500 
+              ${element.shape === 'circle' ? 'rounded-full' : ''}`}
+          >
+            {isSelected && (
+              <div className="absolute inset-0 flex items-center justify-center text-blue-500 font-medium">
+                Hotspot
+              </div>
+            )}
+            {isSelected && renderResizeHandles(element)}
+          </div>
+        );
+
+      default:
+        return null;
     }
-    
-    if (element.type === "image") {
-      return (
-        <ContextMenu key={element.id}>
-          <ContextMenuTrigger>
-            <div
-              className={baseClasses}
-              style={baseStyle}
-              onClick={(e) => handleElementClick(e, element.id)}
-              onMouseDown={(e) => handleDragStart(e, element)}
-            >
-              <img 
-                src={element.src} 
-                alt={element.alt || 'Slide image'} 
-                className="w-full h-full object-contain"
-              />
-              {renderResizeHandles(element)}
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
-              Select
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-      );
-    }
-    
-    if (element.type === "button") {
-      let buttonClass = "bg-primary text-white";
-      if (element.style === "secondary") {
-        buttonClass = "bg-secondary text-secondary-foreground";
-      } else if (element.style === "outline") {
-        buttonClass = "bg-transparent border border-primary text-primary";
-      }
-      
-      return (
-        <ContextMenu key={element.id}>
-          <ContextMenuTrigger>
-            <div
-              className={cn(
-                "absolute flex items-center justify-center rounded cursor-move",
-                buttonClass,
-                selectedElementId === element.id && "ring-2 ring-blue-500"
-              )}
-              style={baseStyle}
-              onClick={(e) => handleElementClick(e, element.id)}
-              onMouseDown={(e) => handleDragStart(e, element)}
-            >
-              {element.label}
-              {renderResizeHandles(element)}
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
-              Select
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-      );
-    }
-    
-    if (element.type === "hotspot") {
-      const isCircle = element.shape === "circle";
-      
-      return (
-        <ContextMenu key={element.id}>
-          <ContextMenuTrigger>
-            <div
-              className={cn(
-                "absolute bg-blue-400/30 border-2 border-blue-500 cursor-move",
-                isCircle ? "rounded-full" : "rounded",
-                selectedElementId === element.id && "ring-2 ring-blue-500"
-              )}
-              style={baseStyle}
-              onClick={(e) => handleElementClick(e, element.id)}
-              onMouseDown={(e) => handleDragStart(e, element)}
-              title={element.tooltip}
-            >
-              {renderResizeHandles(element)}
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onClick={() => onSelectElement(element.id)}>
-              Select
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleDeleteElement(element.id)} className="text-red-500">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-      );
-    }
-    
-    return null;
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="relative w-full h-full overflow-auto bg-neutral-200"
-      onMouseDown={handleMouseDown}
+      className="slide-canvas-container"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
     >
-      <div 
-        className="relative bg-neutral-300 min-h-full min-w-full flex items-center justify-center"
+      <div
+        ref={canvasRef}
+        className="slide-canvas relative bg-white shadow-md mx-auto"
+        style={{
+          width: 1920 * zoom,
+          height: 1200 * zoom,
+          transform: `scale(${zoom})`,
+          transformOrigin: '0 0',
+          background: slide.background || '#ffffff'
+        }}
+        onClick={handleCanvasClick}
+        onMouseDown={handleCanvasMouseDown}
       >
-        <div
-          ref={canvasRef}
-          className="relative shadow-lg"
-          style={{ 
-            transform: `scale(${canvasZoom})`,
-            transformOrigin: '0 0',
-            transition: 'transform 0.05s ease-out',
-          }}
-        >
-          <div 
-            className="relative bg-white overflow-hidden"
-            style={{ 
-              width: `${canvasSize.width}px`, 
-              height: `${canvasSize.height}px`,
-              background: slide.background || '#ffffff'
-            }}
-            onClick={handleBackgroundClick}
-          >
-            {slide.elements.map((element) => renderElement(element))}
-          </div>
-        </div>
+        {slide.elements.map(renderElement)}
       </div>
     </div>
   );
