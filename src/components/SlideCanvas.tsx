@@ -18,6 +18,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Trash } from "lucide-react";
 
 interface SlideCanvasProps {
@@ -75,6 +77,9 @@ export function SlideCanvas({
     startElementY: 0
   });
 
+  // Add a state for tracking which text element is being edited
+  const [editingElementId, setEditingElementId] = useState<string | null>(null);
+
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -82,16 +87,55 @@ export function SlideCanvas({
   const [contextMenuElement, setContextMenuElement] = useState<SlideElement | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [elementToDelete, setElementToDelete] = useState<string | null>(null);
+  const editableInputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
   const selectedElement = selectedElementId 
     ? slide.elements.find(el => el.id === selectedElementId) 
     : null;
+
+  // Function to finish editing and apply changes
+  const finishEditing = () => {
+    if (editingElementId && editableInputRef.current) {
+      const newContent = editableInputRef.current.value;
+      onUpdateElement(editingElementId, { content: newContent });
+      setEditingElementId(null);
+    }
+  };
+
+  // Effect to focus the input when editing starts
+  useEffect(() => {
+    if (editingElementId && editableInputRef.current) {
+      editableInputRef.current.focus();
+    }
+  }, [editingElementId]);
+
+  // Effect to handle clicking outside to finish editing
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (editingElementId && 
+          editableInputRef.current && 
+          !editableInputRef.current.contains(e.target as Node)) {
+        finishEditing();
+      }
+    };
+
+    if (editingElementId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [editingElementId]);
 
   // Handle keyboard shortcuts and element movement/deletion
   useEffect(() => {
     if (!selectedElementId) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keyboard shortcuts if currently editing text
+      if (editingElementId) return;
+
       if (selectedElementId && selectedElement) {
         const MOVE_AMOUNT = 1; // Pixels to move
         
@@ -119,6 +163,19 @@ export function SlideCanvas({
             onUpdateElement(selectedElementId, { y: selectedElement.y + MOVE_AMOUNT });
             e.preventDefault();
             break;
+          case "Enter":
+            // If text element is selected, enter edit mode on Enter key
+            if (selectedElement.type === "text" && selectedElementId !== editingElementId) {
+              setEditingElementId(selectedElementId);
+              e.preventDefault();
+            }
+            break;
+          case "Escape":
+            if (editingElementId) {
+              finishEditing();
+              e.preventDefault();
+            }
+            break;
         }
       }
     };
@@ -127,7 +184,7 @@ export function SlideCanvas({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedElementId, selectedElement, onUpdateElement, onDeleteElement]);
+  }, [selectedElementId, selectedElement, editingElementId, onUpdateElement, onDeleteElement]);
 
   // Handle mouse events for pan/drag
   useEffect(() => {
@@ -261,6 +318,21 @@ export function SlideCanvas({
     onSelectElement(element.id);
   };
 
+  // Handle element double click for text editing
+  const handleElementDoubleClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    element: SlideElement
+  ) => {
+    e.stopPropagation();
+    if (element.type === "text") {
+      setEditingElementId(element.id);
+      onSelectElement(element.id);
+    } else if (element.type === "button") {
+      setEditingElementId(element.id);
+      onSelectElement(element.id);
+    }
+  };
+
   // Handle element mouse down for selection, dragging, resizing
   const handleElementMouseDown = (
     e: React.MouseEvent<HTMLDivElement>,
@@ -269,6 +341,12 @@ export function SlideCanvas({
     if (e.button !== 0) return; // Only left click
     
     e.stopPropagation();
+    
+    // If we're currently editing, don't start dragging
+    if (editingElementId === element.id) {
+      return;
+    }
+    
     onSelectElement(element.id);
     
     // Check if we're clicking on a resize handle
@@ -432,6 +510,7 @@ export function SlideCanvas({
   // Render individual element based on its type
   const renderElement = (element: SlideElement) => {
     const isSelected = selectedElementId === element.id;
+    const isEditing = editingElementId === element.id;
     
     const baseStyle: React.CSSProperties = {
       position: 'absolute',
@@ -445,6 +524,7 @@ export function SlideCanvas({
     const commonProps = {
       onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => handleElementMouseDown(e, element),
       onContextMenu: (e: React.MouseEvent<HTMLDivElement>) => handleElementRightClick(e, element),
+      onDoubleClick: (e: React.MouseEvent<HTMLDivElement>) => handleElementDoubleClick(e, element),
       style: baseStyle,
       className: `element ${isSelected ? 'outline outline-2 outline-primary' : ''}`
     };
@@ -452,7 +532,44 @@ export function SlideCanvas({
     const renderElementContent = () => {
       switch (element.type) {
         case "text":
-          return (
+          return isEditing ? (
+            <div
+              key={element.id}
+              style={baseStyle}
+              className={`${commonProps.className} bg-white overflow-hidden`}
+            >
+              <Textarea
+                ref={ref => { editableInputRef.current = ref; }}
+                defaultValue={element.content}
+                style={{
+                  fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
+                  color: element.fontColor || 'inherit',
+                  fontWeight: element.fontWeight || 'inherit',
+                  fontStyle: element.fontStyle || 'normal',
+                  textAlign: element.align || 'left',
+                  border: 'none',
+                  width: '100%',
+                  height: '100%',
+                  resize: 'none',
+                  padding: '2px',
+                  background: 'transparent'
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    finishEditing();
+                    e.preventDefault();
+                  } else if (e.key === 'Enter' && e.shiftKey) {
+                    // Allow shift+enter for new lines in textarea
+                    return;
+                  } else if (e.key === 'Enter') {
+                    finishEditing();
+                    e.preventDefault();
+                  }
+                }}
+                onBlur={finishEditing}
+              />
+            </div>
+          ) : (
             <div
               key={element.id}
               {...commonProps}
@@ -471,6 +588,60 @@ export function SlideCanvas({
             </div>
           );
 
+        case "button":
+          return isEditing ? (
+            <div
+              key={element.id}
+              style={baseStyle}
+              className={`${commonProps.className} flex items-center justify-center overflow-hidden
+                ${element.style === 'primary' ? 'bg-primary text-primary-foreground' : 
+                  element.style === 'secondary' ? 'bg-secondary text-secondary-foreground' : 
+                  'bg-background border border-input'}`}
+            >
+              <Input
+                ref={ref => { editableInputRef.current = ref; }}
+                defaultValue={element.label}
+                style={{
+                  border: 'none',
+                  width: '100%',
+                  height: '100%',
+                  padding: '2px',
+                  background: 'transparent',
+                  textAlign: 'center',
+                  color: 'inherit'
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    finishEditing();
+                    e.preventDefault();
+                  } else if (e.key === 'Enter') {
+                    finishEditing();
+                    e.preventDefault();
+                  }
+                }}
+                onBlur={() => {
+                  if (editingElementId && editableInputRef.current) {
+                    const newLabel = editableInputRef.current.value;
+                    onUpdateElement(editingElementId, { label: newLabel });
+                    setEditingElementId(null);
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div
+              key={element.id}
+              {...commonProps}
+              className={`${commonProps.className} flex items-center justify-center select-none 
+                ${element.style === 'primary' ? 'bg-primary text-primary-foreground' : 
+                  element.style === 'secondary' ? 'bg-secondary text-secondary-foreground' : 
+                  'bg-background border border-input'}`}
+            >
+              {element.label}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
+
         case "image":
           return (
             <div
@@ -483,21 +654,6 @@ export function SlideCanvas({
                 alt={element.alt || "Image"}
                 className="w-full h-full object-contain pointer-events-none"
               />
-              {isSelected && renderResizeHandles(element)}
-            </div>
-          );
-
-        case "button":
-          return (
-            <div
-              key={element.id}
-              {...commonProps}
-              className={`${commonProps.className} flex items-center justify-center select-none 
-                ${element.style === 'primary' ? 'bg-primary text-primary-foreground' : 
-                  element.style === 'secondary' ? 'bg-secondary text-secondary-foreground' : 
-                  'bg-background border border-input'}`}
-            >
-              {element.label}
               {isSelected && renderResizeHandles(element)}
             </div>
           );
@@ -529,6 +685,12 @@ export function SlideCanvas({
         <ContextMenuTrigger className="w-full h-full">{renderElementContent()}</ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onClick={() => onSelectElement(element.id)}>Select</ContextMenuItem>
+          {element.type === "text" && (
+            <ContextMenuItem onClick={() => setEditingElementId(element.id)}>Edit Text</ContextMenuItem>
+          )}
+          {element.type === "button" && (
+            <ContextMenuItem onClick={() => setEditingElementId(element.id)}>Edit Button</ContextMenuItem>
+          )}
           <ContextMenuItem onClick={() => handleDuplicate(element.id)}>Duplicate</ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onClick={() => handleBringToFront(element.id)}>Bring to Front</ContextMenuItem>
@@ -546,6 +708,38 @@ export function SlideCanvas({
         </ContextMenuContent>
       </ContextMenu>
     );
+  };
+
+  // Handle context menu actions
+  const handleDuplicate = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    // Duplicate functionality would be implemented here
+    // Currently just logging to show the action would work
+    console.log("Duplicate element", element);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (elementToDelete) {
+      onDeleteElement(elementToDelete);
+      setElementToDelete(null);
+    }
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleBringToFront = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    console.log("Bring to front", element);
+  };
+
+  const handleSendToBack = (elementId: string) => {
+    const element = slide.elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    console.log("Send to back", element);
   };
 
   return (
