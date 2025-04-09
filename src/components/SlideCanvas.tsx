@@ -865,3 +865,132 @@ export function SlideCanvas({
                   height: '100%',
                   resize: 'none',
                   padding: '2px',
+                }}
+              />
+            </div>
+          ) : (
+            <div
+              {...commonProps}
+              className={`${commonProps.className} p-2 overflow-hidden`}
+              style={{
+                ...baseStyle,
+                fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
+                color: element.fontColor || 'inherit',
+                fontWeight: element.fontWeight || 'inherit',
+                fontStyle: element.fontStyle || 'normal',
+                textAlign: element.align || 'left',
+              }}
+            >
+              {element.content}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
+        case "image":
+          return (
+            <div {...commonProps} className={`${commonProps.className} overflow-hidden`}>
+              <img 
+                src={element.content} 
+                alt="Slide element" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
+        case "shape":
+          return (
+            <div 
+              {...commonProps} 
+              className={`${commonProps.className} bg-blue-200`}
+            >
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
+        case "button":
+          return isEditing ? (
+            <div
+              key={element.id}
+              style={baseStyle}
+              className={`${commonProps.className} bg-white overflow-hidden`}
+            >
+              <Input
+                ref={ref => { editableInputRef.current = ref; }}
+                defaultValue={element.content}
+                style={{
+                  border: 'none',
+                  width: '100%',
+                  height: '100%',
+                  padding: '2px',
+                  textAlign: 'center',
+                }}
+              />
+            </div>
+          ) : (
+            <div
+              {...commonProps}
+              className={`${commonProps.className} bg-primary text-primary-foreground flex items-center justify-center rounded-md`}
+            >
+              {element.content}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
+        default:
+          return (
+            <div {...commonProps} className={`${commonProps.className} bg-gray-200`}>
+              Unknown element type: {element.type}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
+      }
+    };
+
+    return (
+      <ContextMenu key={element.id}>
+        <ContextMenuTrigger asChild>
+          {renderElementContent()}
+        </ContextMenuTrigger>
+        {element.type === "text" ? renderTextContextMenu(element) : renderDefaultContextMenu(element)}
+      </ContextMenu>
+    );
+  };
+
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full h-full overflow-hidden"
+      onMouseDown={handleCanvasMouseDown}
+    >
+      <div 
+        ref={canvasRef}
+        className="absolute bg-white shadow-md"
+        style={{ 
+          width: `${slide.width}px`, 
+          height: `${slide.height}px`,
+          transform: `scale(${zoom})`,
+          transformOrigin: 'top left',
+        }}
+        onClick={handleCanvasClick}
+        onMouseMove={handleMouseMove}
+      >
+        {slide.elements.map(element => renderElement(element))}
+      </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected element.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
