@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { SlideElement, TextElement, ButtonElement, ImageElement, HotspotElement } from "@/utils/slideTypes";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -8,18 +8,15 @@ interface TextContentProps {
   element: TextElement;
   isEditing: boolean;
   editableInputRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
-  onFinishEditing: (updatedValue?: string) => void;
+  onFinishEditing: () => void;
 }
 
 export function TextElementContent({ element, isEditing, editableInputRef, onFinishEditing }: TextContentProps) {
-  const [value, setValue] = useState(element.content);
-
   if (isEditing) {
     return (
       <Textarea
         ref={editableInputRef as React.RefObject<HTMLTextAreaElement>}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        defaultValue={element.content}
         style={{
           fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
           color: element.fontColor || 'inherit',
@@ -42,7 +39,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
             e.preventDefault();
           }
         }}
-        onBlur={() => onFinishEditing(value)}
+        onBlur={onFinishEditing}
       />
     );
   }
@@ -176,7 +173,7 @@ interface ElementContentProps {
   element: SlideElement;
   isEditing: boolean;
   editableInputRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
-  onFinishEditing: (updatedValue?: string) => void;
+  onFinishEditing: () => void;
 }
 
 export function ElementContent({ element, isEditing, editableInputRef, onFinishEditing }: ElementContentProps) {
