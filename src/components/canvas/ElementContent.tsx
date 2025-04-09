@@ -30,7 +30,8 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
           outline: 'none',
           backgroundColor: 'transparent',
           padding: '4px',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          verticalAlign: 'top'
         }}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
@@ -44,9 +45,6 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
   }
 
   // --- VIEWING MODE ---
-  // Check if newline characters are present in the data being rendered
-  console.log(`Rendering Text Content for element ${element.id}:`, JSON.stringify(element.content));
-
   return (
     <div
       style={{
@@ -61,24 +59,21 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         width: '100%',
         height: '100%',
         padding: '4px',
-        overflow: 'hidden', // Or 'auto'
+        overflow: 'auto', // Changed from 'hidden' to 'auto' to allow scrolling if needed
         boxSizing: 'border-box',
 
         // Flexbox for Vertical Alignment of Content Block
         display: 'flex',
-        alignItems: 'flex-start', // Align inner div (content block) to the top
-        justifyContent: 'flex-start', // Align inner div (content block) to the left
+        flexDirection: 'column',
+        alignItems: 'flex-start', // Ensure content starts at the left
+        justifyContent: 'flex-start', // Ensure content starts at the top
 
         // Whitespace Handling (Crucial for Newlines)
         whiteSpace: 'pre-wrap', // Respect newlines and spaces, allow wrapping
         wordBreak: 'break-word' // Allow breaking long words
       }}
     >
-      {/* Inner div receives text content. It will be aligned top-left by the parent flex settings. */}
-      {/* The `textAlign` style from the parent ensures text *inside* this div aligns correctly. */}
-      <div style={{ width: '100%' }}>
-        {element.content || '\u00A0'} {/* Use non-breaking space to prevent collapse */}
-      </div>
+      {element.content || '\u00A0'} {/* Use non-breaking space to prevent collapse */}
     </div>
   );
 }
