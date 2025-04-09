@@ -44,33 +44,33 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
     );
   }
 
-  // --- VIEWING MODE ---
   return (
     <div
       style={{
-        // Base Text Styles
-        fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
-        color: element.fontColor || 'inherit',
-        fontWeight: element.fontWeight || 'inherit',
-        fontStyle: element.fontStyle || 'inherit',
-        textAlign: element.align || 'left', // Horizontal align *within* lines
-
-        // Box Model & Layout
         width: '100%',
         height: '100%',
         padding: '4px',
-        overflow: 'auto', // Changed from 'hidden' to 'auto' to allow scrolling if needed
+        overflow: 'auto',
         boxSizing: 'border-box',
-
-        // Flexbox for Vertical Alignment of Content Block
-        display: 'block', // Changed from 'flex' to 'block' to keep text flow natural
-        
-        // Whitespace Handling (Crucial for Newlines)
-        whiteSpace: 'pre-wrap', // Respect newlines and spaces, allow wrapping
-        wordBreak: 'break-word' // Allow breaking long words
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
       }}
     >
-      {element.content || '\u00A0'} {/* Use non-breaking space to prevent collapse */}
+      <div
+        style={{
+          fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
+          color: element.fontColor || 'inherit',
+          fontWeight: element.fontWeight || 'inherit',
+          fontStyle: element.fontStyle || 'inherit',
+          textAlign: element.align || 'left',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          width: '100%',
+        }}
+      >
+        {element.content || '\u00A0'}
+      </div>
     </div>
   );
 }
