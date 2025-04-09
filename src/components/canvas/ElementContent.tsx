@@ -1,9 +1,9 @@
 import React from "react";
-import { SlideElement, TextElement, ButtonElement, ImageElement, HotspotElement } from "@/utils/slideTypes"; // Assuming ImageElement and HotspotElement types exist here
+import { SlideElement, TextElement, ButtonElement, ImageElement, HotspotElement } from "@/utils/slideTypes";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 
-// Interface for Text Element specific props
+// --- TextElementContent ---
 interface TextContentProps {
   element: TextElement;
   isEditing: boolean;
@@ -11,7 +11,6 @@ interface TextContentProps {
   onFinishEditing: () => void;
 }
 
-// Component to render Text Element content (viewing and editing)
 export function TextElementContent({ element, isEditing, editableInputRef, onFinishEditing }: TextContentProps) {
   if (isEditing) {
     return (
@@ -19,73 +18,72 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         ref={editableInputRef as React.RefObject<HTMLTextAreaElement>}
         defaultValue={element.content}
         style={{
-          // Inherited/dynamic styles
           fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
           color: element.fontColor || 'inherit',
           fontWeight: element.fontWeight || 'inherit',
           fontStyle: element.fontStyle || 'inherit',
           textAlign: element.align || 'left',
-
-          // Layout & Appearance styles
           width: '100%',
           height: '100%',
           resize: 'none',
           border: 'none',
           outline: 'none',
           backgroundColor: 'transparent',
-          padding: '4px', // Ensures text isn't flush against the border
-          boxSizing: 'border-box' // Include padding in width/height calculation
+          padding: '4px',
+          boxSizing: 'border-box'
         }}
         onKeyDown={(e) => {
-          // Finish editing on Escape key
           if (e.key === 'Escape') {
             onFinishEditing();
             e.preventDefault();
           }
-          // Allow default behavior for Enter (creates newline) unless Shift is also pressed
-          // (This prevents accidental submission if Enter is meant for newlines)
-          // Or remove this block if Enter should *always* submit/finish editing
-          // if (e.key === 'Enter' && !e.shiftKey) {
-          //   onFinishEditing();
-          //   e.preventDefault();
-          // }
         }}
-        // Optional: Finish editing when clicking outside
         onBlur={onFinishEditing}
       />
     );
   }
 
-  // Viewing mode: Display text within a div
+  // --- VIEWING MODE ---
+  // Check if newline characters are present in the data being rendered
+  console.log(`Rendering Text Content for element ${element.id}:`, JSON.stringify(element.content));
+
   return (
     <div
       style={{
+        // Base Text Styles
         fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
         color: element.fontColor || 'inherit',
         fontWeight: element.fontWeight || 'inherit',
         fontStyle: element.fontStyle || 'inherit',
-        textAlign: element.align || 'left',
+        textAlign: element.align || 'left', // Horizontal align *within* lines
+
+        // Box Model & Layout
         width: '100%',
         height: '100%',
         padding: '4px',
-        overflow: 'hidden', // Hide overflow text (consider 'auto' for scrollbars)
-        display: 'flex', // Use flexbox for alignment
-        alignItems: 'flex-start', // Align inner content div to the top
-        justifyContent: 'flex-start', // Align inner content div to the left
-        whiteSpace: 'pre-wrap', // <<< THIS IS THE KEY FIX for newlines
-        wordBreak: 'break-word' // Break long words if necessary
+        overflow: 'hidden', // Or 'auto'
+        boxSizing: 'border-box',
+
+        // Flexbox for Vertical Alignment of Content Block
+        display: 'flex',
+        alignItems: 'flex-start', // Align inner div (content block) to the top
+        justifyContent: 'flex-start', // Align inner div (content block) to the left
+
+        // Whitespace Handling (Crucial for Newlines)
+        whiteSpace: 'pre-wrap', // Respect newlines and spaces, allow wrapping
+        wordBreak: 'break-word' // Allow breaking long words
       }}
     >
-      {/* Using a nested div ensures text alignment respects parent flex settings */}
-      {/* Using 'pre-wrap' on parent makes this inner div respect newlines in content */}
+      {/* Inner div receives text content. It will be aligned top-left by the parent flex settings. */}
+      {/* The `textAlign` style from the parent ensures text *inside* this div aligns correctly. */}
       <div style={{ width: '100%' }}>
-        {element.content || '\u00A0'} {/* Display content or a non-breaking space to maintain height */}
+        {element.content || '\u00A0'} {/* Use non-breaking space to prevent collapse */}
       </div>
     </div>
   );
 }
 
-// Interface for Button Element specific props
+// --- ButtonElementContent ---
 interface ButtonContentProps {
   element: ButtonElement;
   isEditing: boolean;
@@ -93,7 +91,6 @@ interface ButtonContentProps {
   onFinishEditing: () => void;
 }
 
-// Component to render Button Element content (viewing and editing)
 export function ButtonElementContent({ element, isEditing, editableInputRef, onFinishEditing }: ButtonContentProps) {
   if (isEditing) {
     return (
@@ -108,45 +105,41 @@ export function ButtonElementContent({ element, isEditing, editableInputRef, onF
           boxSizing: 'border-box'
         }}
         onKeyDown={(e) => {
-          // Finish editing on Escape or Enter key
           if (e.key === 'Escape' || e.key === 'Enter') {
             onFinishEditing();
             e.preventDefault();
           }
         }}
-         // Optional: Finish editing when clicking outside
         onBlur={onFinishEditing}
       />
     );
   }
 
-  // Viewing mode: Display styled button div
   return (
     <div
-      className={`w-full h-full flex items-center justify-center text-sm // Adjust text size as needed
-        ${element.style === "primary" ? "bg-primary text-primary-foreground hover:bg-primary/90" : // Added hover effect
-          element.style === "secondary" ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" : // Added hover effect
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground" // Example default/outline style
+      className={`w-full h-full flex items-center justify-center text-sm
+        ${element.style === "primary" ? "bg-primary text-primary-foreground hover:bg-primary/90" :
+          element.style === "secondary" ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" :
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
         }`}
       style={{
-        borderRadius: '4px', // Consistent border radius
-        cursor: 'pointer', // Indicate interactivity
-        padding: '4px', // Add padding
+        borderRadius: '4px',
+        cursor: 'pointer',
+        padding: '4px',
         boxSizing: 'border-box',
-        transition: 'colors' // Smooth transition for hover effects
+        transition: 'colors'
       }}
     >
-      {element.label || 'Button'} {/* Default text if label is empty */}
+      {element.label || 'Button'}
     </div>
   );
 }
 
-// Interface for Image Element specific props
+// --- ImageElementContent ---
 interface ImageContentProps {
-  element: ImageElement; // Use the specific ImageElement type
+  element: ImageElement;
 }
 
-// Component to render Image Element content
 export function ImageElementContent({ element }: ImageContentProps) {
   return (
     <img
@@ -155,37 +148,34 @@ export function ImageElementContent({ element }: ImageContentProps) {
       style={{
         width: '100%',
         height: '100%',
-        objectFit: element.objectFit || 'contain', // Use objectFit from element or default to 'contain'
-        display: 'block' // Prevents extra space below image
+        objectFit: element.objectFit || 'contain',
+        display: 'block'
       }}
-      draggable={false} // Prevent native browser image dragging
+      draggable={false}
     />
   );
 }
 
-// Interface for Hotspot Element specific props
+// --- HotspotElementContent ---
 interface HotspotContentProps {
-  element: HotspotElement; // Use the specific HotspotElement type
+  element: HotspotElement;
 }
 
-// Component to render Hotspot Element content
 export function HotspotElementContent({ element }: HotspotContentProps) {
   return (
     <div
-      className={`w-full h-full flex items-center justify-center border-2 border-dashed border-primary hover:border-primary/80 hover:bg-primary/10 ${ // Added hover effect
+      className={`w-full h-full flex items-center justify-center border-2 border-dashed border-primary hover:border-primary/80 hover:bg-primary/10 ${
         element.shape === "circle" ? "rounded-full" : ""
-      } cursor-pointer`} // Add cursor pointer
-      title={element.tooltip} // Use tooltip for hover text
-      style={{ boxSizing: 'border-box', transition: 'border-color, background-color' }} // Ensure border is inside, add transition
+      } cursor-pointer`}
+      title={element.tooltip}
+      style={{ boxSizing: 'border-box', transition: 'border-color, background-color' }}
     >
-      {/* Hotspots are typically invisible, so no inner content needed unless for editor view */}
-      {/* <div className="opacity-50 text-xs">Hotspot</div> */}
+      {/* Invisible content */}
     </div>
   );
 }
 
-
-// General interface for rendering any element's content
+// --- ElementContent ---
 interface ElementContentProps {
   element: SlideElement;
   isEditing: boolean;
@@ -193,9 +183,7 @@ interface ElementContentProps {
   onFinishEditing: () => void;
 }
 
-// Main component that switches based on element type
 export function ElementContent({ element, isEditing, editableInputRef, onFinishEditing }: ElementContentProps) {
-
   switch (element.type) {
     case "text":
       return (
@@ -207,7 +195,6 @@ export function ElementContent({ element, isEditing, editableInputRef, onFinishE
         />
       );
     case "image":
-      // Editing state isn't typically applicable to the image content itself here
       return <ImageElementContent element={element} />;
     case "button":
       return (
@@ -219,15 +206,9 @@ export function ElementContent({ element, isEditing, editableInputRef, onFinishE
         />
       );
     case "hotspot":
-       // Editing state isn't typically applicable to the hotspot content itself here
       return <HotspotElementContent element={element} />;
-    // Add cases for other element types (Shape, Video, etc.) here
-    // case "shape":
-    //   return <ShapeElementContent element={element} />; // Example
     default:
-      // Provide a fallback for unknown or unsupported types
-      // Ensure the default case handles the element type assertion correctly if needed
-      // const _exhaustiveCheck: never = element; // Uncomment for exhaustive type checking
-      return <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs p-2 text-center">Unsupported Element Type: { (element as any).type }</div>;
+      const elementType = (element as any)?.type ?? 'unknown';
+      return <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs p-2 text-center">Unsupported Element Type: {elementType}</div>;
   }
 }
