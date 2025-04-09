@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
