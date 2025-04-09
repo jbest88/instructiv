@@ -1,4 +1,3 @@
-
 import React from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { ElementContent } from "./ElementContent";
@@ -15,7 +14,6 @@ interface SlideElementComponentProps {
   onContextMenu: (e: React.MouseEvent<HTMLDivElement>, element: SlideElement) => void;
   onDoubleClick: (e: React.MouseEvent<HTMLDivElement>, element: SlideElement) => void;
   onFinishEditing: () => void;
-  // Context menu handlers
   onCut: (id: string) => void;
   onCopy: (id: string) => void;
   onPaste: (id: string) => void;
@@ -29,7 +27,6 @@ interface SlideElementComponentProps {
   onSelect: (id: string) => void;
   onDeleteElement: (id: string) => void;
   onDeleteInitiate: (id: string) => void;
-  // State for popovers
   isFontPopoverOpen: boolean;
   setIsFontPopoverOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isParagraphPopoverOpen: boolean;
@@ -72,25 +69,23 @@ export function SlideElementComponent({
     left: `${element.x}px`,
     top: `${element.y}px`,
     width: `${element.width}px`,
-    height: `${element.height}px`
+    height: `${element.height}px`,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'stretch'
   };
 
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-      <div
-  onMouseDown={(e) => onMouseDown(e, element)}
-  onContextMenu={(e) => onContextMenu(e, element)}
-  onDoubleClick={(e) => onDoubleClick(e, element)}
-  style={{
-    ...baseStyle,
-    display: 'block', // ✅ This is the real fix
-    // Remove alignItems/justifyContent — they are irrelevant
-  }}
-  className={`element ${isSelected ? 'outline outline-2 outline-primary' : ''}`}
->
-
-
+        <div
+          onMouseDown={(e) => onMouseDown(e, element)}
+          onContextMenu={(e) => onContextMenu(e, element)}
+          onDoubleClick={(e) => onDoubleClick(e, element)}
+          style={baseStyle}
+          className={`element ${isSelected ? 'outline outline-2 outline-primary' : ''}`}
+        >
           <ElementContent 
             element={element} 
             isEditing={isEditing} 
@@ -100,7 +95,7 @@ export function SlideElementComponent({
           {isSelected && <ResizeHandles element={element} />}
         </div>
       </ContextMenuTrigger>
-      
+
       {element.type === "text" ? (
         <TextContextMenu
           element={element}
