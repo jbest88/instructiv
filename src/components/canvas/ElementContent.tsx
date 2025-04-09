@@ -89,11 +89,7 @@ export function TextElementContent({
           width: "100%"
         }}
       >
-<<<<<<< HEAD
-        {element.content || "\u00A0"}
-=======
         {value || '\u00A0'}
->>>>>>> 082f5fbe3c0bc2c8bce3805e35411bc323ac130a
       </div>
     </div>
   );
