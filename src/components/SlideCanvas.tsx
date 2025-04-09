@@ -710,38 +710,6 @@ export function SlideCanvas({
     );
   };
 
-  // Handle context menu actions
-  const handleDuplicate = (elementId: string) => {
-    const element = slide.elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    // Duplicate functionality would be implemented here
-    // Currently just logging to show the action would work
-    console.log("Duplicate element", element);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (elementToDelete) {
-      onDeleteElement(elementToDelete);
-      setElementToDelete(null);
-    }
-    setIsDeleteDialogOpen(false);
-  };
-
-  const handleBringToFront = (elementId: string) => {
-    const element = slide.elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    console.log("Bring to front", element);
-  };
-
-  const handleSendToBack = (elementId: string) => {
-    const element = slide.elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    console.log("Send to back", element);
-  };
-
   return (
     <>
       <div 
