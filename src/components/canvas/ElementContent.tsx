@@ -73,8 +73,6 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
       </div>
     </div>
   );
-  
-  
 }
 
 // --- ButtonElementContent ---
