@@ -11,12 +11,25 @@ interface TextContentProps {
   onFinishEditing: (updatedValue?: string) => void;
 }
 
-export function TextElementContent({ element, isEditing, editableInputRef, onFinishEditing }: TextContentProps) {
+export function TextElementContent({
+  element,
+  isEditing,
+  editableInputRef,
+  onFinishEditing
+}: TextContentProps) {
   const [value, setValue] = useState(element.content);
 
   useEffect(() => {
     setValue(element.content);
   }, [element.content]);
+
+  const handleFinish = () => {
+    if (value !== element.content) {
+      onFinishEditing(value); // 💾 send updated value
+    } else {
+      onFinishEditing(); // no change
+    }
+  };
 
   if (isEditing) {
     return (
@@ -24,29 +37,31 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         ref={editableInputRef as React.RefObject<HTMLTextAreaElement>}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        style={{
-          fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
-          color: element.fontColor || 'inherit',
-          fontWeight: element.fontWeight || 'inherit',
-          fontStyle: element.fontStyle || 'inherit',
-          textAlign: element.align || 'left',
-          width: '100%',
-          height: '100%',
-          resize: 'none',
-          border: 'none',
-          outline: 'none',
-          backgroundColor: 'transparent',
-          padding: '4px',
-          boxSizing: 'border-box',
-          verticalAlign: 'top'
-        }}
+        onBlur={handleFinish}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            onFinishEditing();
+          if (e.key === "Escape") {
             e.preventDefault();
+            handleFinish();
           }
         }}
-        onBlur={() => onFinishEditing(value)}
+        style={{
+          fontSize: element.fontSize ? `${element.fontSize}px` : "inherit",
+          color: element.fontColor || "inherit",
+          fontWeight: element.fontWeight || "inherit",
+          fontStyle: element.fontStyle || "inherit",
+          textAlign: element.align || "left",
+          width: "100%",
+          height: "100%",
+          resize: "none",
+          border: "none",
+          outline: "none",
+          backgroundColor: "transparent",
+          padding: "4px",
+          boxSizing: "border-box",
+          verticalAlign: "top",
+          whiteSpace: "pre-wrap", // ✅ multiline preservation
+          overflowWrap: "break-word"
+        }}
       />
     );
   }
@@ -54,34 +69,36 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
-        padding: '4px',
-        overflow: 'auto',
-        boxSizing: 'border-box',
-        backgroundColor: '#fffae6',
-        border: '1px solid red',
-        display: 'block'
+        width: "100%",
+        height: "100%",
+        padding: "4px",
+        overflow: "auto",
+        boxSizing: "border-box",
+        display: "block",
+        whiteSpace: "pre-wrap", // ✅ show line breaks
+        wordBreak: "break-word"
       }}
     >
       <div
         style={{
-          fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
-          color: element.fontColor || 'inherit',
-          fontWeight: element.fontWeight || 'inherit',
-          fontStyle: element.fontStyle || 'inherit',
-          textAlign: element.align || 'left',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          width: '100%',
-          backgroundColor: '#e6fffa'
+          fontSize: element.fontSize ? `${element.fontSize}px` : "inherit",
+          color: element.fontColor || "inherit",
+          fontWeight: element.fontWeight || "inherit",
+          fontStyle: element.fontStyle || "inherit",
+          textAlign: element.align || "left",
+          width: "100%"
         }}
       >
+<<<<<<< HEAD
+        {element.content || "\u00A0"}
+=======
         {value || '\u00A0'}
+>>>>>>> 082f5fbe3c0bc2c8bce3805e35411bc323ac130a
       </div>
     </div>
   );
 }
+
 
 // --- ButtonElementContent ---
 interface ButtonContentProps {

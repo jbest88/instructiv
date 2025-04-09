@@ -222,6 +222,7 @@ export function SlideCanvas({
     >
       {/* Render all elements */}
       {slide.elements.map((element) => (
+
   <SlideElementComponent
     key={element.id}
     element={element}
@@ -261,6 +262,7 @@ export function SlideCanvas({
     setIsHyperlinkPopoverOpen={setIsHyperlinkPopoverOpen}
   />
 ))}
+>>>>>>> 082f5fbe3c0bc2c8bce3805e35411bc323ac130a
 
 
       {/* Delete confirmation dialog */}
