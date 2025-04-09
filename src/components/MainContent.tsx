@@ -55,12 +55,8 @@ export function MainContent() {
     const scrollTop = (1200 * zoom - containerHeight) / 2;
     
     // Apply the scroll position
-    if (scrollLeft > 0) {
-      container.scrollLeft = scrollLeft;
-    }
-    if (scrollTop > 0) {
-      container.scrollTop = scrollTop;
-    }
+    container.scrollLeft = Math.max(0, scrollLeft);
+    container.scrollTop = Math.max(0, scrollTop);
   };
   
   // Center canvas when zoom changes or on window resize
@@ -125,6 +121,7 @@ export function MainContent() {
           <div 
             ref={canvasContainerRef} 
             className="absolute inset-0 overflow-auto"
+            style={{ position: 'relative' }}
           >
             <SlideCanvas 
               slide={currentSlide}
@@ -137,7 +134,7 @@ export function MainContent() {
           </div>
           
           {/* Zoom controls with keyboard shortcuts and percentage */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-white/90 rounded-md p-1 shadow-md">
+          <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-white/90 rounded-md p-1 shadow-md z-10">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -169,7 +166,7 @@ export function MainContent() {
           </div>
           
           {/* Shortcut hints */}
-          <div className="absolute bottom-4 left-4 bg-white/80 rounded p-1 text-xs text-gray-600 shadow-sm">
+          <div className="absolute bottom-4 left-4 bg-white/80 rounded p-1 text-xs text-gray-600 shadow-sm z-10">
             <div className="flex items-center gap-1">
               <Move className="h-3 w-3" /> Pan: Space + Drag or Middle Mouse
             </div>

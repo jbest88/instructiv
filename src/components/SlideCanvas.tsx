@@ -33,6 +33,8 @@ interface ResizeState {
   startY: number;
   startWidth: number;
   startHeight: number;
+  startElementX: number;
+  startElementY: number;
 }
 
 export function SlideCanvas({ 
@@ -57,7 +59,9 @@ export function SlideCanvas({
     startX: 0,
     startY: 0,
     startWidth: 0,
-    startHeight: 0
+    startHeight: 0,
+    startElementX: 0,
+    startElementY: 0
   });
 
   const [isPanning, setIsPanning] = useState(false);
@@ -167,7 +171,9 @@ export function SlideCanvas({
         startX: e.clientX,
         startY: e.clientY,
         startWidth: element.width,
-        startHeight: element.height
+        startHeight: element.height,
+        startElementX: element.x,
+        startElementY: element.y
       });
       
       return;
@@ -245,14 +251,14 @@ export function SlideCanvas({
       
       let newWidth = resizeState.startWidth;
       let newHeight = resizeState.startHeight;
-      let newX = element.x;
-      let newY = element.y;
+      let newX = resizeState.startElementX;
+      let newY = resizeState.startElementY;
       
       // Adjust based on the handle being dragged
       switch (resizeState.handle) {
         case "n":
           newHeight = Math.max(10, resizeState.startHeight - deltaY);
-          newY = resizeState.startHeight - deltaY < 10 ? element.y : element.y + deltaY;
+          newY = resizeState.startElementY + deltaY;
           break;
         case "s":
           newHeight = Math.max(10, resizeState.startHeight + deltaY);
@@ -262,18 +268,18 @@ export function SlideCanvas({
           break;
         case "w":
           newWidth = Math.max(10, resizeState.startWidth - deltaX);
-          newX = resizeState.startWidth - deltaX < 10 ? element.x : element.x + deltaX;
+          newX = resizeState.startElementX + deltaX;
           break;
         case "ne":
           newWidth = Math.max(10, resizeState.startWidth + deltaX);
           newHeight = Math.max(10, resizeState.startHeight - deltaY);
-          newY = resizeState.startHeight - deltaY < 10 ? element.y : element.y + deltaY;
+          newY = resizeState.startElementY + deltaY;
           break;
         case "nw":
           newWidth = Math.max(10, resizeState.startWidth - deltaX);
           newHeight = Math.max(10, resizeState.startHeight - deltaY);
-          newX = resizeState.startWidth - deltaX < 10 ? element.x : element.x + deltaX;
-          newY = resizeState.startHeight - deltaY < 10 ? element.y : element.y + deltaY;
+          newX = resizeState.startElementX + deltaX;
+          newY = resizeState.startElementY + deltaY;
           break;
         case "se":
           newWidth = Math.max(10, resizeState.startWidth + deltaX);
@@ -282,15 +288,15 @@ export function SlideCanvas({
         case "sw":
           newWidth = Math.max(10, resizeState.startWidth - deltaX);
           newHeight = Math.max(10, resizeState.startHeight + deltaY);
-          newX = resizeState.startWidth - deltaX < 10 ? element.x : element.x + deltaX;
+          newX = resizeState.startElementX + deltaX;
           break;
       }
       
       onUpdateElement(selectedElementId, {
-        x: newX,
-        y: newY,
         width: newWidth,
-        height: newHeight
+        height: newHeight,
+        x: newX,
+        y: newY
       });
     }
     
