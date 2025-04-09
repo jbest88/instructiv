@@ -222,38 +222,38 @@ export function SlideCanvas({
     >
       {/* Render all elements */}
       {slide.elements.map((element) => (
-        <div key={element.id}>
-          <SlideElementComponent
-            element={element}
-            isSelected={selectedElementId === element.id}
-            isEditing={editingElementId === element.id}
-            editableInputRef={editableInputRef}
-            onMouseDown={handleElementMouseDown}
-            onContextMenu={handleElementRightClick}
-            onDoubleClick={handleElementDoubleClick}
-            onFinishEditing={finishEditing}
-            onCut={handleCut}
-            onCopy={handleCopy}
-            onPaste={handlePaste}
-            onExitEdit={handleExitEditText}
-            onFontStyleChange={applyFontStyle}
-            onParagraphStyleChange={applyParagraphStyle}
-            onHyperlinkChange={applyHyperlink}
-            onDuplicate={handleDuplicate}
-            onBringToFront={handleBringToFront}
-            onSendToBack={handleSendToBack}
-            onSelect={onSelectElement}
-            onDeleteElement={onDeleteElement}
-            onDeleteInitiate={handleDeleteInitiate}
-            isFontPopoverOpen={isFontPopoverOpen}
-            setIsFontPopoverOpen={setIsFontPopoverOpen}
-            isParagraphPopoverOpen={isParagraphPopoverOpen}
-            setIsParagraphPopoverOpen={setIsParagraphPopoverOpen}
-            isHyperlinkPopoverOpen={isHyperlinkPopoverOpen}
-            setIsHyperlinkPopoverOpen={setIsHyperlinkPopoverOpen}
-          />
-        </div>
-      ))}
+  <SlideElementComponent
+    key={element.id}
+    element={element}
+    isSelected={selectedElementId === element.id}
+    isEditing={editingElementId === element.id}
+    editableInputRef={editableInputRef}
+    onMouseDown={handleElementMouseDown}
+    onContextMenu={handleElementRightClick}
+    onDoubleClick={handleElementDoubleClick}
+    onFinishEditing={finishEditing}
+    onCut={handleCut}
+    onCopy={handleCopy}
+    onPaste={handlePaste}
+    onExitEdit={handleExitEditText}
+    onFontStyleChange={applyFontStyle}
+    onParagraphStyleChange={applyParagraphStyle}
+    onHyperlinkChange={applyHyperlink}
+    onDuplicate={handleDuplicate}
+    onBringToFront={handleBringToFront}
+    onSendToBack={handleSendToBack}
+    onSelect={onSelectElement}
+    onDeleteElement={onDeleteElement}
+    onDeleteInitiate={handleDeleteInitiate}
+    isFontPopoverOpen={isFontPopoverOpen}
+    setIsFontPopoverOpen={setIsFontPopoverOpen}
+    isParagraphPopoverOpen={isParagraphPopoverOpen}
+    setIsParagraphPopoverOpen={setIsParagraphPopoverOpen}
+    isHyperlinkPopoverOpen={isHyperlinkPopoverOpen}
+    setIsHyperlinkPopoverOpen={setIsHyperlinkPopoverOpen}
+  />
+))}
+
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
