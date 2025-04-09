@@ -53,20 +53,42 @@ export function MainContent() {
             />
           </div>
           
-          {/* Zoom controls */}
+          {/* Zoom controls with keyboard shortcuts and percentage */}
           <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-white/90 rounded-md p-1 shadow-md">
-            <Button variant="ghost" size="icon" onClick={handleZoomOut}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleZoomOut}
+              title="Zoom Out (Ctrl+-)"
+            >
               <ZoomOut className="h-4 w-4" />
             </Button>
             <div className="px-2 text-sm tabular-nums">
               {Math.round(canvasZoom * 100)}%
             </div>
-            <Button variant="ghost" size="icon" onClick={handleZoomIn}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleZoomIn}
+              title="Zoom In (Ctrl++)"
+            >
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleResetZoom} className="ml-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleResetZoom} 
+              className="ml-1"
+              title="Reset Zoom (Ctrl+0)"
+            >
               <Maximize2 className="h-4 w-4" />
             </Button>
+          </div>
+          
+          {/* Shortcut hints */}
+          <div className="absolute bottom-4 left-4 bg-white/80 rounded p-1 text-xs text-gray-600 shadow-sm">
+            <div>Pan: Space + Drag or Middle Mouse</div>
+            <div>Zoom: Ctrl + Mouse Wheel</div>
           </div>
         </div>
       ) : (

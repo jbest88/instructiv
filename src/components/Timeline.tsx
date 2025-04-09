@@ -1,6 +1,6 @@
 
-import { useState, useRef } from "react";
-import { Eye, ChevronUp, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Eye, ChevronUp, ChevronDown, Lock, Unlock } from "lucide-react";
 import { Slide, TimelineItem, SlideElement } from "@/utils/slideTypes";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,48 @@ export function Timeline({ currentSlide }: TimelineProps) {
   const [dragTarget, setDragTarget] = useState<{ id: string, type: 'start' | 'end' | 'move' } | null>(null);
   const [dragStartX, setDragStartX] = useState(0);
   
+  // State for timeline scale and position
+  const [timelineScale, setTimelineScale] = useState(40); // pixels per second
+  const [timelineDuration, setTimelineDuration] = useState(30); // seconds
+  
+  // Create or update timeline items from elements if needed
+  useEffect(() => {
+    // If slide has no timeline items, create them from elements
+    if (!currentSlide.timelineItems || currentSlide.timelineItems.length === 0) {
+      const newTimelineItems = currentSlide.elements.map(element => 
+        createTimelineItemFromElement(element)
+      );
+      
+      if (newTimelineItems.length > 0) {
+        handleUpdateSlide({
+          timelineItems: newTimelineItems
+        });
+      }
+    } else {
+      // Check for new elements that don't have timeline items
+      const existingElementIds = currentSlide.timelineItems.map(item => item.linkedElementId);
+      const elementsWithoutTimeline = currentSlide.elements.filter(
+        element => !existingElementIds.includes(element.id)
+      );
+      
+      if (elementsWithoutTimeline.length > 0) {
+        const newItems = elementsWithoutTimeline.map(element => 
+          createTimelineItemFromElement(element)
+        );
+        
+        handleUpdateSlide({
+          timelineItems: [...(currentSlide.timelineItems || []), ...newItems]
+        });
+      }
+    }
+  }, [currentSlide.elements]);
+  
   // Use the slide's timelineItems or create from elements if not available
   const timelineItems = currentSlide.timelineItems || 
     currentSlide.elements.map(element => createTimelineItemFromElement(element));
   
   // Create time markers (in seconds)
-  const timeMarkers = Array.from({ length: 30 }, (_, i) => i + 1);
+  const timeMarkers = Array.from({ length: timelineDuration }, (_, i) => i + 1);
   
   // Create a timeline item from an element if it doesn't exist
   function createTimelineItemFromElement(element: SlideElement): TimelineItem {
@@ -37,16 +73,20 @@ export function Timeline({ currentSlide }: TimelineProps) {
       type: element.type,
       startTime: 0,
       duration: 5, // Default 5 seconds duration
-      linkedElementId: element.id
+      linkedElementId: element.id,
+      isLocked: false,
+      isVisible: true
     };
   }
   
   // Get a display name for element based on type and properties
   function getElementName(element: SlideElement): string {
     if (element.type === "text") {
-      return element.content.substring(0, 20) || "Text";
+      const textContent = element.content || "Text";
+      return textContent.length > 20 ? textContent.substring(0, 20) + "..." : textContent;
     } else if (element.type === "button") {
-      return element.label || "Button";
+      const label = element.label || "Button";
+      return label.length > 20 ? label.substring(0, 20) + "..." : label;
     } else if (element.type === "image") {
       return "Image" + (element.alt ? `: ${element.alt.substring(0, 15)}` : "");
     } else {
@@ -56,12 +96,50 @@ export function Timeline({ currentSlide }: TimelineProps) {
   
   // Calculate pixel position from time value
   function timeToPosition(time: number): number {
-    return time * 40; // 40px per second
+    return time * timelineScale;
   }
   
   // Calculate time value from pixel position
   function positionToTime(position: number): number {
-    return Math.max(0, position / 40); // 40px per second
+    return Math.max(0, position / timelineScale);
+  }
+  
+  // Toggle element visibility
+  function toggleElementVisibility(itemId: string) {
+    const item = timelineItems.find(item => item.id === itemId);
+    if (!item) return;
+    
+    const newItems = [...timelineItems];
+    const itemIndex = newItems.findIndex(i => i.id === itemId);
+    
+    newItems[itemIndex] = {
+      ...newItems[itemIndex],
+      isVisible: !newItems[itemIndex].isVisible
+    };
+    
+    // Update slide with updated timelineItems
+    handleUpdateSlide({
+      timelineItems: newItems
+    });
+  }
+  
+  // Toggle element lock state
+  function toggleElementLock(itemId: string) {
+    const item = timelineItems.find(item => item.id === itemId);
+    if (!item) return;
+    
+    const newItems = [...timelineItems];
+    const itemIndex = newItems.findIndex(i => i.id === itemId);
+    
+    newItems[itemIndex] = {
+      ...newItems[itemIndex],
+      isLocked: !newItems[itemIndex].isLocked
+    };
+    
+    // Update slide with updated timelineItems
+    handleUpdateSlide({
+      timelineItems: newItems
+    });
   }
   
   // Handle dragging start of timeline item
@@ -71,6 +149,11 @@ export function Timeline({ currentSlide }: TimelineProps) {
     type: 'start' | 'end' | 'move'
   ) {
     e.preventDefault();
+    
+    // Check if item is locked
+    const item = timelineItems.find(item => item.id === id);
+    if (item?.isLocked) return;
+    
     setDragTarget({ id, type });
     setDragStartX(e.clientX);
     
@@ -105,10 +188,22 @@ export function Timeline({ currentSlide }: TimelineProps) {
     else if (dragTarget.type === 'end') {
       const newDuration = Math.max(0.5, item.duration + positionToTime(deltaX));
       updatedItem.duration = newDuration;
+      
+      // If duration increased, check if we need to extend timeline
+      if (updatedItem.startTime + updatedItem.duration > timelineDuration - 2) {
+        setTimelineDuration(prevDuration => Math.max(prevDuration, 
+          Math.ceil(updatedItem.startTime + updatedItem.duration) + 5));
+      }
     }
     else if (dragTarget.type === 'move') {
       const newStartTime = Math.max(0, item.startTime + positionToTime(deltaX));
       updatedItem.startTime = newStartTime;
+      
+      // If item moved near end, check if we need to extend timeline
+      if (updatedItem.startTime + updatedItem.duration > timelineDuration - 2) {
+        setTimelineDuration(prevDuration => Math.max(prevDuration, 
+          Math.ceil(updatedItem.startTime + updatedItem.duration) + 5));
+      }
     }
     
     // Update the item in the array
@@ -128,6 +223,16 @@ export function Timeline({ currentSlide }: TimelineProps) {
     setDragTarget(null);
     document.removeEventListener('mousemove', handleDragMove);
     document.removeEventListener('mouseup', handleDragEnd);
+  }
+  
+  // Increase timeline scale (zoom in)
+  function zoomInTimeline() {
+    setTimelineScale(prev => Math.min(prev + 10, 100));
+  }
+  
+  // Decrease timeline scale (zoom out)
+  function zoomOutTimeline() {
+    setTimelineScale(prev => Math.max(prev - 10, 20));
   }
   
   return (
@@ -159,6 +264,18 @@ export function Timeline({ currentSlide }: TimelineProps) {
             </TabsTrigger>
           </TabsList>
         </Tabs>
+        
+        {/* Timeline zoom controls */}
+        <div className="flex items-center mr-1 gap-1">
+          <Button variant="ghost" size="icon" onClick={zoomOutTimeline} className="h-6 w-6">
+            <span className="text-xs font-bold">-</span>
+          </Button>
+          <span className="text-xs">{timelineScale}px/s</span>
+          <Button variant="ghost" size="icon" onClick={zoomInTimeline} className="h-6 w-6">
+            <span className="text-xs font-bold">+</span>
+          </Button>
+        </div>
+        
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="ml-2">
             {!timelineOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -169,11 +286,15 @@ export function Timeline({ currentSlide }: TimelineProps) {
       <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
         <div className="bg-white p-0 h-[220px] overflow-y-auto">
           {/* Timeline ruler */}
-          <div className="w-full" ref={timelineRef}>
+          <div className="w-full overflow-x-auto" ref={timelineRef}>
             {/* Time markers */}
-            <div className="flex h-5 border-b pl-14 pr-2">
+            <div className="flex h-5 border-b pl-36 pr-2 sticky top-0 bg-white z-10">
               {timeMarkers.map((time) => (
-                <div key={time} className="w-[40px] text-[10px] text-center border-r">
+                <div 
+                  key={time} 
+                  className="text-[10px] text-center border-r flex-shrink-0"
+                  style={{ width: `${timelineScale}px` }}
+                >
                   {time}s
                 </div>
               ))}
@@ -190,15 +311,46 @@ export function Timeline({ currentSlide }: TimelineProps) {
                   const startPosition = timeToPosition(item.startTime);
                   const width = timeToPosition(item.duration);
                   
+                  // Get the associated element to check if it exists
+                  const element = currentSlide.elements.find(el => el.id === item.linkedElementId);
+                  if (!element) return null; // Skip items with no associated element
+                  
                   return (
                     <div key={item.id} className="flex items-center h-10 border-b">
-                      <div className="w-12 flex justify-center border-r">
-                        <Eye className="h-4 w-4 text-gray-500" />
+                      {/* Visibility toggle */}
+                      <div className="w-10 flex justify-center border-r">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-6 w-6 ${!item.isVisible ? 'text-gray-400' : 'text-blue-500'}`}
+                          onClick={() => toggleElementVisibility(item.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="w-12 flex justify-center items-center border-r">
-                        <input type="checkbox" className="h-3 w-3" />
+                      
+                      {/* Lock toggle */}
+                      <div className="w-10 flex justify-center border-r">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-6 w-6 ${item.isLocked ? 'text-blue-500' : 'text-gray-400'}`}
+                          onClick={() => toggleElementLock(item.id)}
+                        >
+                          {item.isLocked ? (
+                            <Lock className="h-4 w-4" />
+                          ) : (
+                            <Unlock className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
-                      <div className="w-40 text-xs p-1 border-r truncate">
+                      
+                      {/* Element name */}
+                      <div 
+                        className={`w-16 text-xs p-1 border-r truncate ${
+                          item.linkedElementId === selectedElementId ? 'bg-blue-50 font-medium' : ''
+                        }`}
+                      >
                         {item.name}
                       </div>
                       
@@ -207,11 +359,11 @@ export function Timeline({ currentSlide }: TimelineProps) {
                         <div 
                           className={`absolute top-1.5 h-6 bg-blue-100 border border-blue-500 rounded flex items-center text-[10px] ${
                             item.linkedElementId === selectedElementId ? 'border-blue-700 bg-blue-200' : ''
-                          }`} 
+                          } ${item.isLocked ? 'opacity-50' : ''}`} 
                           style={{ 
                             left: `${startPosition}px`, 
                             width: `${width}px`,
-                            cursor: 'move'
+                            cursor: item.isLocked ? 'not-allowed' : 'move'
                           }}
                           onMouseDown={(e) => handleDragStart(e, item.id, 'move')}
                         >

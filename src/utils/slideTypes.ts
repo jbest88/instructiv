@@ -47,6 +47,8 @@ export interface TimelineItem {
   startTime: number; // in seconds
   duration: number; // in seconds
   linkedElementId?: string;
+  isLocked?: boolean; // Added property to lock timeline items
+  isVisible?: boolean; // Added property to toggle visibility
 }
 
 export interface Slide {
@@ -55,7 +57,7 @@ export interface Slide {
   elements: SlideElement[];
   background?: string;
   order: number;
-  timelineItems?: TimelineItem[]; // Added timeline items
+  timelineItems?: TimelineItem[]; // Timeline items array
 }
 
 export interface Scene {
@@ -71,6 +73,6 @@ export interface Project {
   scenes: Scene[];
   currentSceneId: string;
   currentSlideId: string;
-  createdAt?: string; // Added createdAt field
-  updatedAt?: string; // Added updatedAt field
+  createdAt?: string;
+  updatedAt?: string;
 }

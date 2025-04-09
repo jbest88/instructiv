@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Slide, SlideElement } from "@/utils/slideTypes";
 import { cn } from "@/lib/utils";
@@ -34,10 +33,11 @@ export function SlideCanvas({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [viewportPosition, setViewportPosition] = useState({ x: 0, y: 0 });
   
   const { canvasSize, canvasZoom, setCanvasZoom } = useProject();
 
-  // Set up the canvas with proper padding for panning to edges
+  // Center canvas on initial load and when zoom changes
   useEffect(() => {
     if (containerRef.current && canvasRef.current) {
       const containerWidth = containerRef.current.clientWidth;
@@ -45,79 +45,198 @@ export function SlideCanvas({
       const canvasWidth = canvasSize.width * canvasZoom;
       const canvasHeight = canvasSize.height * canvasZoom;
       
-      // Add padding around canvas to allow scrolling beyond edges
-      const paddingX = Math.max(containerWidth - canvasWidth, 100);
-      const paddingY = Math.max(containerHeight - canvasHeight, 100);
+      // Center the canvas in the viewport
+      const paddingX = Math.max((containerWidth - canvasWidth) / 2, 100);
+      const paddingY = Math.max((containerHeight - canvasHeight) / 2, 100);
       
-      // Apply padding to the canvas wrapper for scrollability
       if (canvasRef.current.parentElement) {
         canvasRef.current.parentElement.style.padding = `${paddingY}px ${paddingX}px`;
-        canvasRef.current.parentElement.style.width = `${canvasWidth + paddingX * 2}px`;
-        canvasRef.current.parentElement.style.height = `${canvasHeight + paddingY * 2}px`;
+        canvasRef.current.parentElement.style.minWidth = `${canvasWidth + (paddingX * 2)}px`;
+        canvasRef.current.parentElement.style.minHeight = `${canvasHeight + (paddingY * 2)}px`;
+        
+        // Set scrollbars to center canvas on initial load
+        if (viewportPosition.x === 0 && viewportPosition.y === 0) {
+          setTimeout(() => {
+            if (containerRef.current) {
+              const scrollX = (canvasRef.current.parentElement!.offsetWidth - containerWidth) / 2;
+              const scrollY = (canvasRef.current.parentElement!.offsetHeight - containerHeight) / 2;
+              containerRef.current.scrollLeft = scrollX;
+              containerRef.current.scrollTop = scrollY;
+              setViewportPosition({ x: scrollX, y: scrollY });
+            }
+          }, 10);
+        }
       }
     }
   }, [canvasSize, canvasZoom]);
 
-  // Handle wheel event for zooming
+  // Handle zoom with mouse positioning
   const handleWheel = (e: WheelEvent) => {
-    // Only zoom when shift key is pressed
-    if (e.shiftKey) {
+    if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       
+      if (!containerRef.current || !canvasRef.current) return;
+      
+      // Get mouse position relative to canvas
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      // Get current scroll position
+      const scrollLeft = containerRef.current.scrollLeft;
+      const scrollTop = containerRef.current.scrollTop;
+      
+      // Calculate mouse position relative to scroll position
+      const mouseXInCanvas = mouseX + scrollLeft;
+      const mouseYInCanvas = mouseY + scrollTop;
+      
+      // Calculate zoom change
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      let newZoom = canvasZoom + delta;
+      const prevZoom = canvasZoom;
+      let newZoom = prevZoom + delta;
       
       // Limit zoom range
       newZoom = Math.max(0.1, Math.min(3, newZoom));
+      if (newZoom === prevZoom) return;
       
+      // Calculate new scroll position
+      const zoomRatio = newZoom / prevZoom;
+      const newScrollLeft = mouseXInCanvas * zoomRatio - mouseX;
+      const newScrollTop = mouseYInCanvas * zoomRatio - mouseY;
+      
+      // Update zoom
       setCanvasZoom(newZoom);
+      
+      // Set new scroll position after zoom is applied
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollLeft = newScrollLeft;
+          containerRef.current.scrollTop = newScrollTop;
+          setViewportPosition({ x: newScrollLeft, y: newScrollTop });
+        }
+      }, 10);
     }
   };
 
-  // Add middle-mouse button panning
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Middle mouse button (button 1) for panning
-    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+  // Add space bar panning (like Articulate Storyline)
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.code === 'Space' && !isPanning && containerRef.current) {
       e.preventDefault();
       setIsPanning(true);
+      containerRef.current.style.cursor = 'grabbing';
+      document.addEventListener('mousemove', handleSpaceBarPan);
+      document.addEventListener('mouseup', handleSpaceBarPanEnd);
+    }
+  };
+  
+  const handleSpaceBarPan = (e: MouseEvent) => {
+    if (!isPanning || !containerRef.current) return;
+    
+    if (!panStart.x && !panStart.y) {
+      setPanStart({ x: e.clientX, y: e.clientY });
+      return;
+    }
+    
+    const deltaX = e.clientX - panStart.x;
+    const deltaY = e.clientY - panStart.y;
+    
+    containerRef.current.scrollLeft -= deltaX;
+    containerRef.current.scrollTop -= deltaY;
+    
+    setPanStart({ x: e.clientX, y: e.clientY });
+  };
+  
+  const handleSpaceBarPanEnd = () => {
+    if (!containerRef.current) return;
+    
+    setIsPanning(false);
+    containerRef.current.style.cursor = 'default';
+    setPanStart({ x: 0, y: 0 });
+    
+    document.removeEventListener('mousemove', handleSpaceBarPan);
+    document.removeEventListener('mouseup', handleSpaceBarPanEnd);
+  };
+  
+  // Middle-mouse button panning
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Middle mouse button (button 1) or Alt+Left click for panning
+    if (e.button === 1 || (e.button === 0 && (e.altKey || isPanning))) {
+      e.preventDefault();
       setPanStart({ x: e.clientX, y: e.clientY });
       
       if (containerRef.current) {
         containerRef.current.style.cursor = 'grabbing';
       }
+      
+      // Add document-level event listeners
+      document.addEventListener('mousemove', handleDocumentMouseMove);
+      document.addEventListener('mouseup', handleDocumentMouseUp);
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning && containerRef.current) {
-      const deltaX = e.clientX - panStart.x;
-      const deltaY = e.clientY - panStart.y;
-      
-      containerRef.current.scrollLeft -= deltaX;
-      containerRef.current.scrollTop -= deltaY;
-      
-      setPanStart({ x: e.clientX, y: e.clientY });
-    }
+  const handleDocumentMouseMove = (e: MouseEvent) => {
+    if (!containerRef.current || (!panStart.x && !panStart.y)) return;
+    
+    const deltaX = e.clientX - panStart.x;
+    const deltaY = e.clientY - panStart.y;
+    
+    containerRef.current.scrollLeft -= deltaX;
+    containerRef.current.scrollTop -= deltaY;
+    
+    setViewportPosition({
+      x: containerRef.current.scrollLeft,
+      y: containerRef.current.scrollTop
+    });
+    
+    setPanStart({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMouseUp = () => {
-    if (isPanning && containerRef.current) {
-      setIsPanning(false);
+  const handleDocumentMouseUp = () => {
+    if (containerRef.current) {
       containerRef.current.style.cursor = 'default';
     }
+    
+    setPanStart({ x: 0, y: 0 });
+    
+    document.removeEventListener('mousemove', handleDocumentMouseMove);
+    document.removeEventListener('mouseup', handleDocumentMouseUp);
   };
-  
-  // Add wheel event listener
+
+  // Cleanup event listeners
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     
     container.addEventListener('wheel', handleWheel, { passive: false });
+    document.addEventListener('keydown', handleKeyDown);
     
     return () => {
       container.removeEventListener('wheel', handleWheel);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousemove', handleDocumentMouseMove);
+      document.removeEventListener('mouseup', handleDocumentMouseUp);
+      document.removeEventListener('mousemove', handleSpaceBarPan);
+      document.removeEventListener('mouseup', handleSpaceBarPanEnd);
     };
-  }, [canvasZoom]);
+  }, [canvasZoom, isPanning, panStart]);
+  
+  // Handle scroll events to update viewport position
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      setViewportPosition({
+        x: container.scrollLeft,
+        y: container.scrollTop
+      });
+    };
+    
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
   
   // Handle element selection
   const handleElementClick = (e: React.MouseEvent, elementId: string) => {
@@ -503,29 +622,30 @@ export function SlideCanvas({
       ref={containerRef}
       className="relative w-full h-full overflow-auto bg-neutral-200"
       onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
-      <div
-        ref={canvasRef}
-        className="relative shadow-lg mx-auto my-auto"
-        style={{ 
-          transform: `scale(${canvasZoom})`,
-          transformOrigin: 'center',
-          transition: 'transform 0.1s ease-out',
-        }}
+      <div 
+        className="relative bg-neutral-300 min-h-full min-w-full flex items-center justify-center"
       >
-        <div 
-          className="relative bg-white overflow-hidden"
+        <div
+          ref={canvasRef}
+          className="relative shadow-lg"
           style={{ 
-            width: `${canvasSize.width}px`, 
-            height: `${canvasSize.height}px`,
-            background: slide.background || '#ffffff'
+            transform: `scale(${canvasZoom})`,
+            transformOrigin: '0 0',
+            transition: 'transform 0.05s ease-out',
           }}
-          onClick={handleBackgroundClick}
         >
-          {slide.elements.map((element) => renderElement(element))}
+          <div 
+            className="relative bg-white overflow-hidden"
+            style={{ 
+              width: `${canvasSize.width}px`, 
+              height: `${canvasSize.height}px`,
+              background: slide.background || '#ffffff'
+            }}
+            onClick={handleBackgroundClick}
+          >
+            {slide.elements.map((element) => renderElement(element))}
+          </div>
         </div>
       </div>
     </div>
