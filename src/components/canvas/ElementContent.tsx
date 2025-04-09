@@ -54,7 +54,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         boxSizing: 'border-box',
         backgroundColor: '#fffae6', // 👈 yellow highlight to debug
         border: '1px solid red', // 👈 red border to show container edges
-        display: 'flex',
+        display: 'block',
         flexDirection: 'column',
         justifyContent: 'flex-start',
       }}

@@ -904,8 +904,8 @@ export function SlideCanvas({
                 height: '100%',
                 padding: '4px',
                 overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center'
+                display: 'block',
+                alignItems: 'flex-start'
               }}
             >
               {element.content}
