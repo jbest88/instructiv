@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -9,6 +10,7 @@ import {
   ContextMenuSub,
   ContextMenuSubTrigger,
   ContextMenuSubContent,
+  ContextMenuTrigger,
   ContextMenuHighlightGroup,
 } from "@/components/ui/context-menu";
 import {
@@ -889,19 +891,10 @@ export function SlideCanvas({
           return (
             <div {...commonProps} className={`${commonProps.className} overflow-hidden`}>
               <img 
-                src={element.content} 
-                alt="Slide element" 
+                src={element.src} 
+                alt={element.alt || "Slide element"} 
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
-              {isSelected && renderResizeHandles(element)}
-            </div>
-          );
-        case "shape":
-          return (
-            <div 
-              {...commonProps} 
-              className={`${commonProps.className} bg-blue-200`}
-            >
               {isSelected && renderResizeHandles(element)}
             </div>
           );
@@ -914,7 +907,7 @@ export function SlideCanvas({
             >
               <Input
                 ref={ref => { editableInputRef.current = ref; }}
-                defaultValue={element.content}
+                defaultValue={element.label}
                 style={{
                   border: 'none',
                   width: '100%',
@@ -929,7 +922,16 @@ export function SlideCanvas({
               {...commonProps}
               className={`${commonProps.className} bg-primary text-primary-foreground flex items-center justify-center rounded-md`}
             >
-              {element.content}
+              {element.label}
+              {isSelected && renderResizeHandles(element)}
+            </div>
+          );
+        case "hotspot":
+          return (
+            <div
+              {...commonProps}
+              className={`${commonProps.className} ${element.shape === "circle" ? "rounded-full" : ""} border-2 border-dashed border-blue-400 bg-blue-100/30`}
+            >
               {isSelected && renderResizeHandles(element)}
             </div>
           );
@@ -963,8 +965,8 @@ export function SlideCanvas({
         ref={canvasRef}
         className="absolute bg-white shadow-md"
         style={{ 
-          width: `${slide.width}px`, 
-          height: `${slide.height}px`,
+          width: `${slide.width || 1920}px`, 
+          height: `${slide.height || 1080}px`,
           transform: `scale(${zoom})`,
           transformOrigin: 'top left',
         }}
