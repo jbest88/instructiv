@@ -70,10 +70,7 @@ export function SlideElementComponent({
     top: `${element.y}px`,
     width: `${element.width}px`,
     height: `${element.height}px`,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'stretch'
+    display: 'block' // ✅ THIS is what fixes it
   };
 
   return (
@@ -86,9 +83,9 @@ export function SlideElementComponent({
           style={baseStyle}
           className={`element ${isSelected ? 'outline outline-2 outline-primary' : ''}`}
         >
-          <ElementContent 
-            element={element} 
-            isEditing={isEditing} 
+          <ElementContent
+            element={element}
+            isEditing={isEditing}
             editableInputRef={editableInputRef}
             onFinishEditing={onFinishEditing}
           />
