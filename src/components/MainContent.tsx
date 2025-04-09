@@ -51,8 +51,8 @@ export function MainContent() {
     const containerHeight = container.clientHeight;
     
     // Calculate the center position
-    const scrollLeft = (1920 * zoom - containerWidth) / 2;
-    const scrollTop = (1200 * zoom - containerHeight) / 2;
+    const scrollLeft = (1920 - containerWidth / zoom) / 2;
+    const scrollTop = (1200 - containerHeight / zoom) / 2;
     
     // Apply the scroll position
     container.scrollLeft = Math.max(0, scrollLeft);
@@ -121,7 +121,13 @@ export function MainContent() {
           <div 
             ref={canvasContainerRef} 
             className="absolute inset-0 overflow-auto"
-            style={{ position: 'relative' }}
+            style={{ 
+              position: 'relative',
+              transform: `scale(${canvasZoom})`, 
+              transformOrigin: '0 0',
+              width: `${100 / canvasZoom}%`,
+              height: `${100 / canvasZoom}%`
+            }}
           >
             <SlideCanvas 
               slide={currentSlide}

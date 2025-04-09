@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -379,8 +378,7 @@ export function SlideCanvas({
 
   // Canvas right-click handler to prevent default context menu
   const handleCanvasContextMenu = (e: React.MouseEvent) => {
-    // We're no longer preventing the default event - let context menu work
-    // e.preventDefault();
+    // Allow context menu to appear - don't prevent default
   };
 
   // Render resize handles for the selected element
@@ -528,7 +526,7 @@ export function SlideCanvas({
     <>
       <div
         ref={containerRef}
-        className="slide-canvas-container"
+        className="slide-canvas-container w-full h-full overflow-auto"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
@@ -536,14 +534,14 @@ export function SlideCanvas({
           ref={canvasRef}
           className="slide-canvas relative bg-white shadow-md mx-auto"
           style={{
-            width: 1920 * zoom,
-            height: 1200 * zoom,
-            transform: `scale(${zoom})`,
+            width: `${1920}px`,
+            height: `${1200}px`,
             transformOrigin: '0 0',
             background: slide.background || '#ffffff'
           }}
           onClick={handleCanvasClick}
           onMouseDown={handleCanvasMouseDown}
+          onContextMenu={handleCanvasContextMenu}
         >
           {slide.elements.map(renderElement)}
         </div>
