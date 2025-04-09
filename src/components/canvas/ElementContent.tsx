@@ -50,16 +50,17 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         width: '100%',
         height: '100%',
         padding: '4px',
-        overflow: 'auto',
+        overflow: 'hidden',
         boxSizing: 'border-box',
-        backgroundColor: 'transparent',
+        backgroundColor: '#fffae6', // 👈 yellow highlight to debug
+        border: '1px solid red', // 👈 red border to show container edges
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
       }}
     >
       <div
         style={{
-          height: '100%',
-          width: '100%',
-          display: 'block',
           fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
           color: element.fontColor || 'inherit',
           fontWeight: element.fontWeight || 'inherit',
@@ -67,12 +68,15 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
           textAlign: element.align || 'left',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
+          width: '100%',
+          backgroundColor: '#e6fffa' // 👈 greenish to show text box
         }}
       >
         {element.content || '\u00A0'}
       </div>
     </div>
   );
+  
 }
 
 // --- ButtonElementContent ---
