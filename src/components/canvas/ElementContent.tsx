@@ -42,6 +42,13 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
             onFinishEditing();
             e.preventDefault();
           }
+          // Allow default behavior for Enter (creates newline) unless Shift is also pressed
+          // (This prevents accidental submission if Enter is meant for newlines)
+          // Or remove this block if Enter should *always* submit/finish editing
+          // if (e.key === 'Enter' && !e.shiftKey) {
+          //   onFinishEditing();
+          //   e.preventDefault();
+          // }
         }}
         // Optional: Finish editing when clicking outside
         onBlur={onFinishEditing}
@@ -61,17 +68,18 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         width: '100%',
         height: '100%',
         padding: '4px',
-        overflow: 'hidden', // Hide overflow text
+        overflow: 'hidden', // Hide overflow text (consider 'auto' for scrollbars)
         display: 'flex', // Use flexbox for alignment
         alignItems: 'flex-start', // Align inner content div to the top
         justifyContent: 'flex-start', // Align inner content div to the left
-        whiteSpace: 'pre-wrap', // Preserve whitespace and wrap text
+        whiteSpace: 'pre-wrap', // <<< THIS IS THE KEY FIX for newlines
         wordBreak: 'break-word' // Break long words if necessary
       }}
     >
       {/* Using a nested div ensures text alignment respects parent flex settings */}
+      {/* Using 'pre-wrap' on parent makes this inner div respect newlines in content */}
       <div style={{ width: '100%' }}>
-        {element.content || ' '} {/* Display content or a space to maintain height */}
+        {element.content || '\u00A0'} {/* Display content or a non-breaking space to maintain height */}
       </div>
     </div>
   );
@@ -116,8 +124,8 @@ export function ButtonElementContent({ element, isEditing, editableInputRef, onF
   return (
     <div
       className={`w-full h-full flex items-center justify-center text-sm // Adjust text size as needed
-        ${element.style === "primary" ? "bg-primary text-primary-foreground" :
-          element.style === "secondary" ? "bg-secondary text-secondary-foreground" :
+        ${element.style === "primary" ? "bg-primary text-primary-foreground hover:bg-primary/90" : // Added hover effect
+          element.style === "secondary" ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" : // Added hover effect
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground" // Example default/outline style
         }`}
       style={{
@@ -125,6 +133,7 @@ export function ButtonElementContent({ element, isEditing, editableInputRef, onF
         cursor: 'pointer', // Indicate interactivity
         padding: '4px', // Add padding
         boxSizing: 'border-box',
+        transition: 'colors' // Smooth transition for hover effects
       }}
     >
       {element.label || 'Button'} {/* Default text if label is empty */}
@@ -163,13 +172,13 @@ interface HotspotContentProps {
 export function HotspotElementContent({ element }: HotspotContentProps) {
   return (
     <div
-      className={`w-full h-full flex items-center justify-center border-2 border-dashed border-primary ${
+      className={`w-full h-full flex items-center justify-center border-2 border-dashed border-primary hover:border-primary/80 hover:bg-primary/10 ${ // Added hover effect
         element.shape === "circle" ? "rounded-full" : ""
       } cursor-pointer`} // Add cursor pointer
       title={element.tooltip} // Use tooltip for hover text
-      style={{ boxSizing: 'border-box' }} // Ensure border is inside
+      style={{ boxSizing: 'border-box', transition: 'border-color, background-color' }} // Ensure border is inside, add transition
     >
-      {/* Optional: Visual indicator for the hotspot in the editor */}
+      {/* Hotspots are typically invisible, so no inner content needed unless for editor view */}
       {/* <div className="opacity-50 text-xs">Hotspot</div> */}
     </div>
   );
@@ -198,7 +207,7 @@ export function ElementContent({ element, isEditing, editableInputRef, onFinishE
         />
       );
     case "image":
-      // Editing state isn't typically applicable to the image content itself
+      // Editing state isn't typically applicable to the image content itself here
       return <ImageElementContent element={element} />;
     case "button":
       return (
@@ -210,15 +219,15 @@ export function ElementContent({ element, isEditing, editableInputRef, onFinishE
         />
       );
     case "hotspot":
-       // Editing state isn't typically applicable to the hotspot content itself
+       // Editing state isn't typically applicable to the hotspot content itself here
       return <HotspotElementContent element={element} />;
     // Add cases for other element types (Shape, Video, etc.) here
     // case "shape":
-    //   return <ShapeElementContent element={element} />;
+    //   return <ShapeElementContent element={element} />; // Example
     default:
       // Provide a fallback for unknown or unsupported types
       // Ensure the default case handles the element type assertion correctly if needed
-      // const _exhaustiveCheck: never = element; // Uncomment for exhaustive check
-      return <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs">Unsupported Element: { (element as any).type }</div>;
+      // const _exhaustiveCheck: never = element; // Uncomment for exhaustive type checking
+      return <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs p-2 text-center">Unsupported Element Type: { (element as any).type }</div>;
   }
 }
