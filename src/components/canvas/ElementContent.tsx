@@ -52,11 +52,14 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
         padding: '4px',
         overflow: 'auto',
         boxSizing: 'border-box',
-        // Removed display: flex and alignment
+        backgroundColor: 'transparent',
       }}
     >
       <div
         style={{
+          height: '100%',
+          width: '100%',
+          display: 'block',
           fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
           color: element.fontColor || 'inherit',
           fontWeight: element.fontWeight || 'inherit',
@@ -64,13 +67,13 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
           textAlign: element.align || 'left',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
-          width: '100%',
         }}
       >
         {element.content || '\u00A0'}
       </div>
     </div>
   );
+  
   
 }
 
