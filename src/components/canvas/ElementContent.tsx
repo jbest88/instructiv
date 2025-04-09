@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SlideElement, TextElement, ButtonElement, ImageElement, HotspotElement } from "@/utils/slideTypes";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,10 @@ interface TextContentProps {
 
 export function TextElementContent({ element, isEditing, editableInputRef, onFinishEditing }: TextContentProps) {
   const [value, setValue] = useState(element.content);
+
+  useEffect(() => {
+    setValue(element.content);
+  }, [element.content]);
 
   if (isEditing) {
     return (
@@ -73,7 +77,7 @@ export function TextElementContent({ element, isEditing, editableInputRef, onFin
           backgroundColor: '#e6fffa'
         }}
       >
-        {element.content || '\u00A0'}
+        {value || '\u00A0'}
       </div>
     </div>
   );
