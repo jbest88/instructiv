@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -851,19 +852,167 @@ export function SlideCanvas({
       className: `element ${isSelected ? 'outline outline-2 outline-primary' : ''}`
     };
 
-    const renderElementContent = () => {
+    // Wrap element in ContextMenu
+    const wrappedElement = (
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div {...commonProps}>
+            {renderElementContent()}
+            {isSelected && renderResizeHandles(element)}
+          </div>
+        </ContextMenuTrigger>
+        {element.type === "text" ? renderTextContextMenu(element) : renderDefaultContextMenu(element)}
+      </ContextMenu>
+    );
+
+    function renderElementContent() {
       switch (element.type) {
         case "text":
           return isEditing ? (
+            <Textarea
+              ref={(ref) => { editableInputRef.current = ref; }}
+              defaultValue={element.content}
+              style={{
+                fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
+                color: element.fontColor || 'inherit',
+                fontWeight: element.fontWeight || 'inherit',
+                fontStyle: element.fontStyle || 'inherit',
+                textAlign: element.align || 'left',
+                width: '100%',
+                height: '100%',
+                resize: 'none',
+                border: 'none',
+                outline: 'none',
+                backgroundColor: 'transparent',
+                padding: '4px'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  finishEditing();
+                  e.preventDefault();
+                }
+              }}
+            />
+          ) : (
             <div
-              key={element.id}
-              style={baseStyle}
-              className={`${commonProps.className} bg-white overflow-hidden`}
+              style={{
+                fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
+                color: element.fontColor || 'inherit',
+                fontWeight: element.fontWeight || 'inherit',
+                fontStyle: element.fontStyle || 'inherit',
+                textAlign: element.align || 'left',
+                width: '100%',
+                height: '100%',
+                padding: '4px',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center'
+              }}
             >
-              <Textarea
-                ref={ref => { editableInputRef.current = ref; }}
-                defaultValue={element.content}
-                style={{
-                  fontSize: element.fontSize ? `${element.fontSize}px` : 'inherit',
-                  color: element.fontColor || 'inherit',
-                  fontWeight
+              {element.content}
+            </div>
+          );
+        case "image":
+          return (
+            <img
+              src={element.src}
+              alt={element.alt || "Slide image"}
+              style={{
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'contain'
+              }}
+              draggable={false}
+            />
+          );
+        case "button":
+          return isEditing ? (
+            <Input
+              ref={(ref) => { editableInputRef.current = ref; }}
+              defaultValue={element.label}
+              style={{
+                width: '100%',
+                height: '100%',
+                textAlign: 'center',
+                padding: '4px'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  finishEditing();
+                  e.preventDefault();
+                }
+                if (e.key === 'Enter') {
+                  finishEditing();
+                  e.preventDefault();
+                }
+              }}
+            />
+          ) : (
+            <div 
+              className={`w-full h-full flex items-center justify-center
+                ${element.style === "primary" ? "bg-primary text-primary-foreground" : 
+                  element.style === "secondary" ? "bg-secondary text-secondary-foreground" : 
+                  "border border-primary bg-transparent"}`}
+              style={{
+                borderRadius: '4px'
+              }}
+            >
+              {element.label}
+            </div>
+          );
+        case "hotspot":
+          return (
+            <div 
+              className={`w-full h-full flex items-center justify-center border-2 border-dashed border-primary ${
+                element.shape === "circle" ? "rounded-full" : ""
+              }`}
+              title={element.tooltip}
+            >
+              <div className="opacity-50">Hotspot</div>
+            </div>
+          );
+        default:
+          return <div>Unknown element type</div>;
+      }
+    }
+
+    return wrappedElement;
+  };
+
+  return (
+    <div
+      ref={canvasRef}
+      className="slide-canvas relative"
+      style={{
+        width: '100%',
+        height: '100%',
+        minWidth: '800px',
+        minHeight: '600px'
+      }}
+      onMouseDown={handleCanvasMouseDown}
+      onClick={handleCanvasClick}
+      onMouseMove={handleMouseMove}
+    >
+      {/* Render all elements */}
+      {slide.elements.map((element) => (
+        <div key={element.id}>{renderElement(element)}</div>
+      ))}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Element</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this element? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
