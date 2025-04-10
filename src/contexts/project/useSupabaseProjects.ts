@@ -28,9 +28,9 @@ export function useSupabaseProjects(
     
     setIsLoadingProjects(true);
     try {
-      // Fixed query - using the correct schema approach
+      // Fix schema issue by specifying the correct schema path
       const { data, error } = await supabase
-        .from('projects')
+        .from('public.projects')
         .select('id, title, updated_at')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
@@ -66,7 +66,7 @@ export function useSupabaseProjects(
       if (existingProject) {
         // Update existing project
         const { data, error } = await supabase
-          .from('projects')
+          .from('public.projects')
           .update({
             data: projectToSave as any,
             updated_at: new Date().toISOString()
@@ -80,7 +80,7 @@ export function useSupabaseProjects(
       } else {
         // Insert new project
         const { data, error } = await supabase
-          .from('projects')
+          .from('public.projects')
           .insert({
             user_id: user.id,
             title: projectToSave.title,
@@ -110,7 +110,7 @@ export function useSupabaseProjects(
     
     try {
       const { data, error } = await supabase
-        .from('projects')
+        .from('public.projects')
         .select('data')
         .eq('id', projectId)
         .single();
@@ -149,7 +149,7 @@ export function useSupabaseProjects(
     
     try {
       const { error } = await supabase
-        .from('projects')
+        .from('public.projects')
         .update({
           data: project as any,
           updated_at: new Date().toISOString()
@@ -175,7 +175,7 @@ export function useSupabaseProjects(
     
     try {
       const { error } = await supabase
-        .from('projects')
+        .from('public.projects')
         .delete()
         .eq('id', projectId);
         
