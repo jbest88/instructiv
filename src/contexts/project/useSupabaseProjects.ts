@@ -28,6 +28,7 @@ export function useSupabaseProjects(
     
     setIsLoadingProjects(true);
     try {
+      // Updated query - using eq() instead of query params in the URL
       const { data, error } = await supabase
         .from('projects')
         .select('id, title, updated_at')
