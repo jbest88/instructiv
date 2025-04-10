@@ -57,20 +57,43 @@ export function useSupabaseProjects(
         title: title || project.title
       };
       
-      const { data, error } = await supabase
-        .from('projects')
-        .insert({
-          user_id: user.id,
-          title: projectToSave.title,
-          data: projectToSave as any
-        })
-        .select();
-        
-      if (error) throw error;
+      // Check if this project already exists in Supabase (update if it does)
+      const existingProject = userProjects.find(p => p.title === projectToSave.title);
       
-      toast.success(`Project "${projectToSave.title}" saved successfully!`);
+      let result;
+      
+      if (existingProject) {
+        // Update existing project
+        const { data, error } = await supabase
+          .from('projects')
+          .update({
+            data: projectToSave as any,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingProject.id)
+          .select();
+          
+        if (error) throw error;
+        result = data;
+        toast.success(`Project "${projectToSave.title}" updated successfully!`);
+      } else {
+        // Insert new project
+        const { data, error } = await supabase
+          .from('projects')
+          .insert({
+            user_id: user.id,
+            title: projectToSave.title,
+            data: projectToSave as any
+          })
+          .select();
+          
+        if (error) throw error;
+        result = data;
+        toast.success(`Project "${projectToSave.title}" saved successfully!`);
+      }
+      
       await fetchUserProjects();
-      return;
+      return result;
     } catch (error: any) {
       console.error("Error saving project:", error);
       toast.error(`Failed to save project: ${error.message}`);
@@ -116,6 +139,32 @@ export function useSupabaseProjects(
     }
   };
   
+  // Function to update an existing project in Supabase
+  const handleUpdateProjectInSupabase = async (projectId: string) => {
+    if (!user) {
+      toast.error("Please sign in to update projects");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          data: project as any,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', projectId);
+        
+      if (error) throw error;
+      
+      toast.success("Project updated successfully!");
+      await fetchUserProjects();
+    } catch (error: any) {
+      console.error("Error updating project:", error);
+      toast.error(`Failed to update project: ${error.message}`);
+    }
+  };
+  
   // Function to delete project from Supabase
   const handleDeleteProjectFromSupabase = async (projectId: string) => {
     if (!user) {
@@ -144,6 +193,8 @@ export function useSupabaseProjects(
     isLoadingProjects,
     handleSaveProjectToSupabase,
     handleLoadProjectFromSupabase,
-    handleDeleteProjectFromSupabase
+    handleUpdateProjectInSupabase,
+    handleDeleteProjectFromSupabase,
+    fetchUserProjects
   };
 }

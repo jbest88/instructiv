@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { useProject } from "@/contexts/project";
 import { ProjectsList } from "@/components/ProjectsList";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,7 @@ export function FileMenuDropdown() {
     handleImportProject
   } = useProject();
   
+  const { user } = useAuth();
   const [isProjectsListOpen, setIsProjectsListOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   
@@ -88,33 +90,41 @@ export function FileMenuDropdown() {
           {/* Save local */}
           <DropdownMenuItem onClick={handleSaveProject}>
             <Save className="mr-2 h-4 w-4" />
-            Save
+            Save Local
           </DropdownMenuItem>
           
           {/* Save As (to cloud) */}
-          <DropdownMenuItem onClick={() => handleSaveProjectToSupabase()}>
-            <Upload className="mr-2 h-4 w-4" />
-            Save As
-          </DropdownMenuItem>
+          {user && (
+            <DropdownMenuItem onClick={() => handleSaveProjectToSupabase()}>
+              <Upload className="mr-2 h-4 w-4" />
+              Save to Cloud
+            </DropdownMenuItem>
+          )}
           
           {/* Open from local */}
           <DropdownMenuItem onClick={handleLoadProject}>
             <FileDown className="mr-2 h-4 w-4" />
-            Open
+            Open Local
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />
           
           {/* Cloud projects */}
-          <DropdownMenuItem onClick={() => setIsProjectsListOpen(true)}>
+          <DropdownMenuItem 
+            onClick={() => setIsProjectsListOpen(true)}
+            disabled={!user}
+            className={!user ? "opacity-50 cursor-not-allowed" : ""}
+          >
             <Cloud className="mr-2 h-4 w-4" />
-            Cloud Projects
+            {user ? "Cloud Projects" : "Sign in for Cloud Projects"}
           </DropdownMenuItem>
           
-          <DropdownMenuItem>
-            <Upload className="mr-2 h-4 w-4" />
-            Publish
-          </DropdownMenuItem>
+          {user && (
+            <DropdownMenuItem>
+              <Upload className="mr-2 h-4 w-4" />
+              Publish
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       

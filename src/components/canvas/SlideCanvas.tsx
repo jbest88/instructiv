@@ -1,3 +1,4 @@
+
 import React, { useRef } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -124,16 +125,22 @@ export function SlideCanvas({
     setIsDeleteDialogOpen(false);
   };
 
+  // Adjust the dimensions of the canvas based on zoom level
+  const canvasStyle = {
+    width: "100%",
+    height: "100%",
+    minWidth: "800px",
+    minHeight: "600px",
+    transform: `scale(${zoom})`,
+    transformOrigin: "0 0",
+    position: "relative" as const
+  };
+
   return (
     <div
       ref={canvasRef}
       className="slide-canvas relative"
-      style={{
-        width: "100%",
-        height: "100%",
-        minWidth: "800px",
-        minHeight: "600px"
-      }}
+      style={canvasStyle}
       onMouseDown={handleCanvasMouseDown}
       onClick={handleCanvasClick}
     >
