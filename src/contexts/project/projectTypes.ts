@@ -41,4 +41,5 @@ export interface ProjectContextType {
   handleSaveProjectToSupabase: (title?: string) => Promise<void>;
   handleLoadProjectFromSupabase: (projectId: string) => Promise<void>;
   handleDeleteProjectFromSupabase: (projectId: string) => Promise<void>;
+  handleUpdateProjectInSupabase: (projectId: string) => Promise<void>;
 }

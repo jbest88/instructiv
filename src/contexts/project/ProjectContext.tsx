@@ -120,7 +120,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     isLoadingProjects: supabase.isLoadingProjects,
     handleSaveProjectToSupabase: supabase.handleSaveProjectToSupabase,
     handleLoadProjectFromSupabase: supabase.handleLoadProjectFromSupabase,
-    handleDeleteProjectFromSupabase: supabase.handleDeleteProjectFromSupabase
+    handleDeleteProjectFromSupabase: supabase.handleDeleteProjectFromSupabase,
+    handleUpdateProjectInSupabase: supabase.handleUpdateProjectInSupabase
   };
 
   return (
