@@ -28,7 +28,6 @@ export function useSupabaseProjects(
     
     setIsLoadingProjects(true);
     try {
-      // Use the correct table name without schema prefix
       const { data, error } = await supabase
         .from('projects')
         .select('id, title, updated_at')
@@ -134,6 +133,7 @@ export function useSupabaseProjects(
       setProject(projectData);
       setOpenSlides([]);
       toast.success("Project loaded successfully!");
+      return projectData;
     } catch (error: any) {
       console.error("Error loading project:", error);
       toast.error(`Failed to load project: ${error.message}`);

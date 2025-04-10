@@ -1,70 +1,40 @@
-export interface ElementBase {
+import { v4 as uuidv4 } from 'uuid';
+
+export interface SlideElement {
   id: string;
-  type: "text" | "image" | "button" | "hotspot";
+  type: 'text' | 'image' | 'button' | 'hotspot';
   x: number;
   y: number;
   width: number;
   height: number;
-}
-
-export interface TextElement extends ElementBase {
-  type: "text";
-  content: string;
+  rotation: number;
+  zIndex: number;
+  text?: string;
   fontSize?: number;
   fontColor?: string;
+  fontFamily?: string;
   fontWeight?: string;
-  fontStyle?: string; // Added for italic support
-  align?: "left" | "center" | "right";
-}
-
-export interface ImageElement extends ElementBase {
-  type: "image";
-  src: string;
+  textAlign?: 'left' | 'center' | 'right';
+  src?: string;
   alt?: string;
-  objectFit?: "contain" | "cover" | "fill" | "none" | "scale-down"; // Added objectFit property
-}
-
-export interface ButtonElement extends ElementBase {
-  type: "button";
-  label: string;
-  action: "nextSlide" | "prevSlide" | "goToSlide" | "debug";
-  targetSlideId?: string;
-  style?: "primary" | "secondary" | "outline";
-}
-
-export interface HotspotElement extends ElementBase {
-  type: "hotspot";
-  tooltip: string;
-  shape: "circle" | "rectangle";
-}
-
-export type SlideElement = TextElement | ImageElement | ButtonElement | HotspotElement;
-
-export interface TimelineItem {
-  id: string;
-  name: string;
-  type: "button" | "image" | "text" | "hotspot";
-  startTime: number; // in seconds
-  duration: number; // in seconds
-  linkedElementId?: string;
-  isLocked?: boolean; // Added property to lock timeline items
-  isVisible?: boolean; // Added property to toggle visibility
+  url?: string;
+  buttonText?: string;
+  buttonColor?: string;
+  textColor?: string;
 }
 
 export interface Slide {
   id: string;
   title: string;
-  elements: SlideElement[];
-  background?: string;
   order: number;
-  timelineItems?: TimelineItem[]; // Timeline items array
+  background: string;
+  elements: SlideElement[];
 }
 
 export interface Scene {
   id: string;
   title: string;
   slides: Slide[];
-  order: number;
 }
 
 export interface Project {
@@ -73,6 +43,5 @@ export interface Project {
   scenes: Scene[];
   currentSceneId: string;
   currentSlideId: string;
-  createdAt?: string;
-  updatedAt?: string;
+  isNewProject?: boolean; // Added flag to indicate if this is a new project
 }
