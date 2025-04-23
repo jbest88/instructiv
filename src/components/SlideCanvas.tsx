@@ -2,6 +2,7 @@
 import React from 'react';
 import { SlideElement, Slide } from "@/utils/slideTypes";
 import { SlideElementComponent } from "./canvas/SlideElement";
+import { ResizeHandles } from "./canvas/ResizeHandles";
 
 interface SlideCanvasProps {
   slide: Slide;
@@ -30,6 +31,10 @@ export function SlideCanvas({
     onSelectElement(elementId);
   };
 
+  const handleElementDrag = (elementId: string, updates: Partial<SlideElement>) => {
+    onUpdateElement(elementId, updates);
+  };
+
   // Adjust the dimensions of the canvas based on zoom level
   const canvasStyle = {
     width: "100%", 
@@ -54,8 +59,9 @@ export function SlideCanvas({
           element={element}
           isSelected={selectedElementId === element.id}
           onSelect={() => handleElementSelect(element.id)}
-          onUpdateElement={(updatedElement) => onUpdateElement(updatedElement.id, updatedElement)}
-          onDeleteElement={onDeleteElement}
+          onUpdateElement={(updates) => handleElementDrag(element.id, updates)}
+          onDeleteElement={() => onDeleteElement(element.id)}
+          zoom={zoom}
         />
       ))}
     </div>
