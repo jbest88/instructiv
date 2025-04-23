@@ -1,13 +1,15 @@
+
 import { useProject } from "@/contexts/project";
 import { usePanels } from "@/contexts/PanelContext";
 import { Button } from "@/components/ui/button";
-import { CircleCheck, X } from "lucide-react";
+import { CircleCheck, X, Flow } from "lucide-react";
 import { 
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 export function StoryView() {
   const { project, currentScene, handleSelectScene } = useProject();
@@ -53,7 +55,20 @@ export function StoryView() {
           ))}
         </NavigationMenuList>
       </NavigationMenu>
+      
+      {/* Add link to Scene Workflow View */}
+      <div className="mt-2 flex justify-end">
+        <Button
+          as={Link}
+          to="/scene-view"
+          variant="outline"
+          size="sm"
+          className="flex items-center text-xs"
+        >
+          <Flow className="mr-1 h-3 w-3" />
+          Scene Workflow
+        </Button>
+      </div>
     </div>
   );
 }
-

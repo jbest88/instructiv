@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 
 export interface SlideElement {
@@ -21,6 +22,13 @@ export interface SlideElement {
   buttonText?: string;
   buttonColor?: string;
   textColor?: string;
+  // Additional properties for specific element types
+  content?: string;
+  label?: string;
+  action?: string;
+  style?: string;
+  tooltip?: string;
+  shape?: string;
 }
 
 export interface Slide {
@@ -35,6 +43,9 @@ export interface Scene {
   id: string;
   title: string;
   slides: Slide[];
+  // Optional properties for workflow visualization
+  workflowX?: number;
+  workflowY?: number;
 }
 
 export interface Project {
