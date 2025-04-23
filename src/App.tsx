@@ -11,20 +11,23 @@ import { ProjectProvider } from '@/contexts/project';
 import { PanelProvider } from '@/contexts/PanelContext';
 import { Toaster } from "@/components/ui/toaster";
 import ProjectContent from './pages/Index';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 function App() {
   return (
-    <ProjectProvider>
-      <PanelProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<ProjectContent />} />
-            <Route path="/scene-view" element={<SceneView />} />
-          </Routes>
-          <Toaster />
-        </Router>
-      </PanelProvider>
-    </ProjectProvider>
+    <AuthProvider>
+      <ProjectProvider>
+        <PanelProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<ProjectContent />} />
+              <Route path="/scene-view" element={<SceneView />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </PanelProvider>
+      </ProjectProvider>
+    </AuthProvider>
   );
 }
 
