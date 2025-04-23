@@ -154,8 +154,9 @@ export function SlideCanvas({
           element={element}
           isSelected={selectedElementId === element.id}
           onSelect={() => handleElementSelect(element.id)}
-          onUpdateElement={(updatedElement) => onUpdateElement(updatedElement.id, updatedElement)}
-          onDeleteElement={onDeleteElement}
+          onUpdateElement={(updates) => onUpdateElement(element.id, updates)}
+          onDeleteElement={() => onDeleteElement(element.id)}
+          zoom={zoom}
         />
       ))}
 
