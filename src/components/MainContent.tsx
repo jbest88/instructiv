@@ -166,7 +166,7 @@ export function MainContent() {
         </div>
       )}
       
-      {/* Remove Timeline reference */}
+      {/* Timeline component has been removed */}
     </div>
   );
 }

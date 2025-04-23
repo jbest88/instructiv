@@ -49,10 +49,7 @@ function ProjectContent() {
         <MainContent />
         
         {/* Right toolbox panel */}
-        <ToolboxPanel 
-          isOpen={toolboxOpen}
-          onToggle={() => setToolboxOpen(!toolboxOpen)}
-        />
+        <ToolboxPanel isOpen={toolboxOpen} onToggle={() => setToolboxOpen(!toolboxOpen)} />
       </div>
       
       {/* Preview modal */}
