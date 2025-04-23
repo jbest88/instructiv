@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -7,6 +6,7 @@ import { useElementInteraction } from "./hooks/useElementInteraction";
 import { useTextEditing } from "./hooks/useTextEditing";
 import { useContextMenuState } from "./hooks/useContextMenuState";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { CanvasContextMenu } from "./ContextMenus";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,6 +84,48 @@ export function SlideCanvas({
     finishEditing
   });
 
+  const handleCanvasContextMenu = (e: React.MouseEvent) => {
+    // Prevent default context menu
+    e.preventDefault();
+  };
+
+  // Implement canvas context menu handlers
+  const handleCanvasCut = () => {
+    console.log('Canvas cut');
+  };
+
+  const handleCanvasCopy = () => {
+    console.log('Canvas copy');
+  };
+
+  const handleCanvasPaste = () => {
+    console.log('Canvas paste');
+  };
+
+  const handleToggleRuler = () => {
+    console.log('Toggle ruler');
+  };
+
+  const handleToggleGrid = () => {
+    console.log('Toggle grid');
+  };
+
+  const handleAddGuide = () => {
+    console.log('Add guide');
+  };
+
+  const handleResetSlide = () => {
+    console.log('Reset slide');
+  };
+
+  const handleFormatBackground = () => {
+    console.log('Format background');
+  };
+
+  const handleProperties = () => {
+    console.log('Open properties');
+  };
+
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     startPan(e);
   };
@@ -140,25 +182,43 @@ export function SlideCanvas({
     position: "relative" as const
   };
 
+  // Update the return statement
   return (
-    <div
-      ref={canvasRef}
-      className="slide-canvas relative"
-      style={canvasStyle}
-      onMouseDown={handleCanvasMouseDown}
-      onClick={handleCanvasClick}
-    >
-      {slide.elements.map((element) => (
-        <SlideElementComponent
-          key={element.id}
-          element={element}
-          isSelected={selectedElementId === element.id}
-          onSelect={() => handleElementSelect(element.id)}
-          onUpdateElement={(updates) => onUpdateElement(element.id, updates)}
-          onDeleteElement={() => onDeleteElement(element.id)}
-          zoom={zoom}
-        />
-      ))}
+    <div className="flex-1 overflow-hidden relative">
+      <CanvasContextMenu
+        onCut={handleCanvasCut}
+        onCopy={handleCanvasCopy}
+        onPaste={handleCanvasPaste}
+        onToggleRuler={handleToggleRuler}
+        onToggleGrid={handleToggleGrid}
+        onAddGuide={handleAddGuide}
+        onReset={handleResetSlide}
+        onFormatBackground={handleFormatBackground}
+        onProperties={handleProperties}
+      >
+        <div 
+          ref={canvasRef}
+          className="absolute inset-0 overflow-auto"
+          onContextMenu={handleCanvasContextMenu}
+          style={{
+            position: 'relative',
+            height: '100%',
+            width: '100%'
+          }}
+        >
+          {slide.elements.map((element) => (
+            <SlideElementComponent
+              key={element.id}
+              element={element}
+              isSelected={selectedElementId === element.id}
+              onSelect={() => handleElementSelect(element.id)}
+              onUpdateElement={(updates) => onUpdateElement(element.id, updates)}
+              onDeleteElement={() => onDeleteElement(element.id)}
+              zoom={zoom}
+            />
+          ))}
+        </div>
+      </CanvasContextMenu>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

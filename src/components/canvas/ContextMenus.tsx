@@ -1,4 +1,3 @@
-
 import React from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import {
@@ -20,7 +19,11 @@ import {
   SendToBack,
   Edit,
   Save,
-  PaintBucket
+  PaintBucket,
+  Ruler,
+  Grid3x3,
+  Settings2,
+  RotateCcw
 } from "lucide-react";
 
 interface ElementContextMenuProps {
@@ -151,6 +154,104 @@ export const ElementContextMenu: React.FC<ElementContextMenuProps> = ({
             Set as Default Shape
           </ContextMenuItem>
         )}
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+};
+
+interface CanvasContextMenuProps {
+  onCut?: () => void;
+  onCopy?: () => void;
+  onPaste?: () => void;
+  onAddGuide?: () => void;
+  onToggleRuler?: () => void;
+  onToggleGrid?: () => void;
+  onReset?: () => void;
+  onFormatBackground?: () => void;
+  onProperties?: () => void;
+  children: React.ReactNode;
+}
+
+export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
+  onCut,
+  onCopy,
+  onPaste,
+  onAddGuide,
+  onToggleRuler,
+  onToggleGrid,
+  onReset,
+  onFormatBackground,
+  onProperties,
+  children
+}) => {
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        {children}
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-64">
+        <ContextMenuItem onClick={onCut}>
+          <Scissors className="mr-2 h-4 w-4" />
+          Cut
+        </ContextMenuItem>
+        <ContextMenuItem onClick={onCopy}>
+          <Copy className="mr-2 h-4 w-4" />
+          Copy
+        </ContextMenuItem>
+        
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <ClipboardPaste className="mr-2 h-4 w-4" />
+            Paste Options
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem onClick={onPaste}>
+              Paste
+            </ContextMenuItem>
+            <ContextMenuItem>
+              Paste Format Only
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+
+        <ContextMenuSeparator />
+        
+        <ContextMenuItem onClick={onToggleRuler}>
+          <Ruler className="mr-2 h-4 w-4" />
+          Ruler
+        </ContextMenuItem>
+        
+        <ContextMenuItem onClick={onToggleGrid}>
+          <Grid3x3 className="mr-2 h-4 w-4" />
+          Grid and Guides...
+        </ContextMenuItem>
+        
+        <ContextMenuItem onClick={onAddGuide}>
+          Add new vertical guide line
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+        
+        <ContextMenuItem>
+          Apply Layout
+        </ContextMenuItem>
+        
+        <ContextMenuItem onClick={onReset}>
+          <RotateCcw className="mr-2 h-4 w-4" />
+          Reset Slide
+        </ContextMenuItem>
+        
+        <ContextMenuItem onClick={onFormatBackground}>
+          <PaintBucket className="mr-2 h-4 w-4" />
+          Format Background...
+        </ContextMenuItem>
+        
+        <ContextMenuSeparator />
+        
+        <ContextMenuItem onClick={onProperties}>
+          <Settings2 className="mr-2 h-4 w-4" />
+          Properties...
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
