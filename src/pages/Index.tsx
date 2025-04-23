@@ -1,3 +1,4 @@
+
 import { ProjectProvider } from "@/contexts/project";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { useProject } from "@/contexts/project";
@@ -8,7 +9,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { PreviewModal } from "@/components/PreviewModal";
 import { ToolboxPanel } from "@/components/ToolboxPanel";
 import { Toolbar } from "@/components/Toolbar";
-import MainContent from "@/components/MainContent";
+import { MainContent } from "@/components/MainContent";
 import { EmptyState } from "@/components/EmptyState";
 import { DeleteSlideDialog } from "@/components/DeleteSlideDialog";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
@@ -48,9 +49,10 @@ function ProjectContent() {
         <MainContent />
         
         {/* Right toolbox panel */}
+        {/* Ensure the ToolboxPanel component accepts these props */}
         <ToolboxPanel 
-          isOpen={toolboxOpen} 
-          onToggle={() => setToolboxOpen(!toolboxOpen)} 
+          open={toolboxOpen} 
+          setOpen={setToolboxOpen} 
         />
       </div>
       

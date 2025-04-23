@@ -15,6 +15,8 @@ interface ElementContentProps {
   isEditing: boolean;
   editValue: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
 }
 
 export const ElementContent: React.FC<ElementContentProps> = ({
@@ -22,13 +24,17 @@ export const ElementContent: React.FC<ElementContentProps> = ({
   isEditing,
   editValue,
   onChange,
+  onKeyDown,
+  inputRef,
 }) => {
   switch (element.type) {
     case 'text':
       return isEditing ? (
         <textarea
+          ref={inputRef as React.Ref<HTMLTextAreaElement>}
           value={editValue}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           className="w-full h-full p-0 resize-none border-none outline-none bg-transparent"
           style={{
             fontFamily: element.fontFamily || 'sans-serif',
@@ -105,4 +111,3 @@ export const ElementContent: React.FC<ElementContentProps> = ({
 };
 
 export default ElementContent;
-

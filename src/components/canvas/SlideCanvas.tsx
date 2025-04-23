@@ -94,6 +94,10 @@ export function SlideCanvas({
     }
   };
 
+  const handleElementSelect = (elementId: string) => {
+    onSelectElement(elementId);
+  };
+
   const handleElementRightClick = (e: React.MouseEvent<HTMLDivElement>, element: SlideElement) => {
     e.preventDefault();
     e.stopPropagation();
@@ -149,40 +153,9 @@ export function SlideCanvas({
           key={element.id}
           element={element}
           isSelected={selectedElementId === element.id}
-          isEditing={editingElementId === element.id}
-          editableInputRef={editableInputRef}
-          onMouseDown={handleElementMouseDown}
-          onContextMenu={handleElementRightClick}
-          onDoubleClick={handleElementDoubleClick}
-          onFinishEditing={(updatedValue?: string) => {
-            if (lastEditedIdRef.current && typeof updatedValue === "string") {
-              onUpdateElement(lastEditedIdRef.current, { content: updatedValue });
-            }
-            setEditingElementId(null);
-            lastEditedIdRef.current = null;
-          }}
-          onCut={() => {}}
-          onCopy={() => {}}
-          onPaste={() => {}}
-          onExitEdit={() => {}}
-          onFontStyleChange={() => {}}
-          onParagraphStyleChange={() => {}}
-          onHyperlinkChange={() => {}}
-          onDuplicate={() => {}}
-          onBringToFront={() => {}}
-          onSendToBack={() => {}}
-          onSelect={onSelectElement}
+          onSelect={() => handleElementSelect(element.id)}
+          onUpdateElement={(updatedElement) => onUpdateElement(updatedElement.id, updatedElement)}
           onDeleteElement={onDeleteElement}
-          onDeleteInitiate={(id: string) => {
-            setElementToDelete(id);
-            setIsDeleteDialogOpen(true);
-          }}
-          isFontPopoverOpen={isFontPopoverOpen}
-          setIsFontPopoverOpen={setIsFontPopoverOpen}
-          isParagraphPopoverOpen={isParagraphPopoverOpen}
-          setIsParagraphPopoverOpen={setIsParagraphPopoverOpen}
-          isHyperlinkPopoverOpen={isHyperlinkPopoverOpen}
-          setIsHyperlinkPopoverOpen={setIsHyperlinkPopoverOpen}
         />
       ))}
 

@@ -1,6 +1,6 @@
 
 import { useProject } from "@/contexts/project/ProjectContext";
-import { SlideCanvas } from "@/components/SlideCanvas";
+import { SlideCanvas } from "@/components/canvas/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
 import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
@@ -164,12 +164,9 @@ export function MainContent() {
           </div>
         </div>
       )}
-      
-      {/* Timeline component has been removed */}
     </div>
   );
 }
 
-// Add default export to resolve the SyntaxError
+// Make sure to export MainContent as the default export
 export default MainContent;
-

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { SlideElement } from '@/utils/slideTypes';
 import ElementContent from './ElementContent';
@@ -74,6 +75,16 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
         onKeyDown={handleKeyDown}
         inputRef={editableInputRef}
       />
+      
+      {isSelected && (
+        <button 
+          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+          onClick={handleDelete}
+          title="Delete element"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 };
