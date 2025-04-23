@@ -7,6 +7,16 @@ import { Scene, Slide, SlideElement, ButtonElement } from "@/utils/slideTypes";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 
+// Define a type for the scene positions used for hit detection
+interface ScenePosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+}
+
 export function SceneWorkflow() {
   const { project, currentScene, handleSelectScene, handleSelectSlide } = useProject();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,6 +27,9 @@ export function SceneWorkflow() {
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [selectedSceneForModal, setSelectedSceneForModal] = useState<Scene | null>(null);
   const navigate = useNavigate();
+  
+  // Create a ref to store scene positions for hit detection
+  const scenePositionsRef = useRef<Map<string, ScenePosition>>(new Map());
   
   // Find connections between scenes based on button triggers
   const sceneConnections = useMemo(() => {
@@ -99,7 +112,7 @@ export function SceneWorkflow() {
     ctx.scale(zoom, zoom);
     
     // Create a map to store scene positions
-    const scenePositions = new Map();
+    const scenePositions = new Map<string, ScenePosition>();
     
     // Draw scene nodes
     const sceneSpacing = 250;
@@ -159,6 +172,9 @@ export function SceneWorkflow() {
       ctx.font = "10px sans-serif";
       ctx.fillText("Double click to view slides", x + sceneWidth / 2, y + 90);
     });
+    
+    // Update the ref with current positions for hit detection
+    scenePositionsRef.current = scenePositions;
     
     // Draw connections between scenes
     ctx.lineWidth = 2;
@@ -274,7 +290,10 @@ export function SceneWorkflow() {
       const mouseY = (e.clientY - rect.top) / zoom - pan.y / zoom;
       
       // Check if click is on a scene
-      for (const [sceneId, pos] of Array.from(scenePositions.entries())) {
+      const scenePositions = scenePositionsRef.current;
+      
+      // Iterate over the Map entries
+      for (const [sceneId, pos] of scenePositions.entries()) {
         if (
           mouseX >= pos.left &&
           mouseX <= pos.left + pos.width &&
@@ -318,31 +337,6 @@ export function SceneWorkflow() {
   useEffect(() => {
     renderWorkflow();
     
-    // Set up a variable to store the scene positions for hit detection
-    const scenePositions = new Map();
-    
-    // Draw scene nodes
-    const sceneSpacing = 250;
-    const sceneWidth = 180;
-    const sceneHeight = 120;
-    
-    project.scenes.forEach((scene, index) => {
-      const x = 200 + (index % 3) * sceneSpacing;
-      const y = 150 + Math.floor(index / 3) * sceneSpacing;
-      
-      // Store scene position
-      scenePositions.set(scene.id, { 
-        x: x + sceneWidth / 2, 
-        y: y + sceneHeight / 2,
-        width: sceneWidth,
-        height: sceneHeight,
-        left: x,
-        top: y
-      });
-    });
-    
-    // Make scenePositions available for click handling
-    (window as any).scenePositions = scenePositions;
   }, [project, zoom, pan, sceneConnections]);
   
   // Update canvas size on window resize
