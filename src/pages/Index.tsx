@@ -13,9 +13,10 @@ import { MainContent } from "@/components/MainContent";
 import { EmptyState } from "@/components/EmptyState";
 import { DeleteSlideDialog } from "@/components/DeleteSlideDialog";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
+import { SlideControls } from "@/components/SlideControls";
 
 function ProjectContent() {
-  const { project, currentScene, isPreviewOpen, setIsPreviewOpen, userProjects } = useProject();
+  const { project, currentScene, currentSlide, isPreviewOpen, setIsPreviewOpen, userProjects, handleAddElement, handleUpdateElement, handleDeleteElement, handleSaveProject, handleLoadProject } = useProject();
   const { toolboxOpen, setToolboxOpen } = usePanels();
   const { user } = useAuth();
 
@@ -48,12 +49,26 @@ function ProjectContent() {
         {/* Main content */}
         <MainContent />
         
-        {/* Right toolbox panel */}
-        {/* Ensure the ToolboxPanel component accepts these props */}
+        {/* Right toolbox panel - ensuring it's rendered */}
         <ToolboxPanel 
           open={toolboxOpen} 
           setOpen={setToolboxOpen} 
         />
+
+        {/* Element Controls Panel - add this back to fix controls issue */}
+        {toolboxOpen && currentSlide && (
+          <div className="border-l w-72 h-full overflow-auto">
+            <SlideControls 
+              selectedElement={currentSlide.elements.find(el => el.id === project.selectedElementId) || null}
+              onUpdateElement={handleUpdateElement}
+              onAddElement={handleAddElement}
+              onDeleteElement={handleDeleteElement}
+              onPreview={() => setIsPreviewOpen(true)}
+              onSaveProject={handleSaveProject}
+              onLoadProject={handleLoadProject}
+            />
+          </div>
+        )}
       </div>
       
       {/* Preview modal */}

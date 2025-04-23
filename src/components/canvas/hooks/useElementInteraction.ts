@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 
@@ -60,17 +61,21 @@ export function useElementInteraction({
     const handleMouseMove = (e: MouseEvent) => {
       // Handle element dragging
       if (dragState.isDragging && selectedElementId) {
+        e.preventDefault(); // Prevent default to ensure dragging works properly
+        
         const deltaX = (e.clientX - dragState.startX) / zoom;
         const deltaY = (e.clientY - dragState.startY) / zoom;
         
         onUpdateElement(selectedElementId, {
-          x: dragState.startElementX + deltaX,
-          y: dragState.startElementY + deltaY
+          x: Math.max(0, dragState.startElementX + deltaX),
+          y: Math.max(0, dragState.startElementY + deltaY)
         });
       }
       
       // Handle element resizing
       if (resizeState.isResizing && selectedElementId) {
+        e.preventDefault(); // Prevent default during resize
+        
         const deltaX = (e.clientX - resizeState.startX) / zoom;
         const deltaY = (e.clientY - resizeState.startY) / zoom;
         const element = elements.find(el => el.id === selectedElementId);
@@ -123,14 +128,20 @@ export function useElementInteraction({
         onUpdateElement(selectedElementId, {
           width: newWidth,
           height: newHeight,
-          x: newX,
-          y: newY
+          x: Math.max(0, newX),
+          y: Math.max(0, newY)
         });
+      }
+      
+      // Handle panning
+      if (isPanning) {
+        document.body.style.cursor = "grabbing";
       }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
       if (dragState.isDragging || resizeState.isResizing) {
+        e.preventDefault(); // Prevent default on mouse up
         setDragState(prev => ({ ...prev, isDragging: false }));
         setResizeState(prev => ({ ...prev, isResizing: false }));
         document.body.style.cursor = "";
@@ -142,7 +153,7 @@ export function useElementInteraction({
       }
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mousemove", handleMouseMove, { passive: false });
     document.addEventListener("mouseup", handleMouseUp);
     
     return () => {
@@ -153,6 +164,8 @@ export function useElementInteraction({
 
   const startDrag = (e: React.MouseEvent<HTMLDivElement>, element: SlideElement) => {
     if (e.button !== 0) return; // Only left click
+    e.preventDefault(); // Prevent default to ensure dragging starts properly
+    e.stopPropagation(); // Stop propagation to prevent other handlers
     
     // Check if we're clicking on a resize handle
     const target = e.target as HTMLElement;

@@ -1,7 +1,5 @@
 
 import React from "react";
-import { ProjectProvider } from "@/contexts/project";
-import { PanelProvider } from "@/contexts/PanelContext";
 import { SceneWorkflow } from "@/components/SceneWorkflow";
 import { Toolbar } from "@/components/Toolbar";
 import { SceneSelector } from "@/components/SceneSelector";

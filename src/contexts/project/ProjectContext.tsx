@@ -31,6 +31,29 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   >([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 
+  // Load project from localStorage when component mounts
+  useEffect(() => {
+    const savedProject = localStorage.getItem('project');
+    if (savedProject) {
+      try {
+        const parsedProject = JSON.parse(savedProject);
+        setProject(parsedProject);
+        console.log("Project loaded from localStorage on mount");
+      } catch (error) {
+        console.error("Error loading project from localStorage:", error);
+      }
+    }
+  }, []);
+
+  // Auto-save project to localStorage whenever it changes
+  useEffect(() => {
+    // Don't save if it's just the default project
+    if (project && (project.scenes.length > 1 || project.scenes[0]?.slides.length > 1)) {
+      localStorage.setItem('project', JSON.stringify(project));
+      console.log("Project auto-saved to localStorage");
+    }
+  }, [project]);
+
   // Automatically open the first slide when a project is loaded
   useEffect(() => {
     if (project && project.scenes && project.scenes.length > 0) {
