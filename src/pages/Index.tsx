@@ -16,7 +16,7 @@ import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { SlideControls } from "@/components/SlideControls";
 
 function ProjectContent() {
-  const { project, currentScene, currentSlide, isPreviewOpen, setIsPreviewOpen, userProjects, handleAddElement, handleUpdateElement, handleDeleteElement, handleSaveProject, handleLoadProject } = useProject();
+  const { project, currentScene, currentSlide, isPreviewOpen, setIsPreviewOpen, userProjects, handleAddElement, handleUpdateElement, handleDeleteElement, handleSaveProject, handleLoadProject, selectedElementId } = useProject();
   const { toolboxOpen, setToolboxOpen } = usePanels();
   const { user } = useAuth();
 
@@ -59,7 +59,7 @@ function ProjectContent() {
         {toolboxOpen && currentSlide && (
           <div className="border-l w-72 h-full overflow-auto">
             <SlideControls 
-              selectedElement={currentSlide.elements.find(el => el.id === project.selectedElementId) || null}
+              selectedElement={currentSlide.elements.find(el => el.id === selectedElementId) || null}
               onUpdateElement={handleUpdateElement}
               onAddElement={handleAddElement}
               onDeleteElement={handleDeleteElement}
