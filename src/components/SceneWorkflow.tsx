@@ -4,6 +4,8 @@ import { useProject } from "@/contexts/project";
 import { Button } from "@/components/ui/button";
 import { MinusCircle, PlusCircle, ZoomIn, ZoomOut, Workflow, Link } from "lucide-react";
 import { Scene, Slide, SlideElement, ButtonElement } from "@/utils/slideTypes";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 export function SceneWorkflow() {
   const { project, currentScene, handleSelectScene, handleSelectSlide } = useProject();
@@ -13,6 +15,8 @@ export function SceneWorkflow() {
   const [pan, setPan] = useState({ x: 50, y: 50 });
   const [isDragging, setIsDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [selectedSceneForModal, setSelectedSceneForModal] = useState<Scene | null>(null);
+  const navigate = useNavigate();
   
   // Find connections between scenes based on button triggers
   const sceneConnections = useMemo(() => {
@@ -27,6 +31,8 @@ export function SceneWorkflow() {
     
     // Loop through all scenes and their slides to find button elements with goToScene actions
     project.scenes.forEach(scene => {
+      if (!scene.slides) return;
+      
       scene.slides.forEach(slide => {
         // Find button elements that may contain scene navigation actions
         const buttonElements = slide.elements.filter(
@@ -56,6 +62,22 @@ export function SceneWorkflow() {
     
     return connections;
   }, [project.scenes]);
+
+  // Function to handle double click on a scene
+  const handleSceneDoubleClick = (sceneId: string) => {
+    const scene = project.scenes.find(s => s.id === sceneId);
+    if (scene) {
+      setSelectedSceneForModal(scene);
+    }
+  };
+
+  // Function to navigate to a specific slide
+  const handleNavigateToSlide = (sceneId: string, slideId: string) => {
+    handleSelectScene(sceneId);
+    handleSelectSlide(slideId);
+    setSelectedSceneForModal(null);
+    navigate('/'); // Navigate back to the main editor
+  };
   
   const renderWorkflow = () => {
     const canvas = canvasRef.current;
@@ -89,7 +111,14 @@ export function SceneWorkflow() {
       const y = 150 + Math.floor(index / 3) * sceneSpacing;
       
       // Store scene position
-      scenePositions.set(scene.id, { x: x + sceneWidth / 2, y: y + sceneHeight / 2 });
+      scenePositions.set(scene.id, { 
+        x: x + sceneWidth / 2, 
+        y: y + sceneHeight / 2, 
+        width: sceneWidth, 
+        height: sceneHeight,
+        left: x,
+        top: y 
+      });
       
       // Draw scene node
       ctx.fillStyle = scene.id === project.currentSceneId ? "#e0f2fe" : "#f8fafc";
@@ -124,6 +153,11 @@ export function SceneWorkflow() {
           y + 70
         );
       }
+
+      // Add "Double click to view slides" hint
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "10px sans-serif";
+      ctx.fillText("Double click to view slides", x + sceneWidth / 2, y + 90);
     });
     
     // Draw connections between scenes
@@ -226,6 +260,37 @@ export function SceneWorkflow() {
       const zoomChange = e.deltaY > 0 ? 0.9 : 1.1;
       setZoom(prev => Math.max(0.5, Math.min(2.5, prev * zoomChange)));
     };
+
+    // Handle scene double click
+    const handleClick = (e: MouseEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      // Get canvas position and size
+      const rect = canvas.getBoundingClientRect();
+      
+      // Convert mouse position to canvas coordinates
+      const mouseX = (e.clientX - rect.left) / zoom - pan.x / zoom;
+      const mouseY = (e.clientY - rect.top) / zoom - pan.y / zoom;
+      
+      // Check if click is on a scene
+      for (const [sceneId, pos] of Array.from(scenePositions.entries())) {
+        if (
+          mouseX >= pos.left &&
+          mouseX <= pos.left + pos.width &&
+          mouseY >= pos.top &&
+          mouseY <= pos.top + pos.height
+        ) {
+          // Handle single vs double click
+          if (e.detail === 2) { // Double click
+            handleSceneDoubleClick(sceneId);
+          } else { // Single click
+            handleSelectScene(sceneId);
+          }
+          break;
+        }
+      }
+    };
     
     const canvas = canvasRef.current;
     if (canvas) {
@@ -234,6 +299,7 @@ export function SceneWorkflow() {
       canvas.addEventListener('mouseup', handleMouseUp);
       canvas.addEventListener('mouseleave', handleMouseUp);
       canvas.addEventListener('wheel', handleWheel);
+      canvas.addEventListener('click', handleClick);
     }
     
     return () => {
@@ -243,13 +309,40 @@ export function SceneWorkflow() {
         canvas.removeEventListener('mouseup', handleMouseUp);
         canvas.removeEventListener('mouseleave', handleMouseUp);
         canvas.removeEventListener('wheel', handleWheel);
+        canvas.removeEventListener('click', handleClick);
       }
     };
-  }, [isDragging, lastMousePos, zoom]);
+  }, [isDragging, lastMousePos, zoom, handleSelectScene]);
   
   // Render canvas whenever dependencies change
   useEffect(() => {
     renderWorkflow();
+    
+    // Set up a variable to store the scene positions for hit detection
+    const scenePositions = new Map();
+    
+    // Draw scene nodes
+    const sceneSpacing = 250;
+    const sceneWidth = 180;
+    const sceneHeight = 120;
+    
+    project.scenes.forEach((scene, index) => {
+      const x = 200 + (index % 3) * sceneSpacing;
+      const y = 150 + Math.floor(index / 3) * sceneSpacing;
+      
+      // Store scene position
+      scenePositions.set(scene.id, { 
+        x: x + sceneWidth / 2, 
+        y: y + sceneHeight / 2,
+        width: sceneWidth,
+        height: sceneHeight,
+        left: x,
+        top: y
+      });
+    });
+    
+    // Make scenePositions available for click handling
+    (window as any).scenePositions = scenePositions;
   }, [project, zoom, pan, sceneConnections]);
   
   // Update canvas size on window resize
@@ -306,6 +399,32 @@ export function SceneWorkflow() {
           className="absolute top-0 left-0 w-full h-full cursor-move"
         />
       </div>
+
+      {/* Slides modal */}
+      {selectedSceneForModal && (
+        <Dialog open={!!selectedSceneForModal} onOpenChange={(open) => !open && setSelectedSceneForModal(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Slides in {selectedSceneForModal.title}</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 mt-4 max-h-[400px] overflow-y-auto p-2">
+              {selectedSceneForModal.slides.map((slide) => (
+                <div
+                  key={slide.id}
+                  className="p-4 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                  onClick={() => handleNavigateToSlide(selectedSceneForModal.id, slide.id)}
+                >
+                  <div className="font-medium mb-2">{slide.title}</div>
+                  <div className="text-xs text-gray-500">{slide.elements.length} element(s)</div>
+                  <div className="h-16 bg-gray-100 mt-2 rounded flex items-center justify-center text-xs text-gray-400">
+                    Click to navigate
+                  </div>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

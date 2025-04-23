@@ -49,15 +49,15 @@ function ProjectContent() {
         {/* Main content */}
         <MainContent />
         
-        {/* Right toolbox panel - ensuring it's rendered */}
+        {/* Right toolbox panel */}
         <ToolboxPanel 
           open={toolboxOpen} 
           setOpen={setToolboxOpen} 
         />
 
-        {/* Element Controls Panel - add this back to fix controls issue */}
-        {toolboxOpen && currentSlide && (
-          <div className="border-l w-72 h-full overflow-auto">
+        {/* Element Controls Panel */}
+        {currentSlide && selectedElementId && (
+          <div className="border-l w-72 h-full bg-background overflow-auto">
             <SlideControls 
               selectedElement={currentSlide.elements.find(el => el.id === selectedElementId) || null}
               onUpdateElement={handleUpdateElement}
