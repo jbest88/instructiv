@@ -5,8 +5,7 @@ import { SceneSelector } from "@/components/SceneSelector";
 import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Maximize2, Move } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect, useRef } from "react";
 
 export function MainContent() {
   const { 
@@ -170,3 +169,7 @@ export function MainContent() {
     </div>
   );
 }
+
+// Add default export to resolve the SyntaxError
+export default MainContent;
+

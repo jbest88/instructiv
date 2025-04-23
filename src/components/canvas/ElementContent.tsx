@@ -2,8 +2,16 @@
 import React from 'react';
 import { SlideElement } from '@/utils/slideTypes';
 
+// Extend the SlideElement type to include optional styling properties
+interface ExtendedSlideElement extends SlideElement {
+  color?: string;
+  backgroundColor?: string;
+  border?: string;
+  borderRadius?: string;
+}
+
 interface ElementContentProps {
-  element: SlideElement;
+  element: ExtendedSlideElement;
   isEditing: boolean;
   editValue: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -25,7 +33,7 @@ export const ElementContent: React.FC<ElementContentProps> = ({
           style={{
             fontFamily: element.fontFamily || 'sans-serif',
             fontSize: element.fontSize || 16,
-            color: element.color || 'black',
+            color: (element as ExtendedSlideElement).color || 'black',
             textAlign: element.align as any || 'left',
             fontWeight: element.fontStyle?.includes('bold') ? 'bold' : 'normal',
             fontStyle: element.fontStyle?.includes('italic') ? 'italic' : 'normal',
@@ -38,7 +46,7 @@ export const ElementContent: React.FC<ElementContentProps> = ({
           style={{
             fontFamily: element.fontFamily || 'sans-serif',
             fontSize: element.fontSize || 16,
-            color: element.color || 'black',
+            color: (element as ExtendedSlideElement).color || 'black',
             textAlign: element.align as any || 'left',
             fontWeight: element.fontStyle?.includes('bold') ? 'bold' : 'normal',
             fontStyle: element.fontStyle?.includes('italic') ? 'italic' : 'normal',
@@ -56,7 +64,6 @@ export const ElementContent: React.FC<ElementContentProps> = ({
           alt={element.alt || ''}
           className="w-full h-full"
           style={{
-            // Instead of objectFit, use CSS object-fit
             objectFit: 'contain'
           }}
         />
@@ -67,10 +74,10 @@ export const ElementContent: React.FC<ElementContentProps> = ({
         <button
           className="px-4 py-2 rounded"
           style={{
-            backgroundColor: element.backgroundColor || '#3b82f6',
-            color: element.color || 'white',
-            border: element.border || 'none',
-            borderRadius: element.borderRadius || '4px',
+            backgroundColor: (element as ExtendedSlideElement).backgroundColor || '#3b82f6',
+            color: (element as ExtendedSlideElement).color || 'white',
+            border: (element as ExtendedSlideElement).border || 'none',
+            borderRadius: (element as ExtendedSlideElement).borderRadius || '4px',
             fontFamily: element.fontFamily || 'sans-serif',
             fontSize: element.fontSize || 16,
           }}
@@ -96,3 +103,6 @@ export const ElementContent: React.FC<ElementContentProps> = ({
       return <div>Unknown element type</div>;
   }
 };
+
+export default ElementContent;
+

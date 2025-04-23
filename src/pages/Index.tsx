@@ -1,4 +1,3 @@
-
 import { ProjectProvider } from "@/contexts/project";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { useProject } from "@/contexts/project";
@@ -9,7 +8,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { PreviewModal } from "@/components/PreviewModal";
 import { ToolboxPanel } from "@/components/ToolboxPanel";
 import { Toolbar } from "@/components/Toolbar";
-import { MainContent } from "@/components/MainContent";
+import MainContent from "@/components/MainContent";
 import { EmptyState } from "@/components/EmptyState";
 import { DeleteSlideDialog } from "@/components/DeleteSlideDialog";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
@@ -49,7 +48,10 @@ function ProjectContent() {
         <MainContent />
         
         {/* Right toolbox panel */}
-        <ToolboxPanel isOpen={toolboxOpen} onToggle={() => setToolboxOpen(!toolboxOpen)} />
+        <ToolboxPanel 
+          isOpen={toolboxOpen} 
+          onToggle={() => setToolboxOpen(!toolboxOpen)} 
+        />
       </div>
       
       {/* Preview modal */}
@@ -64,14 +66,4 @@ function ProjectContent() {
   );
 }
 
-const Index = () => {
-  return (
-    <PanelProvider>
-      <ProjectProvider>
-        <ProjectContent />
-      </ProjectProvider>
-    </PanelProvider>
-  );
-};
-
-export default Index;
+export default ProjectContent;
