@@ -168,5 +168,5 @@ export function MainContent() {
   );
 }
 
-// Make sure to export MainContent as the default export
+// Explicitly export MainContent as the default export
 export default MainContent;
