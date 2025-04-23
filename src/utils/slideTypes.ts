@@ -32,6 +32,7 @@ export interface SlideElement {
   // Add these missing properties
   fontStyle?: string;
   align?: 'left' | 'center' | 'right';
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 }
 
 // Define type aliases for specific element types
@@ -49,7 +50,7 @@ export type ImageElement = SlideElement & {
   type: 'image';
   src: string;
   alt?: string;
-  objectFit?: string;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 };
 
 export type ButtonElement = SlideElement & {
