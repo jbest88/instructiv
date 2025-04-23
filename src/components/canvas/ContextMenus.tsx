@@ -20,7 +20,7 @@ import {
   SendToBack,
   Edit,
   Save,
-  Format
+  PaintBucket
 } from "lucide-react";
 
 interface ElementContextMenuProps {
@@ -135,7 +135,7 @@ export const ElementContextMenu: React.FC<ElementContextMenuProps> = ({
 
         {onFormatShape && (
           <ContextMenuItem onClick={() => onFormatShape(element.id)}>
-            <Format className="mr-2 h-4 w-4" />
+            <PaintBucket className="mr-2 h-4 w-4" />
             Format Shape
           </ContextMenuItem>
         )}
