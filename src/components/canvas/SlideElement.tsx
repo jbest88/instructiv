@@ -1,8 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { SlideElement } from '@/utils/slideTypes';
 import ElementContent from './ElementContent';
 import { ResizeHandles } from './ResizeHandles';
+import { ElementContextMenu } from './ContextMenus';
 
 interface SlideElementProps {
   element: SlideElement;
@@ -220,40 +220,81 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
     zIndex: element.zIndex || 1
   };
 
+  const handleCut = (id: string) => {
+    // TODO: Implement cut functionality
+    console.log('Cut element:', id);
+  };
+
+  const handleCopy = (id: string) => {
+    // TODO: Implement copy functionality
+    console.log('Copy element:', id);
+  };
+
+  const handlePaste = (id: string) => {
+    // TODO: Implement paste functionality
+    console.log('Paste to element:', id);
+  };
+
+  const handleBringToFront = (id: string) => {
+    onUpdateElement({ zIndex: 999 });
+  };
+
+  const handleSendToBack = (id: string) => {
+    onUpdateElement({ zIndex: 0 });
+  };
+
+  const handleFormatShape = (id: string) => {
+    // TODO: Implement format shape dialog
+    console.log('Format shape:', id);
+  };
+
   return (
-    <div 
-      ref={elementRef}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}
-      onDoubleClick={handleDoubleClick}
-      onMouseDown={handleMouseDown}
-      className={`absolute ${isSelected ? 'border border-blue-500' : ''} select-none`}
-      style={styleProps}
+    <ElementContextMenu
+      element={element}
+      onCut={handleCut}
+      onCopy={handleCopy}
+      onPaste={handlePaste}
+      onBringToFront={handleBringToFront}
+      onSendToBack={handleSendToBack}
+      onEdit={() => setIsEditing(true)}
+      onFormatShape={handleFormatShape}
+      onRename={(id) => console.log('Rename:', id)}
+      onSetDefaultShape={(id) => console.log('Set as default:', id)}
     >
-      <ElementContent 
-        element={element}
-        isEditing={isEditing}
-        editValue={editValue}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        inputRef={editableInputRef}
-      />
-      
-      {isSelected && (
-        <>
-          <button 
-            className="delete-btn absolute -top-3 -right-3 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center z-10"
-            onClick={handleDelete}
-            title="Delete element"
-          >
-            ×
-          </button>
-          <ResizeHandles element={element} />
-        </>
-      )}
-    </div>
+      <div 
+        ref={elementRef}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+        onDoubleClick={handleDoubleClick}
+        onMouseDown={handleMouseDown}
+        className={`absolute ${isSelected ? 'border border-blue-500' : ''} select-none`}
+        style={styleProps}
+      >
+        <ElementContent 
+          element={element}
+          isEditing={isEditing}
+          editValue={editValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          inputRef={editableInputRef}
+        />
+        
+        {isSelected && (
+          <>
+            <button 
+              className="delete-btn absolute -top-3 -right-3 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center z-10"
+              onClick={handleDelete}
+              title="Delete element"
+            >
+              ×
+            </button>
+            <ResizeHandles element={element} />
+          </>
+        )}
+      </div>
+    </ElementContextMenu>
   );
 };
 
