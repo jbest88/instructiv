@@ -2,108 +2,148 @@
 import React from 'react';
 import { SlideElement } from '@/utils/slideTypes';
 
-// Extend the SlideElement type to include optional styling properties
-interface ExtendedSlideElement extends SlideElement {
-  color?: string;
-  backgroundColor?: string;
-  border?: string;
-  borderRadius?: string;
-}
-
 interface ElementContentProps {
-  element: ExtendedSlideElement;
+  element: SlideElement;
   isEditing: boolean;
   editValue: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onKeyDown?: (e: React.KeyboardEvent) => void;
-  inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>;
 }
 
-export const ElementContent: React.FC<ElementContentProps> = ({
+const ElementContent: React.FC<ElementContentProps> = ({
   element,
   isEditing,
   editValue,
   onChange,
   onKeyDown,
-  inputRef,
+  inputRef
 }) => {
+  // Apply consistent styling for all element types
+  const containerStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: element.align || 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  };
+
   switch (element.type) {
-    case 'text':
+    case 'text': {
+      const textStyle: React.CSSProperties = {
+        fontSize: `${element.fontSize || 16}px`,
+        fontWeight: element.fontWeight || 'normal',
+        fontStyle: element.fontStyle || 'normal',
+        color: element.fontColor || '#000000',
+        textAlign: element.align as any || 'left',
+        width: '100%',
+        height: '100%',
+        padding: '4px',
+        margin: 0,
+        resize: 'none',
+        border: 'none',
+        background: 'transparent',
+        overflow: 'hidden',
+      };
+
       return isEditing ? (
         <textarea
-          ref={inputRef as React.Ref<HTMLTextAreaElement>}
+          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+          style={textStyle}
           value={editValue}
           onChange={onChange}
           onKeyDown={onKeyDown}
-          className="w-full h-full p-0 resize-none border-none outline-none bg-transparent"
-          style={{
-            fontFamily: element.fontFamily || 'sans-serif',
-            fontSize: element.fontSize || 16,
-            color: (element as ExtendedSlideElement).color || 'black',
-            textAlign: element.align as any || 'left',
-            fontWeight: element.fontStyle?.includes('bold') ? 'bold' : 'normal',
-            fontStyle: element.fontStyle?.includes('italic') ? 'italic' : 'normal',
-            textDecoration: element.fontStyle?.includes('underline') ? 'underline' : 'none',
-          }}
+          onBlur={() => console.log('blur')}
+          autoFocus
         />
       ) : (
-        <div
-          className="whitespace-pre-wrap break-words"
-          style={{
-            fontFamily: element.fontFamily || 'sans-serif',
-            fontSize: element.fontSize || 16,
-            color: (element as ExtendedSlideElement).color || 'black',
-            textAlign: element.align as any || 'left',
-            fontWeight: element.fontStyle?.includes('bold') ? 'bold' : 'normal',
-            fontStyle: element.fontStyle?.includes('italic') ? 'italic' : 'normal',
-            textDecoration: element.fontStyle?.includes('underline') ? 'underline' : 'none',
-          }}
-        >
-          {element.content}
+        <div style={{ ...containerStyle, ...textStyle }}>
+          {element.content || ''}
         </div>
       );
+    }
 
-    case 'image':
+    case 'image': {
       return (
-        <img
-          src={element.src}
-          alt={element.alt || ''}
-          className="w-full h-full"
-          style={{
-            objectFit: 'contain'
-          }}
-        />
+        <div style={containerStyle}>
+          <img
+            src={element.src || '/placeholder.svg'}
+            alt={element.alt || 'Image'}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: element.objectFit as any || 'contain',
+            }}
+          />
+        </div>
       );
+    }
 
-    case 'button':
-      return (
-        <button
-          className="px-4 py-2 rounded"
+    case 'button': {
+      const buttonStyle: React.CSSProperties = {
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: element.buttonColor || '#3b82f6',
+        color: element.textColor || '#ffffff',
+        borderRadius: '4px',
+        padding: '8px 16px',
+        cursor: 'pointer',
+        border: 'none',
+        fontSize: `${element.fontSize || 16}px`,
+        fontWeight: 'bold',
+      };
+
+      return isEditing ? (
+        <input
+          ref={inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={editValue}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onBlur={() => console.log('blur')}
           style={{
-            backgroundColor: (element as ExtendedSlideElement).backgroundColor || '#3b82f6',
-            color: (element as ExtendedSlideElement).color || 'white',
-            border: (element as ExtendedSlideElement).border || 'none',
-            borderRadius: (element as ExtendedSlideElement).borderRadius || '4px',
-            fontFamily: element.fontFamily || 'sans-serif',
-            fontSize: element.fontSize || 16,
+            ...buttonStyle,
+            textAlign: 'center',
           }}
-        >
-          {element.content}
+          autoFocus
+        />
+      ) : (
+        <button style={buttonStyle}>
+          {element.content || element.label || 'Button'}
         </button>
       );
+    }
 
-    case 'hotspot':
+    case 'hotspot': {
+      const isCircle = element.shape === 'circle';
+      
+      const hotspotStyle: React.CSSProperties = {
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(59, 130, 246, 0.3)',
+        border: '2px dashed #3b82f6',
+        borderRadius: isCircle ? '50%' : '4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      };
+
       return (
-        <div
-          className="flex items-center justify-center rounded-full border-2 border-dashed cursor-pointer"
-          style={{
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderColor: '#3b82f6',
-          }}
-        >
-          <span className="text-blue-500 text-xs">Hotspot</span>
+        <div style={hotspotStyle}>
+          {element.tooltip && (
+            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs text-gray-600 pointer-events-none">
+              {element.tooltip}
+            </span>
+          )}
         </div>
       );
+    }
 
     default:
       return <div>Unknown element type</div>;

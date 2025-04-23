@@ -145,44 +145,45 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
         let newX = elementStart.x;
         let newY = elementStart.y;
         
-        // Adjust dimensions based on the resize handle being used
+        // Apply consistent resizing logic for all element types
         switch (resizeDirection) {
           case 'n':
-            newHeight = Math.max(10, resizeStart.height - deltaY);
+            newHeight = Math.max(20, resizeStart.height - deltaY);
             newY = elementStart.y + deltaY;
             break;
           case 's':
-            newHeight = Math.max(10, resizeStart.height + deltaY);
+            newHeight = Math.max(20, resizeStart.height + deltaY);
             break;
           case 'e':
-            newWidth = Math.max(10, resizeStart.width + deltaX);
+            newWidth = Math.max(20, resizeStart.width + deltaX);
             break;
           case 'w':
-            newWidth = Math.max(10, resizeStart.width - deltaX);
+            newWidth = Math.max(20, resizeStart.width - deltaX);
             newX = elementStart.x + deltaX;
             break;
           case 'ne':
-            newWidth = Math.max(10, resizeStart.width + deltaX);
-            newHeight = Math.max(10, resizeStart.height - deltaY);
+            newWidth = Math.max(20, resizeStart.width + deltaX);
+            newHeight = Math.max(20, resizeStart.height - deltaY);
             newY = elementStart.y + deltaY;
             break;
           case 'nw':
-            newWidth = Math.max(10, resizeStart.width - deltaX);
-            newHeight = Math.max(10, resizeStart.height - deltaY);
+            newWidth = Math.max(20, resizeStart.width - deltaX);
+            newHeight = Math.max(20, resizeStart.height - deltaY);
             newX = elementStart.x + deltaX;
             newY = elementStart.y + deltaY;
             break;
           case 'se':
-            newWidth = Math.max(10, resizeStart.width + deltaX);
-            newHeight = Math.max(10, resizeStart.height + deltaY);
+            newWidth = Math.max(20, resizeStart.width + deltaX);
+            newHeight = Math.max(20, resizeStart.height + deltaY);
             break;
           case 'sw':
-            newWidth = Math.max(10, resizeStart.width - deltaX);
-            newHeight = Math.max(10, resizeStart.height + deltaY);
+            newWidth = Math.max(20, resizeStart.width - deltaX);
+            newHeight = Math.max(20, resizeStart.height + deltaY);
             newX = elementStart.x + deltaX;
             break;
         }
         
+        // Apply consistent updates for all element types
         onUpdateElement({
           width: newWidth,
           height: newHeight,
@@ -208,6 +209,17 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
     };
   }, [isDragging, isResizing, dragStart, elementStart, resizeStart, resizeDirection, onUpdateElement, zoom]);
 
+  // Ensure all elements have a minimum size
+  const minSize = 20;
+  const styleProps = {
+    left: element.x,
+    top: element.y,
+    width: Math.max(minSize, element.width),
+    height: Math.max(minSize, element.height),
+    cursor: isDragging ? 'grabbing' : 'grab',
+    zIndex: element.zIndex || 1
+  };
+
   return (
     <div 
       ref={elementRef}
@@ -218,14 +230,7 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
       className={`absolute ${isSelected ? 'border border-blue-500' : ''} select-none`}
-      style={{ 
-        left: element.x, 
-        top: element.y, 
-        width: element.width, 
-        height: element.height,
-        cursor: isDragging ? 'grabbing' : 'grab',
-        zIndex: element.zIndex || 1
-      }}
+      style={styleProps}
     >
       <ElementContent 
         element={element}
