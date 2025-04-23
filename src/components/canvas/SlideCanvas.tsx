@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { Slide } from "@/utils/slideTypes";
@@ -25,6 +24,7 @@ interface SlideCanvasProps {
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (id: string, updates: Partial<SlideElement>) => void;
   onDeleteElement: (id: string) => void;
+  onAddElement?: (element: SlideElement) => void;
 }
 
 export function SlideCanvas({
@@ -33,7 +33,8 @@ export function SlideCanvas({
   zoom,
   onSelectElement,
   onUpdateElement,
-  onDeleteElement
+  onDeleteElement,
+  onAddElement
 }: SlideCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const lastEditedIdRef = useRef<string | null>(null);
@@ -81,7 +82,8 @@ export function SlideCanvas({
     setElementToDelete,
     setIsDeleteDialogOpen,
     setEditingElementId,
-    finishEditing
+    finishEditing,
+    onAddElement
   });
 
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

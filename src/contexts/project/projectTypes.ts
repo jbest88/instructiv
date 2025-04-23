@@ -1,4 +1,3 @@
-
 import { Project, Scene, Slide, SlideElement } from "@/utils/slideTypes";
 
 export interface ProjectContextType {
@@ -42,4 +41,5 @@ export interface ProjectContextType {
   handleLoadProjectFromSupabase: (projectId: string) => Promise<void>;
   handleDeleteProjectFromSupabase: (projectId: string) => Promise<void>;
   handleUpdateProjectInSupabase: (projectId: string) => Promise<void>;
+  handleAddNewElement: (element: SlideElement) => void;
 }

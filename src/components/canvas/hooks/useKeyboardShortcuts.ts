@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ interface UseKeyboardShortcutsProps {
   setIsDeleteDialogOpen: (isOpen: boolean) => void;
   setEditingElementId: (id: string | null) => void;
   finishEditing: () => void;
+  onAddElement?: (element: SlideElement) => void;
 }
 
 export function useKeyboardShortcuts({
@@ -21,7 +23,8 @@ export function useKeyboardShortcuts({
   setElementToDelete,
   setIsDeleteDialogOpen,
   setEditingElementId,
-  finishEditing
+  finishEditing,
+  onAddElement
 }: UseKeyboardShortcutsProps) {
   // Handle keyboard shortcuts and element movement/deletion
   useEffect(() => {
@@ -58,7 +61,7 @@ export function useKeyboardShortcuts({
                       x: pastedElement.x + 20,
                       y: pastedElement.y + 20
                     };
-                    // TODO: Add pasted element to slide
+                    onAddElement?.(newElement);
                     toast.success("Element pasted");
                   } catch (err) {
                     toast.error("Invalid element data in clipboard");
@@ -76,7 +79,7 @@ export function useKeyboardShortcuts({
                 x: selectedElement.x + 20,
                 y: selectedElement.y + 20
               };
-              // TODO: Add duplicated element to slide
+              onAddElement?.(duplicatedElement);
               toast.success("Element duplicated");
               e.preventDefault();
               break;
@@ -135,5 +138,5 @@ export function useKeyboardShortcuts({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedElementId, selectedElement, editingElementId, onUpdateElement, setElementToDelete, setIsDeleteDialogOpen, setEditingElementId, finishEditing]);
+  }, [selectedElementId, selectedElement, editingElementId, onUpdateElement, setElementToDelete, setIsDeleteDialogOpen, setEditingElementId, finishEditing, onAddElement]);
 }

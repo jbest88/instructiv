@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -8,7 +7,7 @@ import React, {
 } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
-import { Project } from "@/utils/slideTypes";
+import { Project, SlideElement } from "@/utils/slideTypes";
 import { ProjectContextType } from "./projectTypes";
 import { createDefaultProject } from "@/utils/defaultSlides";
 import { useProjectScenes } from "./useProjectScenes";
@@ -215,6 +214,35 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     toast.info("Supabase integration not configured");
   };
 
+  const handleAddNewElement = (element: SlideElement) => {
+    if (!currentScene || !currentSlide) return;
+
+    const updatedSlides = currentScene.slides.map((slide) => {
+      if (slide.id === currentSlide.id) {
+        return {
+          ...slide,
+          elements: [...slide.elements, element],
+        };
+      }
+      return slide;
+    });
+
+    const updatedScenes = project.scenes.map((scene) => {
+      if (scene.id === currentScene.id) {
+        return {
+          ...scene,
+          slides: updatedSlides,
+        };
+      }
+      return scene;
+    });
+
+    setProject({
+      ...project,
+      scenes: updatedScenes,
+    });
+  };
+
   const value: ProjectContextType = {
     project,
     currentScene,
@@ -256,6 +284,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     handleLoadProjectFromSupabase,
     handleDeleteProjectFromSupabase,
     handleUpdateProjectInSupabase,
+    handleAddNewElement,
   };
 
   return (
