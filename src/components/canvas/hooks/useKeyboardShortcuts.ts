@@ -1,6 +1,6 @@
-
 import { useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
+import { toast } from "sonner";
 
 interface UseKeyboardShortcutsProps {
   selectedElementId: string | null;
@@ -34,10 +34,67 @@ export function useKeyboardShortcuts({
       if (selectedElementId && selectedElement) {
         const MOVE_AMOUNT = 1; // Pixels to move
         
+        // Handle copy/paste/duplicate shortcuts
+        if (e.ctrlKey) {
+          switch (e.key.toLowerCase()) {
+            case 'c': // Copy
+              // Store element data in clipboard
+              const elementData = JSON.stringify(selectedElement);
+              navigator.clipboard.writeText(elementData)
+                .then(() => toast.success("Element copied"))
+                .catch(() => toast.error("Failed to copy"));
+              e.preventDefault();
+              break;
+
+            case 'v': // Paste
+              navigator.clipboard.readText()
+                .then(text => {
+                  try {
+                    const pastedElement = JSON.parse(text) as SlideElement;
+                    // Create new element with offset position
+                    const newElement = {
+                      ...pastedElement,
+                      id: crypto.randomUUID(),
+                      x: pastedElement.x + 20,
+                      y: pastedElement.y + 20
+                    };
+                    // TODO: Add pasted element to slide
+                    toast.success("Element pasted");
+                  } catch (err) {
+                    toast.error("Invalid element data in clipboard");
+                  }
+                })
+                .catch(() => toast.error("Failed to paste"));
+              e.preventDefault();
+              break;
+
+            case 'd': // Duplicate
+              // Create new element with offset position
+              const duplicatedElement = {
+                ...selectedElement,
+                id: crypto.randomUUID(),
+                x: selectedElement.x + 20,
+                y: selectedElement.y + 20
+              };
+              // TODO: Add duplicated element to slide
+              toast.success("Element duplicated");
+              e.preventDefault();
+              break;
+          }
+        }
+
+        // Handle properties dialog (Ctrl+Shift+Enter)
+        if (e.ctrlKey && e.shiftKey && e.key === 'Enter') {
+          // TODO: Open properties dialog
+          toast.info("Properties dialog (to be implemented)");
+          e.preventDefault();
+          return;
+        }
+
+        // Keep existing movement shortcuts
         switch (e.key) {
           case "Delete":
           case "Backspace":
-            // Show delete confirmation instead of immediate deletion
             setElementToDelete(selectedElementId);
             setIsDeleteDialogOpen(true);
             e.preventDefault();
@@ -59,7 +116,6 @@ export function useKeyboardShortcuts({
             e.preventDefault();
             break;
           case "Enter":
-            // If text element is selected, enter edit mode on Enter key
             if (selectedElement.type === "text" && selectedElementId !== editingElementId) {
               setEditingElementId(selectedElementId);
               e.preventDefault();
