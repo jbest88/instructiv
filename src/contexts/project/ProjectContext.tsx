@@ -14,6 +14,10 @@ import { useProjectScenes } from "./useProjectScenes";
 import { useProjectSlides } from "./useProjectSlides";
 import { useProjectElements } from "./useProjectElements";
 
+// Create a global clipboard for storing copied elements
+// This is in memory only and not persisted
+let elementClipboard: SlideElement | null = null;
+
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -243,6 +247,89 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  // Clipboard Operations
+  const copyElementToClipboard = useCallback((element: SlideElement) => {
+    if (!element) {
+      toast.error("No element selected to copy");
+      return;
+    }
+
+    try {
+      // Store in our in-memory clipboard
+      elementClipboard = { ...element };
+      console.log("Copy element:", element.id);
+      toast.success("Element copied to clipboard");
+    } catch (error) {
+      console.error("Failed to copy element", error);
+      toast.error("Failed to copy element");
+    }
+  }, []);
+
+  const pasteElementFromClipboard = useCallback(() => {
+    if (!elementClipboard || !currentSlide) {
+      toast.error("No element in clipboard to paste");
+      return;
+    }
+
+    try {
+      // Create a new element with a new ID and slightly offset position
+      const newElement: SlideElement = {
+        ...elementClipboard,
+        id: uuidv4(),
+        x: elementClipboard.x + 20,
+        y: elementClipboard.y + 20,
+      };
+
+      // Add the new element to the current slide
+      handleAddNewElement(newElement);
+      toast.success("Element pasted from clipboard");
+      
+      // Select the newly pasted element
+      setSelectedElementId(newElement.id);
+    } catch (error) {
+      console.error("Failed to paste element", error);
+      toast.error("Failed to paste element");
+    }
+  }, [currentSlide, elementClipboard, handleAddNewElement]);
+
+  const duplicateSelectedElement = useCallback(() => {
+    if (!selectedElement) {
+      toast.error("No element selected to duplicate");
+      return;
+    }
+
+    try {
+      // Create a new element with a new ID and slightly offset position
+      const duplicatedElement: SlideElement = {
+        ...selectedElement,
+        id: uuidv4(),
+        x: selectedElement.x + 20,
+        y: selectedElement.y + 20,
+      };
+
+      // Add the duplicated element to the current slide
+      handleAddNewElement(duplicatedElement);
+      toast.success("Element duplicated");
+      
+      // Select the newly duplicated element
+      setSelectedElementId(duplicatedElement.id);
+    } catch (error) {
+      console.error("Failed to duplicate element", error);
+      toast.error("Failed to duplicate element");
+    }
+  }, [selectedElement, handleAddNewElement]);
+
+  // Placeholder for properties dialog
+  const openElementProperties = useCallback((elementId: string) => {
+    if (!elementId) {
+      toast.error("No element selected");
+      return;
+    }
+    
+    toast.info("Properties dialog will be implemented soon");
+    // Future implementation will go here
+  }, []);
+
   const value: ProjectContextType = {
     project,
     currentScene,
@@ -285,6 +372,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     handleDeleteProjectFromSupabase,
     handleUpdateProjectInSupabase,
     handleAddNewElement,
+    copyElementToClipboard,
+    pasteElementFromClipboard,
+    duplicateSelectedElement,
+    openElementProperties,
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import { Project, Scene, Slide, SlideElement } from "@/utils/slideTypes";
 
 export interface ProjectContextType {
@@ -42,4 +43,8 @@ export interface ProjectContextType {
   handleDeleteProjectFromSupabase: (projectId: string) => Promise<void>;
   handleUpdateProjectInSupabase: (projectId: string) => Promise<void>;
   handleAddNewElement: (element: SlideElement) => void;
+  copyElementToClipboard: (element: SlideElement) => void;
+  pasteElementFromClipboard: () => void;
+  duplicateSelectedElement: () => void;
+  openElementProperties: (elementId: string) => void;
 }

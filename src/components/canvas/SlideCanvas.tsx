@@ -6,6 +6,7 @@ import { useElementInteraction } from "./hooks/useElementInteraction";
 import { useTextEditing } from "./hooks/useTextEditing";
 import { useContextMenuState } from "./hooks/useContextMenuState";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useProject } from "@/contexts/project";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,9 @@ export function SlideCanvas({
 }: SlideCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const lastEditedIdRef = useRef<string | null>(null);
+
+  // Get the clipboard handlers from ProjectContext
+  const { copyElementToClipboard, pasteElementFromClipboard, duplicateSelectedElement, openElementProperties } = useProject();
 
   const {
     editingElementId,
@@ -83,7 +87,11 @@ export function SlideCanvas({
     setIsDeleteDialogOpen,
     setEditingElementId,
     finishEditing,
-    onAddElement
+    onAddElement,
+    copyElementToClipboard,
+    pasteElementFromClipboard,
+    duplicateSelectedElement,
+    openElementProperties
   });
 
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

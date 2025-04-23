@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { SlideElement } from "@/utils/slideTypes";
 import { toast } from "sonner";
@@ -13,6 +12,10 @@ interface UseKeyboardShortcutsProps {
   setEditingElementId: (id: string | null) => void;
   finishEditing: () => void;
   onAddElement?: (element: SlideElement) => void;
+  copyElementToClipboard?: (element: SlideElement) => void;
+  pasteElementFromClipboard?: () => void;
+  duplicateSelectedElement?: () => void;
+  openElementProperties?: (elementId: string) => void;
 }
 
 export function useKeyboardShortcuts({
@@ -24,12 +27,14 @@ export function useKeyboardShortcuts({
   setIsDeleteDialogOpen,
   setEditingElementId,
   finishEditing,
-  onAddElement
+  onAddElement,
+  copyElementToClipboard,
+  pasteElementFromClipboard,
+  duplicateSelectedElement,
+  openElementProperties
 }: UseKeyboardShortcutsProps) {
   // Handle keyboard shortcuts and element movement/deletion
   useEffect(() => {
-    if (!selectedElementId) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle keyboard shortcuts if currently editing text
       if (editingElementId) return;
@@ -41,56 +46,34 @@ export function useKeyboardShortcuts({
         if (e.ctrlKey) {
           switch (e.key.toLowerCase()) {
             case 'c': // Copy
-              // Store element data in clipboard
-              const elementData = JSON.stringify(selectedElement);
-              navigator.clipboard.writeText(elementData)
-                .then(() => toast.success("Element copied"))
-                .catch(() => toast.error("Failed to copy"));
-              e.preventDefault();
+              if (copyElementToClipboard && selectedElement) {
+                copyElementToClipboard(selectedElement);
+                e.preventDefault();
+              }
               break;
 
             case 'v': // Paste
-              navigator.clipboard.readText()
-                .then(text => {
-                  try {
-                    const pastedElement = JSON.parse(text) as SlideElement;
-                    // Create new element with offset position
-                    const newElement = {
-                      ...pastedElement,
-                      id: crypto.randomUUID(),
-                      x: pastedElement.x + 20,
-                      y: pastedElement.y + 20
-                    };
-                    onAddElement?.(newElement);
-                    toast.success("Element pasted");
-                  } catch (err) {
-                    toast.error("Invalid element data in clipboard");
-                  }
-                })
-                .catch(() => toast.error("Failed to paste"));
-              e.preventDefault();
+              if (pasteElementFromClipboard) {
+                pasteElementFromClipboard();
+                e.preventDefault();
+              }
               break;
 
             case 'd': // Duplicate
-              // Create new element with offset position
-              const duplicatedElement = {
-                ...selectedElement,
-                id: crypto.randomUUID(),
-                x: selectedElement.x + 20,
-                y: selectedElement.y + 20
-              };
-              onAddElement?.(duplicatedElement);
-              toast.success("Element duplicated");
-              e.preventDefault();
+              if (duplicateSelectedElement) {
+                duplicateSelectedElement();
+                e.preventDefault();
+              }
               break;
           }
         }
 
         // Handle properties dialog (Ctrl+Shift+Enter)
         if (e.ctrlKey && e.shiftKey && e.key === 'Enter') {
-          // TODO: Open properties dialog
-          toast.info("Properties dialog (to be implemented)");
-          e.preventDefault();
+          if (openElementProperties && selectedElementId) {
+            openElementProperties(selectedElementId);
+            e.preventDefault();
+          }
           return;
         }
 
@@ -138,5 +121,19 @@ export function useKeyboardShortcuts({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedElementId, selectedElement, editingElementId, onUpdateElement, setElementToDelete, setIsDeleteDialogOpen, setEditingElementId, finishEditing, onAddElement]);
+  }, [
+    selectedElementId, 
+    selectedElement, 
+    editingElementId, 
+    onUpdateElement, 
+    setElementToDelete, 
+    setIsDeleteDialogOpen, 
+    setEditingElementId, 
+    finishEditing,
+    onAddElement,
+    copyElementToClipboard,
+    pasteElementFromClipboard,
+    duplicateSelectedElement,
+    openElementProperties
+  ]);
 }
