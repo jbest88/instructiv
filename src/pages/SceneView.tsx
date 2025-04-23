@@ -7,12 +7,17 @@ import { Toolbar } from "@/components/Toolbar";
 import { SceneSelector } from "@/components/SceneSelector";
 
 const SceneView = () => {
+  const handlePreview = () => {
+    console.log("Preview mode activated");
+    // Preview functionality would be implemented here
+  };
+
   return (
     <PanelProvider>
       <ProjectProvider>
         <div className="flex flex-col h-screen overflow-hidden bg-background">
           {/* Toolbar at the top */}
-          <Toolbar />
+          <Toolbar onPreview={handlePreview} />
           
           {/* Scene selector */}
           <SceneSelector />

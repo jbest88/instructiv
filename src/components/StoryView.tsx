@@ -2,7 +2,7 @@
 import { useProject } from "@/contexts/project";
 import { usePanels } from "@/contexts/PanelContext";
 import { Button } from "@/components/ui/button";
-import { CircleCheck, X, Flow } from "lucide-react";
+import { CircleCheck, X, Square } from "lucide-react";
 import { 
   NavigationMenu,
   NavigationMenuItem,
@@ -59,13 +59,12 @@ export function StoryView() {
       {/* Add link to Scene Workflow View */}
       <div className="mt-2 flex justify-end">
         <Button
-          as={Link}
-          to="/scene-view"
           variant="outline"
           size="sm"
           className="flex items-center text-xs"
+          onClick={() => window.location.href = '/scene-view'}
         >
-          <Flow className="mr-1 h-3 w-3" />
+          <Square className="mr-1 h-3 w-3" />
           Scene Workflow
         </Button>
       </div>

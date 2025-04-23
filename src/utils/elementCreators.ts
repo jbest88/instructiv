@@ -1,11 +1,11 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { 
-  TextElement, 
-  ImageElement, 
-  ButtonElement, 
-  HotspotElement, 
-  SlideElement 
+  SlideElement,
+  TextElement,
+  ImageElement,
+  ButtonElement,
+  HotspotElement 
 } from "@/utils/slideTypes";
 
 // Create a text element with default properties
@@ -18,7 +18,9 @@ export const createTextElement = (): TextElement => ({
   width: 300,
   height: 50,
   fontSize: 16,
-  fontColor: "#333333"
+  fontColor: "#333333",
+  rotation: 0,
+  zIndex: 0
 });
 
 // Create an image element with default properties
@@ -30,7 +32,9 @@ export const createImageElement = (): ImageElement => ({
   x: 200,
   y: 200,
   width: 200,
-  height: 150
+  height: 150,
+  rotation: 0,
+  zIndex: 0
 });
 
 // Create a button element with default properties
@@ -43,7 +47,9 @@ export const createButtonElement = (): ButtonElement => ({
   x: 200,
   y: 200,
   width: 150,
-  height: 50
+  height: 50,
+  rotation: 0,
+  zIndex: 0
 });
 
 // Create a hotspot element with default properties
@@ -55,7 +61,9 @@ export const createHotspotElement = (): HotspotElement => ({
   x: 200,
   y: 200,
   width: 60,
-  height: 60
+  height: 60,
+  rotation: 0,
+  zIndex: 0
 });
 
 // Factory function to create any element type

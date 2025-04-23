@@ -29,7 +29,41 @@ export interface SlideElement {
   style?: string;
   tooltip?: string;
   shape?: string;
+  // Add these missing properties
+  fontStyle?: string;
+  align?: 'left' | 'center' | 'right';
 }
+
+// Define type aliases for specific element types
+export type TextElement = SlideElement & {
+  type: 'text';
+  content: string;
+  fontSize?: number;
+  fontColor?: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  align?: 'left' | 'center' | 'right';
+};
+
+export type ImageElement = SlideElement & {
+  type: 'image';
+  src: string;
+  alt?: string;
+  objectFit?: string;
+};
+
+export type ButtonElement = SlideElement & {
+  type: 'button';
+  label: string;
+  action: string;
+  style?: string;
+};
+
+export type HotspotElement = SlideElement & {
+  type: 'hotspot';
+  tooltip?: string;
+  shape?: string;
+};
 
 export interface Slide {
   id: string;

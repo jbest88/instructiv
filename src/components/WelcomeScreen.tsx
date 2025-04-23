@@ -1,118 +1,93 @@
-
-import { useState } from "react";
-import { useProject } from "@/contexts/project";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { format } from "date-fns";
-import { createDefaultProject } from "@/utils/defaultSlides";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useProject } from '@/contexts/project';
+import { createDefaultProject } from '@/utils/defaultSlides';
+import { FileIcon, FolderOpen, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export function WelcomeScreen() {
-  const { 
-    setProject, 
-    userProjects, 
-    isLoadingProjects,
-    handleLoadProjectFromSupabase,
-    handleSaveProjectToSupabase
-  } = useProject();
-  
-  const { user, signOut } = useAuth();
-  const [newProjectTitle, setNewProjectTitle] = useState("My New Project");
-  const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
+  const { handleSaveProjectToSupabase, handleLoadProjectFromSupabase, userProjects, isLoadingProjects } = useProject();
   
   const handleCreateNewProject = async () => {
-    setCreating(true);
     const newProject = createDefaultProject();
-    newProject.title = newProjectTitle;
-    
-    try {
-      // First set the project to update the local state
-      setProject(newProject);
-      
-      // Then save it to Supabase if the user is logged in
-      if (user) {
-        await handleSaveProjectToSupabase(newProjectTitle);
-      }
-    } catch (error) {
-      console.error("Failed to create project:", error);
-    } finally {
-      setCreating(false);
-    }
+    await handleSaveProjectToSupabase(newProject.title);
+    navigate('/editor');
   };
-  
+
+  const handleOpenProject = async (projectId: string) => {
+    await handleLoadProjectFromSupabase(projectId);
+    navigate('/editor');
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-3xl">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">Welcome to Instructive</CardTitle>
-              <CardDescription>
-                {user ? `Signed in as ${user.email}` : "Create and manage your projects"}
-              </CardDescription>
+    <div className="container mx-auto py-10 max-w-5xl">
+      <h1 className="text-3xl font-bold mb-8 text-center">Welcome to Instructiv</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Create New Project */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Project</CardTitle>
+            <CardDescription>Start with a blank canvas and build your interactive content</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="w-32 h-32 bg-muted rounded-lg flex items-center justify-center">
+              <Plus size={48} className="text-muted-foreground" />
             </div>
-            {user && (
-              <Button variant="outline" onClick={signOut}>Sign Out</Button>
-            )}
-          </div>
-        </CardHeader>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleCreateNewProject} className="w-full">
+              Create New Project
+            </Button>
+          </CardFooter>
+        </Card>
         
-        <CardContent className="space-y-6">
-          {/* Create new project */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Create a new project</h3>
-            <div className="flex gap-2">
-              <Input 
-                value={newProjectTitle} 
-                onChange={(e) => setNewProjectTitle(e.target.value)}
-                placeholder="Project title"
-                className="max-w-sm"
-              />
-              <Button 
-                onClick={handleCreateNewProject}
-                disabled={creating || !newProjectTitle.trim()}
-              >
-                {creating ? "Creating..." : "Create Project"}
-              </Button>
-            </div>
-          </div>
-          
-          {/* Recent projects */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Recent projects</h3>
+        {/* Recent Projects */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Projects</CardTitle>
+            <CardDescription>Open one of your existing projects</CardDescription>
+          </CardHeader>
+          <CardContent className="min-h-[200px]">
             {isLoadingProjects ? (
-              <p className="text-muted-foreground">Loading your projects...</p>
-            ) : userProjects.length === 0 ? (
-              <p className="text-muted-foreground">You don't have any saved projects yet</p>
-            ) : (
-              <div className="grid gap-2">
+              <div className="flex items-center justify-center h-32">
+                <p className="text-muted-foreground">Loading projects...</p>
+              </div>
+            ) : userProjects.length > 0 ? (
+              <div className="space-y-2">
                 {userProjects.map(project => (
-                  <div 
+                  <Button 
                     key={project.id} 
-                    className="flex items-center justify-between p-3 border rounded-md hover:bg-accent/50 cursor-pointer"
-                    onClick={() => handleLoadProjectFromSupabase(project.id)}
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => handleOpenProject(project.id)}
                   >
-                    <div>
-                      <h4 className="font-medium">{project.title}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        Last updated: {format(new Date(project.updated_at), "MMM d, yyyy 'at' h:mm a")}
-                      </p>
+                    <FileIcon className="mr-2 h-4 w-4" />
+                    <div className="flex-1 text-left">
+                      <div>{project.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(project.updated_at).toLocaleDateString()}
+                      </div>
                     </div>
-                    <Button variant="ghost" size="sm">Open</Button>
-                  </div>
+                  </Button>
                 ))}
               </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-32 text-center">
+                <FolderOpen className="h-10 w-10 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">No recent projects</p>
+              </div>
             )}
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex justify-center border-t pt-4">
-          <p className="text-sm text-muted-foreground">
-            Build interactive presentations and learning materials with Instructive
-          </p>
-        </CardFooter>
-      </Card>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" className="w-full" onClick={() => navigate('/projects')}>
+              Browse All Projects
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
