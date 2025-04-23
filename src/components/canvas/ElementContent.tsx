@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from "react";
-import { SlideElement, TextElement, ButtonElement, ImageElement, HotspotElement } from "@/utils/slideTypes";
+import { SlideElement } from "@/utils/slideTypes";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 
 // --- TextElementContent ---
 interface TextContentProps {
-  element: TextElement;
+  element: SlideElement & { type: 'text'; content: string };
   isEditing: boolean;
   editableInputRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
   onFinishEditing: (updatedValue?: string) => void;
@@ -49,7 +50,7 @@ export function TextElementContent({
           color: element.fontColor || "inherit",
           fontWeight: element.fontWeight || "inherit",
           fontStyle: element.fontStyle || "inherit",
-          textAlign: element.align || "left",
+          textAlign: element.align as any || "left",
           width: "100%",
           height: "100%",
           resize: "none",
@@ -85,7 +86,7 @@ export function TextElementContent({
           color: element.fontColor || "inherit",
           fontWeight: element.fontWeight || "inherit",
           fontStyle: element.fontStyle || "inherit",
-          textAlign: element.align || "left",
+          textAlign: element.align as any || "left",
           width: "100%"
         }}
       >
@@ -98,7 +99,7 @@ export function TextElementContent({
 
 // --- ButtonElementContent ---
 interface ButtonContentProps {
-  element: ButtonElement;
+  element: SlideElement & { type: 'button'; label: string };
   isEditing: boolean;
   editableInputRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
   onFinishEditing: () => void;
@@ -150,7 +151,7 @@ export function ButtonElementContent({ element, isEditing, editableInputRef, onF
 
 // --- ImageElementContent ---
 interface ImageContentProps {
-  element: ImageElement;
+  element: SlideElement & { type: 'image'; src: string; alt?: string };
 }
 
 export function ImageElementContent({ element }: ImageContentProps) {
@@ -161,7 +162,7 @@ export function ImageElementContent({ element }: ImageContentProps) {
       style={{
         width: '100%',
         height: '100%',
-        objectFit: element.objectFit || 'contain',
+        objectFit: element.objectFit as any || 'contain',
         display: 'block'
       }}
       draggable={false}
@@ -171,7 +172,7 @@ export function ImageElementContent({ element }: ImageContentProps) {
 
 // --- HotspotElementContent ---
 interface HotspotContentProps {
-  element: HotspotElement;
+  element: SlideElement & { type: 'hotspot'; tooltip?: string; shape?: string };
 }
 
 export function HotspotElementContent({ element }: HotspotContentProps) {
@@ -201,25 +202,25 @@ export function ElementContent({ element, isEditing, editableInputRef, onFinishE
     case "text":
       return (
         <TextElementContent
-          element={element}
+          element={element as SlideElement & { type: 'text'; content: string }}
           isEditing={isEditing}
           editableInputRef={editableInputRef}
           onFinishEditing={onFinishEditing}
         />
       );
     case "image":
-      return <ImageElementContent element={element} />;
+      return <ImageElementContent element={element as SlideElement & { type: 'image'; src: string }} />;
     case "button":
       return (
         <ButtonElementContent
-          element={element}
+          element={element as SlideElement & { type: 'button'; label: string }}
           isEditing={isEditing}
           editableInputRef={editableInputRef}
           onFinishEditing={onFinishEditing}
         />
       );
     case "hotspot":
-      return <HotspotElementContent element={element} />;
+      return <HotspotElementContent element={element as SlideElement & { type: 'hotspot' }} />;
     default:
       const elementType = (element as any)?.type ?? 'unknown';
       return <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs p-2 text-center">Unsupported Element Type: {elementType}</div>;

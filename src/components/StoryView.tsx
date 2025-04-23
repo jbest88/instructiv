@@ -9,7 +9,6 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
 
 export function StoryView() {
   const { project, currentScene, handleSelectScene } = useProject();

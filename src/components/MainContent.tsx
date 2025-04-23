@@ -2,7 +2,6 @@
 import { useProject } from "@/contexts/project/ProjectContext";
 import { SlideCanvas } from "@/components/SlideCanvas";
 import { SceneSelector } from "@/components/SceneSelector";
-import { Timeline } from "@/components/Timeline";
 import { StoryView } from "@/components/StoryView";
 import { Button } from "@/components/ui/button";
 import { Plus, ZoomIn, ZoomOut, Maximize2, Move } from "lucide-react";
@@ -167,8 +166,7 @@ export function MainContent() {
         </div>
       )}
       
-      {/* Timeline at the bottom */}
-      {currentSlide && <Timeline currentSlide={currentSlide} />}
+      {/* Remove Timeline reference */}
     </div>
   );
 }
