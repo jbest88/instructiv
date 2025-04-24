@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useProject } from "@/contexts/project";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,6 +73,7 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
     
     setIsSaving(true);
     try {
+      console.log("Saving new project with title:", newProjectTitle);
       await handleSaveProjectToSupabase(newProjectTitle);
       setNewProjectTitle("");
       toast.success(`Project "${newProjectTitle}" saved to cloud`);
@@ -88,6 +88,7 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
   
   const handleLoadProject = async (projectId: string) => {
     try {
+      console.log("Loading project:", projectId);
       await handleLoadProjectFromSupabase(projectId);
       onClose();
     } catch (error) {
@@ -100,6 +101,7 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
     if (!projectToDelete) return;
     
     try {
+      console.log("Deleting project:", projectToDelete);
       await handleDeleteProjectFromSupabase(projectToDelete);
       setProjectToDelete(null);
       toast.success("Project deleted successfully");

@@ -132,36 +132,53 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Function to save the project to local storage
   const handleSaveProject = () => {
-    localStorage.setItem("project", JSON.stringify(project));
-    toast.success("Project saved to local storage");
+    try {
+      localStorage.setItem("project", JSON.stringify(project));
+      toast.success("Project saved to local storage");
+      console.log("Project saved to local storage", project);
+    } catch (error) {
+      console.error("Error saving to local storage:", error);
+      toast.error("Failed to save to local storage");
+    }
   };
 
   // Function to load the project from local storage
   const handleLoadProject = () => {
-    const storedProject = localStorage.getItem("project");
-    if (storedProject) {
-      const loadedProject = JSON.parse(storedProject);
-      setProject(loadedProject);
-      toast.success("Project loaded from local storage");
-    } else {
-      toast.error("No project found in local storage");
+    try {
+      const storedProject = localStorage.getItem("project");
+      if (storedProject) {
+        const loadedProject = JSON.parse(storedProject);
+        setProject(loadedProject);
+        toast.success("Project loaded from local storage");
+        console.log("Project loaded from local storage", loadedProject);
+      } else {
+        toast.error("No project found in local storage");
+      }
+    } catch (error) {
+      console.error("Error loading from local storage:", error);
+      toast.error("Failed to load from local storage");
     }
   };
 
+  // Function to export the project to a file
   const handleExportProject = () => {
-    const dataStr = JSON.stringify(project);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    try {
+      const dataStr = JSON.stringify(project);
+      const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+      const exportFileName = `${project.title || 'project'}.json`;
 
-    const exportFileName = "project.json";
-
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileName);
-    linkElement.click();
-    toast.success("Project exported");
+      const linkElement = document.createElement("a");
+      linkElement.setAttribute("href", dataUri);
+      linkElement.setAttribute("download", exportFileName);
+      linkElement.click();
+      toast.success("Project exported");
+    } catch (error) {
+      console.error("Error exporting project:", error);
+      toast.error("Failed to export project");
+    }
   };
 
+  // Function to import a project from a file
   const handleImportProject = async (file: File) => {
     return new Promise<void>((resolve, reject) => {
       const reader = new FileReader();
@@ -193,12 +210,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
-  // Stubbed Supabase functions since we're not using auth-helpers anymore
-  const handleLoadUserProjects = async () => {
-    console.log("Load user projects functionality requires Supabase setup");
-    return [];
-  };
-
   // Load user's projects when authenticated
   useEffect(() => {
     const loadUserProjects = async () => {
@@ -225,6 +236,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     loadUserProjects();
   }, []);
 
+  // Function to save project to Supabase
   const handleSaveProjectToSupabase = async (title?: string) => {
     const { data: session } = await supabase.auth.getSession();
     if (!session?.session?.user) {
@@ -233,57 +245,81 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      const projectData = {
+      const projectToSave = {
         title: title || project.title,
-        data: project as any, // Type assertion to avoid TypeScript issues
+        data: project as any, // Type assertion to avoid TypeScript issues with Json type
         user_id: session.session.user.id
       };
 
-      const { error } = await supabase
+      console.log("Saving project to Supabase:", projectToSave);
+      
+      const { data, error } = await supabase
         .from('projects')
-        .insert(projectData);
+        .insert(projectToSave);
 
       if (error) throw error;
       
       // Refresh projects list
-      const { data, error: fetchError } = await supabase
+      const { data: updatedProjects, error: fetchError } = await supabase
         .from('projects')
         .select('id, title, updated_at')
         .order('updated_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      setUserProjects(data || []);
+      setUserProjects(updatedProjects || []);
       
       toast.success('Project saved to cloud');
+      return data;
     } catch (error: any) {
       console.error('Error saving project:', error);
       toast.error(error.message || 'Failed to save project');
+      throw error;
     }
   };
 
+  // Function to load project from Supabase
   const handleLoadProjectFromSupabase = async (projectId: string) => {
     try {
+      console.log("Loading project from Supabase:", projectId);
       const { data, error } = await supabase
         .from('projects')
         .select('data')
         .eq('id', projectId)
         .single();
 
-      if (error) throw error;
-      if (!data?.data) throw new Error('No project data found');
+      if (error) {
+        throw error;
+      }
+      
+      if (!data?.data) {
+        throw new Error('No project data found');
+      }
 
-      // Explicitly cast the data to Project type
+      // Cast the data to Project type
       const loadedProject = data.data as unknown as Project;
+      console.log("Loaded project:", loadedProject);
+      
+      // Validate the project has required structure
+      if (!loadedProject.id || 
+          !loadedProject.title || 
+          !Array.isArray(loadedProject.scenes)) {
+        throw new Error("Invalid project format");
+      }
+      
       setProject(loadedProject);
       toast.success('Project loaded from cloud');
+      return loadedProject;
     } catch (error: any) {
       console.error('Error loading project:', error);
       toast.error(error.message || 'Failed to load project');
+      throw error;
     }
   };
 
+  // Function to delete project from Supabase
   const handleDeleteProjectFromSupabase = async (projectId: string) => {
     try {
+      console.log("Deleting project from Supabase:", projectId);
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -291,19 +327,25 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) throw error;
 
+      // Update the projects list after deletion
       setUserProjects(prev => prev.filter(p => p.id !== projectId));
       toast.success('Project deleted');
     } catch (error: any) {
       console.error('Error deleting project:', error);
       toast.error(error.message || 'Failed to delete project');
+      throw error;
     }
   };
 
+  // Function to update project in Supabase
   const handleUpdateProjectInSupabase = async (projectId: string) => {
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ data: project as any }) // Type assertion to avoid TypeScript issues
+        .update({ 
+          data: project as any, // Type assertion to avoid TypeScript issues
+          updated_at: new Date().toISOString()
+        })
         .eq('id', projectId);
 
       if (error) throw error;
@@ -311,6 +353,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       console.error('Error updating project:', error);
       toast.error(error.message || 'Failed to update project');
+      throw error;
     }
   };
 

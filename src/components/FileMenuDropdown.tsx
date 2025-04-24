@@ -8,7 +8,7 @@ import {
   Upload,
   FileX
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useProject } from "@/contexts/project";
 import { ProjectsList } from "@/components/ProjectsList";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +34,7 @@ export function FileMenuDropdown() {
   const { user } = useAuth();
   const [isProjectsListOpen, setIsProjectsListOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,8 +43,10 @@ export function FileMenuDropdown() {
     try {
       setIsImporting(true);
       await handleImportProject(file);
+      toast.success("Project imported successfully");
     } catch (error) {
       console.error("Import error", error);
+      toast.error("Failed to import project");
     } finally {
       setIsImporting(false);
       // Reset the input so the same file can be selected again
@@ -53,11 +56,44 @@ export function FileMenuDropdown() {
 
   const handleSaveToCloud = async () => {
     try {
+      if (!user) {
+        toast.error("Please sign in to save to cloud");
+        return;
+      }
       await handleSaveProjectToSupabase();
       toast.success("Project saved to cloud");
     } catch (error) {
       console.error("Error saving to cloud:", error);
       toast.error("Failed to save to cloud");
+    }
+  };
+
+  const handleSaveLocalProject = () => {
+    try {
+      handleSaveProject();
+      toast.success("Project saved locally");
+    } catch (error) {
+      console.error("Error saving locally:", error);
+      toast.error("Failed to save locally");
+    }
+  };
+
+  const handleLoadLocalProject = () => {
+    try {
+      handleLoadProject();
+    } catch (error) {
+      console.error("Error loading project:", error);
+      toast.error("Failed to load project");
+    }
+  };
+
+  const handleExport = () => {
+    try {
+      handleExportProject();
+      toast.success("Project exported successfully");
+    } catch (error) {
+      console.error("Error exporting project:", error);
+      toast.error("Failed to export project");
     }
   };
   
@@ -81,6 +117,7 @@ export function FileMenuDropdown() {
               <FileDown className="mr-2 h-4 w-4" />
               <span>Import</span>
               <input
+                ref={fileInputRef}
                 type="file"
                 accept=".json"
                 className="hidden"
@@ -91,7 +128,7 @@ export function FileMenuDropdown() {
           </DropdownMenuItem>
           
           {/* Export to file */}
-          <DropdownMenuItem onClick={handleExportProject}>
+          <DropdownMenuItem onClick={handleExport}>
             <FileUp className="mr-2 h-4 w-4" />
             Export
           </DropdownMenuItem>
@@ -99,7 +136,7 @@ export function FileMenuDropdown() {
           <DropdownMenuSeparator />
           
           {/* Save local */}
-          <DropdownMenuItem onClick={handleSaveProject}>
+          <DropdownMenuItem onClick={handleSaveLocalProject}>
             <Save className="mr-2 h-4 w-4" />
             Save Local
           </DropdownMenuItem>
@@ -113,7 +150,7 @@ export function FileMenuDropdown() {
           )}
           
           {/* Open from local */}
-          <DropdownMenuItem onClick={handleLoadProject}>
+          <DropdownMenuItem onClick={handleLoadLocalProject}>
             <FileDown className="mr-2 h-4 w-4" />
             Open Local
           </DropdownMenuItem>
