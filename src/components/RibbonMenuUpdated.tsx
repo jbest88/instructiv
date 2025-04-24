@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import { FileMenuDropdown } from "../components/FileMenuDropdown";
+
 import {
   Menubar,
   MenubarContent,
@@ -51,23 +53,7 @@ export function RibbonMenuUpdated() {
       {/* Main Menu Bar */}
       <Menubar className="border-0 rounded-none h-auto">
         {/* File Menu */}
-        <MenubarMenu>
-          <MenubarTrigger className="font-medium px-4 py-2">File</MenubarTrigger>
-          <MenubarContent align="start" className="w-52">
-            <MenubarItem onClick={() => window.location.reload()}>
-              New
-            </MenubarItem>
-            <MenubarItem>Open</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Import</MenubarItem>
-            <MenubarItem>Export</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Save</MenubarItem>
-            <MenubarItem>Save As</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Publish</MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
+        <FileMenuDropdown/>
         
         {/* Home Menu Button */}
         <div 
