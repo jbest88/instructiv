@@ -72,6 +72,10 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
       e.preventDefault();
       handleBlur();
     }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      handleBlur();
+    }
   };
 
   const handleDelete = (e: React.MouseEvent) => {
