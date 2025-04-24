@@ -3,6 +3,7 @@ import { Project, Scene, Slide, SlideElement } from "@/utils/slideTypes";
 
 export interface ProjectContextType {
   project: Project;
+  setProject: (project: Project) => void; // Adding this missing property
   currentScene: Scene | null;
   currentSlide: Slide | null;
   selectedElementId: string | null;
@@ -39,7 +40,7 @@ export interface ProjectContextType {
   userProjects: { id: string; title: string; updated_at: string }[];
   isLoadingProjects: boolean;
   handleSaveProjectToSupabase: (title?: string) => Promise<void>;
-  handleLoadProjectFromSupabase: (projectId: string) => Promise<Project>; // <-- Updated return type to Promise<Project>
+  handleLoadProjectFromSupabase: (projectId: string) => Promise<Project>;
   handleDeleteProjectFromSupabase: (projectId: string) => Promise<void>;
   handleUpdateProjectInSupabase: (projectId: string) => Promise<void>;
   handleAddNewElement: (element: SlideElement) => void;
