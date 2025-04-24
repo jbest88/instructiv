@@ -6,8 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, X, User, LogOut } from "lucide-react";
 import { useProject } from "@/contexts/project";
 import { usePanels } from "@/contexts/PanelContext";
-import { RibbonMenuUpdated } from "./RibbonMenuUpdated";
-import { RibbonMenu } from "./RibbonMenu";
+import { FileMenuDropdown } from "./FileMenuDropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +27,7 @@ export function Toolbar({ onPreview }: ToolbarProps) {
     handleCloseSlide,
   } = useProject();
 
-  const { sidebarOpen, toolboxOpen } = usePanels();
+  const { sidebarOpen, toolboxOpen, ribbonOpen } = usePanels();
   const { user, signOut } = useAuth();
 
   // Calculate available space for tabs based on sidebar state
@@ -49,9 +48,12 @@ export function Toolbar({ onPreview }: ToolbarProps) {
 
   return (
     <div className="flex flex-col border-b">
-      {/* Ribbon menus - you can choose which one to show */}
-      <RibbonMenu />
-      <RibbonMenuUpdated />
+      {/* File menu appears at the top */}
+      {ribbonOpen && (
+        <div className="border-b bg-muted/40 p-1 flex items-center">
+          <FileMenuDropdown />
+        </div>
+      )}
       
       {/* Main toolbar content */}
       <div className="flex items-center justify-between gap-4 p-2">

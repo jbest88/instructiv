@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function FileMenuDropdown() {
   const navigate = useNavigate();
@@ -43,12 +44,26 @@ export function FileMenuDropdown() {
     try {
       setIsImporting(true);
       await handleImportProject(file);
+      toast.success("Project imported successfully");
     } catch (error) {
       console.error("Import error", error);
+      toast.error("Failed to import project");
     } finally {
       setIsImporting(false);
       // Reset the input so the same file can be selected again
       e.target.value = '';
+    }
+  };
+
+  const handleSaveToCloud = async () => {
+    if (user) {
+      try {
+        await handleSaveProjectToSupabase();
+      } catch (error) {
+        console.error("Error saving to cloud:", error);
+      }
+    } else {
+      navigate('/auth');
     }
   };
 
@@ -61,76 +76,75 @@ export function FileMenuDropdown() {
   };
   
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 text-sm">File</Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-52">
-        <DropdownMenuItem onClick={() => window.location.reload()}>
-          <FilePlus className="mr-2 h-4 w-4" />
-          New Project
-        </DropdownMenuItem>
-        
-        <DropdownMenuSeparator />
-        
-        {/* Import from file */}
-        <DropdownMenuItem asChild disabled={isImporting}>
-          <label className="flex items-center cursor-pointer">
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 text-sm">File</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-52">
+          <DropdownMenuItem onClick={() => window.location.reload()}>
+            <FilePlus className="mr-2 h-4 w-4" />
+            New Project
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* Import from file */}
+          <DropdownMenuItem asChild disabled={isImporting}>
+            <label className="flex items-center cursor-pointer">
+              <FileDown className="mr-2 h-4 w-4" />
+              <span>Import</span>
+              <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleImport}
+                disabled={isImporting}
+              />
+            </label>
+          </DropdownMenuItem>
+          
+          {/* Export to file */}
+          <DropdownMenuItem onClick={handleExportProject}>
+            <FileUp className="mr-2 h-4 w-4" />
+            Export
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          {/* Save local */}
+          <DropdownMenuItem onClick={handleSaveProject}>
+            <Save className="mr-2 h-4 w-4" />
+            Save Local
+          </DropdownMenuItem>
+          
+          {/* Save As (to cloud) */}
+          <DropdownMenuItem onClick={handleSaveToCloud}>
+            <Upload className="mr-2 h-4 w-4" />
+            {user ? "Save to Cloud" : "Sign in to Save to Cloud"}
+          </DropdownMenuItem>
+          
+          {/* Open from local */}
+          <DropdownMenuItem onClick={handleLoadProject}>
             <FileDown className="mr-2 h-4 w-4" />
-            <span>Import</span>
-            <input
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={handleImport}
-              disabled={isImporting}
-            />
-          </label>
-        </DropdownMenuItem>
-        
-        {/* Export to file */}
-        <DropdownMenuItem onClick={handleExportProject}>
-          <FileUp className="mr-2 h-4 w-4" />
-          Export
-        </DropdownMenuItem>
-        
-        <DropdownMenuSeparator />
-        
-        {/* Save local */}
-        <DropdownMenuItem onClick={handleSaveProject}>
-          <Save className="mr-2 h-4 w-4" />
-          Save Local
-        </DropdownMenuItem>
-        
-        {/* Save As (to cloud) */}
-        {user && (
-          <DropdownMenuItem onClick={() => handleSaveProjectToSupabase()}>
-            <Upload className="mr-2 h-4 w-4" />
-            Save to Cloud
+            Open Local
           </DropdownMenuItem>
-        )}
-        
-        {/* Open from local */}
-        <DropdownMenuItem onClick={handleLoadProject}>
-          <FileDown className="mr-2 h-4 w-4" />
-          Open Local
-        </DropdownMenuItem>
-        
-        <DropdownMenuSeparator />
-        
-        {/* Cloud projects */}
-        <DropdownMenuItem onClick={handleOpenProjects}>
-          <Cloud className="mr-2 h-4 w-4" />
-          {user ? "Cloud Projects" : "Sign in for Cloud Projects"}
-        </DropdownMenuItem>
-        
-        {user && (
-          <DropdownMenuItem onClick={() => navigate('/projects')}>
-            <Upload className="mr-2 h-4 w-4" />
-            View My Projects
+          
+          <DropdownMenuSeparator />
+          
+          {/* Cloud projects */}
+          <DropdownMenuItem onClick={handleOpenProjects}>
+            <Cloud className="mr-2 h-4 w-4" />
+            {user ? "View Cloud Projects" : "Sign in for Cloud Projects"}
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Cloud Projects Modal */}
+      <ProjectsList 
+        isOpen={isProjectsListOpen}
+        onClose={() => setIsProjectsListOpen(false)}
+      />
+    </>
   );
 }
