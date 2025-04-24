@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -269,7 +270,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       setUserProjects(updatedProjects || []);
       
       toast.success('Project saved to cloud');
-      return data;
     } catch (error: any) {
       console.error('Error saving project:', error);
       toast.error(error.message || 'Failed to save project');
@@ -278,7 +278,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Function to load project from Supabase
-  const handleLoadProjectFromSupabase = async (projectId: string) => {
+  const handleLoadProjectFromSupabase = async (projectId: string): Promise<Project> => {
     try {
       console.log("Loading project from Supabase:", projectId);
       const { data, error } = await supabase
@@ -308,7 +308,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       
       setProject(loadedProject);
       toast.success('Project loaded from cloud');
-      return loadedProject;
+      return loadedProject; // Return the loaded project
     } catch (error: any) {
       console.error('Error loading project:', error);
       toast.error(error.message || 'Failed to load project');

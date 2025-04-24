@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useProject } from "@/contexts/project";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { Download, Trash2, Save } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProjectsListProps {
