@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 import ProjectContent from './pages/Index';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Auth from './pages/Auth';
+import ProjectsPage from './pages/ProjectsPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
               <Route path="/" element={<ProjectContent />} />
               <Route path="/scene-view" element={<SceneView />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/projects" element={<ProjectsPage />} />
             </Routes>
             <Toaster />
           </Router>
