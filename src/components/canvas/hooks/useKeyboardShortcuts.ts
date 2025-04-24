@@ -37,13 +37,28 @@ export function useKeyboardShortcuts({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle keyboard shortcuts if currently editing text
-      if (editingElementId) return;
+      if (editingElementId) {
+        // Only handle Escape to exit editing mode
+        if (e.key === "Escape") {
+          finishEditing();
+          e.preventDefault();
+        }
+        return;
+      }
 
       if (selectedElementId && selectedElement) {
         const MOVE_AMOUNT = 1; // Pixels to move
         
         // Handle copy/paste/duplicate shortcuts
         if (e.ctrlKey) {
+          if (e.shiftKey && e.key === 'Enter') {
+            if (openElementProperties && selectedElementId) {
+              openElementProperties(selectedElementId);
+              e.preventDefault();
+              return;
+            }
+          }
+          
           switch (e.key.toLowerCase()) {
             case 'c': // Copy
               if (copyElementToClipboard && selectedElement) {
@@ -66,15 +81,6 @@ export function useKeyboardShortcuts({
               }
               break;
           }
-        }
-
-        // Handle properties dialog (Ctrl+Shift+Enter)
-        if (e.ctrlKey && e.shiftKey && e.key === 'Enter') {
-          if (openElementProperties && selectedElementId) {
-            openElementProperties(selectedElementId);
-            e.preventDefault();
-          }
-          return;
         }
 
         // Keep existing movement shortcuts

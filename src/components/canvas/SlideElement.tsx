@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { SlideElement } from '@/utils/slideTypes';
 import ElementContent from './ElementContent';
@@ -48,9 +49,11 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
   };
 
   const handleBlur = () => {
-    setIsEditing(false);
-    if (element.content !== editValue) {
-      onUpdateElement({ content: editValue });
+    if (isEditing) {
+      setIsEditing(false);
+      if (element.content !== editValue) {
+        onUpdateElement({ content: editValue });
+      }
     }
   };
 
@@ -65,9 +68,9 @@ export const SlideElementComponent: React.FC<SlideElementProps> = ({
   }, [element.content]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      editableInputRef.current?.blur();
+      handleBlur();
     }
   };
 

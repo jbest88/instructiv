@@ -34,10 +34,13 @@ export function useTextEditing(onUpdateElement: (id: string, updates: Partial<Sl
 
   // Function to finish editing and apply changes
   const finishEditing = () => {
-    setEditingElementId(null); // remove this from handling content saving
+    if (editingElementId && editableInputRef.current) {
+      const value = editableInputRef.current.value;
+      onUpdateElement(editingElementId, { content: value });
+    }
+    setEditingElementId(null);
   };
   
-
   return {
     editingElementId,
     setEditingElementId,
