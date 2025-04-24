@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { Download, Trash2, PencilLine, Save } from "lucide-react";
+import { Download, Trash2, Save } from "lucide-react";
 
 interface ProjectsListProps {
   isOpen: boolean;
@@ -46,7 +46,6 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
     isLoadingProjects, 
     handleLoadProjectFromSupabase, 
     handleSaveProjectToSupabase,
-    handleUpdateProjectInSupabase,
     handleDeleteProjectFromSupabase
   } = useProject();
   
@@ -55,16 +54,13 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
   const [newProjectTitle, setNewProjectTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
-  const [editingProject, setEditingProject] = useState<{id: string, title: string} | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
   
-  // Reset new project title and editing states when dialog opens/closes
+  // Reset new project title when dialog opens/closes
   useEffect(() => {
     if (!isOpen) {
       setNewProjectTitle("");
-      setEditingProject(null);
     } else {
-      // Optionally pre-fill the title with current project's title
+      // Pre-fill the title with current project's title
       setNewProjectTitle(project?.title || "");
     }
   }, [isOpen, project]);
@@ -81,20 +77,6 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
       console.error("Failed to save project:", error);
     } finally {
       setIsSaving(false);
-    }
-  };
-  
-  const handleUpdateProjectTitle = async () => {
-    if (!editingProject || !editingProject.title.trim()) return;
-    
-    setIsUpdating(true);
-    try {
-      await handleUpdateProjectInSupabase(editingProject.id);
-      setEditingProject(null);
-    } catch (error) {
-      console.error("Failed to update project:", error);
-    } finally {
-      setIsUpdating(false);
     }
   };
   
@@ -185,52 +167,28 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
                     <TableBody>
                       {userProjects.map((project) => (
                         <TableRow key={project.id}>
-                          <TableCell>
-                            {editingProject?.id === project.id ? (
-                              <Input 
-                                value={editingProject.title}
-                                onChange={(e) => setEditingProject({...editingProject, title: e.target.value})}
-                                className="w-full"
-                              />
-                            ) : (
-                              project.title
-                            )}
-                          </TableCell>
+                          <TableCell>{project.title}</TableCell>
                           <TableCell>
                             {format(new Date(project.updated_at), "MMM d, yyyy 'at' h:mm a")}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              {editingProject?.id === project.id ? (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  title="Save changes"
-                                  onClick={handleUpdateProjectTitle}
-                                  disabled={isUpdating}
-                                >
-                                  <Save size={16} />
-                                </Button>
-                              ) : (
-                                <>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    title="Load project"
-                                    onClick={() => handleLoadProject(project.id)}
-                                  >
-                                    <Download size={16} />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    title="Delete project"
-                                    onClick={() => setProjectToDelete(project.id)}
-                                  >
-                                    <Trash2 size={16} className="text-destructive" />
-                                  </Button>
-                                </>
-                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                title="Load project"
+                                onClick={() => handleLoadProject(project.id)}
+                              >
+                                <Download size={16} />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                title="Delete project"
+                                onClick={() => setProjectToDelete(project.id)}
+                              >
+                                <Trash2 size={16} className="text-destructive" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>

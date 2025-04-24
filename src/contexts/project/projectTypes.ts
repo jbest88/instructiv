@@ -1,4 +1,3 @@
-
 import { Project, Scene, Slide, SlideElement } from "@/utils/slideTypes";
 
 export interface ProjectContextType {
