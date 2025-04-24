@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -471,6 +470,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const value: ProjectContextType = {
     project,
+    setProject,  // Add this line to include setProject in the value object
     currentScene,
     currentSlide,
     selectedElementId,

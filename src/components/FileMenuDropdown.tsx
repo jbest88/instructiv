@@ -11,12 +11,14 @@ import {
 import { useProject } from "@/contexts/project";
 import { supabase } from "@/integrations/supabase/client";
 import { Project } from "@/utils/slideTypes";
+import { createDefaultProject } from "@/utils/defaultSlides";
 
 export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => {
   const { project, setProject } = useProject();
 
   const handleNew = () => {
-    setProject({ /* your default empty project shape */ });
+    // Use createDefaultProject instead of empty object
+    setProject(createDefaultProject());
   };
 
   const handleImport = () => {
