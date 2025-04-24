@@ -1,179 +1,121 @@
-
-import { 
-  Save, 
-  FilePlus, 
-  FileDown, 
-  FileUp, 
-  Cloud,
-  Upload,
-  FileX
-} from "lucide-react";
-import { useState, useRef } from "react";
-import { useProject } from "@/contexts/project";
-import { ProjectsList } from "@/components/ProjectsList";
-import { useAuth } from "@/contexts/AuthContext";
+// src/components/FileMenuDropdown.tsx
+import { FC, ReactNode } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarContent,
+  MenubarItem,
+  MenubarSeparator,
+} from "@/components/ui/menubar";
+import { useProject } from "@/contexts/project";
+import { supabase } from "@/lib/supabaseClient";
 
-export function FileMenuDropdown() {
-  const { 
-    handleSaveProject, 
-    handleLoadProject,
-    handleSaveProjectToSupabase,
-    handleExportProject,
-    handleImportProject
-  } = useProject();
-  
-  const { user } = useAuth();
-  const [isProjectsListOpen, setIsProjectsListOpen] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    try {
-      setIsImporting(true);
-      await handleImportProject(file);
-      toast.success("Project imported successfully");
-    } catch (error) {
-      console.error("Import error", error);
-      toast.error("Failed to import project");
-    } finally {
-      setIsImporting(false);
-      // Reset the input so the same file can be selected again
-      e.target.value = '';
-    }
+export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => {
+  const { project, setProject } = useProject();
+
+  const handleNew = () => {
+    setProject({ /* your default empty project shape */ });
   };
 
-  const handleSaveToCloud = async () => {
-    try {
-      if (!user) {
-        toast.error("Please sign in to save to cloud");
-        return;
-      }
-      await handleSaveProjectToSupabase();
-      toast.success("Project saved to cloud");
-    } catch (error) {
-      console.error("Error saving to cloud:", error);
-      toast.error("Failed to save to cloud");
-    }
-  };
-
-  const handleSaveLocalProject = () => {
-    try {
-      handleSaveProject();
-      toast.success("Project saved locally");
-    } catch (error) {
-      console.error("Error saving locally:", error);
-      toast.error("Failed to save locally");
-    }
-  };
-
-  const handleLoadLocalProject = () => {
-    try {
-      handleLoadProject();
-    } catch (error) {
-      console.error("Error loading project:", error);
-      toast.error("Failed to load project");
-    }
+  const handleImport = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      setProject(JSON.parse(text));
+    };
+    input.click();
   };
 
   const handleExport = () => {
+    const blob = new Blob([JSON.stringify(project, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (project.name || "project") + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSaveLocal = () => {
+    localStorage.setItem("instructivProject", JSON.stringify(project));
+    alert("Project saved locally");
+  };
+
+  const handleOpenLocal = () => {
+    const saved = localStorage.getItem("instructivProject");
+    if (saved) setProject(JSON.parse(saved));
+    else alert("No local project found");
+  };
+
+  const handleSaveCloud = async () => {
     try {
-      handleExportProject();
-      toast.success("Project exported successfully");
-    } catch (error) {
-      console.error("Error exporting project:", error);
-      toast.error("Failed to export project");
+      const name = project.name || prompt("Project name:", "Untitled") || "Untitled";
+      if (!project.id) {
+        // insert new
+        const { data, error } = await supabase
+          .from("projects")
+          .insert({ name, content: project })
+          .select("id, content")
+          .single();
+        if (error) throw error;
+        setProject(data.content);
+      } else {
+        // update existing
+        const { error } = await supabase
+          .from("projects")
+          .update({ content: project, name })
+          .eq("id", project.id);
+        if (error) throw error;
+      }
+      alert("Saved to cloud");
+    } catch (err: any) {
+      alert("Cloud save error: " + err.message);
     }
   };
-  
+
+  const handleOpenCloud = async () => {
+    try {
+      const { data: list, error: listErr } = await supabase
+        .from("projects")
+        .select("id, name")
+        .order("updated_at", { ascending: false });
+      if (listErr) throw listErr;
+      const choices = list.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+      const pick = parseInt(prompt(`Open which project?\n${choices}`) || "", 10) - 1;
+      if (isNaN(pick) || pick < 0 || pick >= list.length) return;
+      const { data, error: getErr } = await supabase
+        .from("projects")
+        .select("content")
+        .eq("id", list[pick].id)
+        .single();
+      if (getErr) throw getErr;
+      setProject(data.content);
+    } catch (err: any) {
+      alert("Cloud open error: " + err.message);
+    }
+  };
+
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 text-sm">File</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-52">
-          <DropdownMenuItem onClick={() => window.location.reload()}>
-            <FilePlus className="mr-2 h-4 w-4" />
-            New Project
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator />
-          
-          {/* Import from file */}
-          <DropdownMenuItem asChild disabled={isImporting}>
-            <label className="flex items-center cursor-pointer">
-              <FileDown className="mr-2 h-4 w-4" />
-              <span>Import</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={handleImport}
-                disabled={isImporting}
-              />
-            </label>
-          </DropdownMenuItem>
-          
-          {/* Export to file */}
-          <DropdownMenuItem onClick={handleExport}>
-            <FileUp className="mr-2 h-4 w-4" />
-            Export
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator />
-          
-          {/* Save local */}
-          <DropdownMenuItem onClick={handleSaveLocalProject}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Local
-          </DropdownMenuItem>
-          
-          {/* Save As (to cloud) */}
-          {user && (
-            <DropdownMenuItem onClick={handleSaveToCloud}>
-              <Upload className="mr-2 h-4 w-4" />
-              Save to Cloud
-            </DropdownMenuItem>
-          )}
-          
-          {/* Open from local */}
-          <DropdownMenuItem onClick={handleLoadLocalProject}>
-            <FileDown className="mr-2 h-4 w-4" />
-            Open Local
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator />
-          
-          {/* Cloud projects */}
-          <DropdownMenuItem 
-            onClick={() => setIsProjectsListOpen(true)}
-            disabled={!user}
-            className={!user ? "opacity-50 cursor-not-allowed" : ""}
-          >
-            <Cloud className="mr-2 h-4 w-4" />
-            {user ? "Cloud Projects" : "Sign in for Cloud Projects"}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      
-      {/* Cloud Projects Modal */}
-      <ProjectsList 
-        isOpen={isProjectsListOpen}
-        onClose={() => setIsProjectsListOpen(false)}
-      />
-    </>
+    <MenubarMenu>
+      <MenubarTrigger>File</MenubarTrigger>
+      <MenubarContent>
+        <MenubarItem onSelect={handleNew}>New</MenubarItem>
+        <MenubarItem onSelect={handleImport}>Import…</MenubarItem>
+        <MenubarItem onSelect={handleExport}>Export…</MenubarItem>
+        <MenubarSeparator />
+        <MenubarItem onSelect={handleSaveLocal}>Save Local</MenubarItem>
+        <MenubarItem onSelect={handleOpenLocal}>Open Local</MenubarItem>
+        <MenubarSeparator />
+        <MenubarItem onSelect={handleSaveCloud}>Save to Cloud</MenubarItem>
+        <MenubarItem onSelect={handleOpenCloud}>Open from Cloud</MenubarItem>
+        {children}
+      </MenubarContent>
+    </MenubarMenu>
   );
-}
+};
