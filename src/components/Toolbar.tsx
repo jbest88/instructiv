@@ -7,6 +7,7 @@ import { Eye, X, User, LogOut } from "lucide-react";
 import { useProject } from "@/contexts/project";
 import { usePanels } from "@/contexts/PanelContext";
 import { RibbonMenuUpdated } from "./RibbonMenuUpdated";
+import { RibbonMenu } from "./RibbonMenu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +49,8 @@ export function Toolbar({ onPreview }: ToolbarProps) {
 
   return (
     <div className="flex flex-col border-b">
-      {/* Ribbon menu at the top */}
+      {/* Ribbon menus - you can choose which one to show */}
+      <RibbonMenu />
       <RibbonMenuUpdated />
       
       {/* Main toolbar content */}
