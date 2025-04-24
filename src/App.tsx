@@ -12,6 +12,7 @@ import { PanelProvider } from '@/contexts/PanelContext';
 import { Toaster } from "@/components/ui/toaster";
 import ProjectContent from './pages/Index';
 import { AuthProvider } from '@/contexts/AuthContext';
+import Auth from './pages/Auth';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Routes>
               <Route path="/" element={<ProjectContent />} />
               <Route path="/scene-view" element={<SceneView />} />
+              <Route path="/auth" element={<Auth />} />
             </Routes>
             <Toaster />
           </Router>
