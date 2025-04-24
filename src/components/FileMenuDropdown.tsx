@@ -1,5 +1,4 @@
 
-// src/components/FileMenuDropdown.tsx
 import { FC, ReactNode } from "react";
 import {
   MenubarMenu,
@@ -12,6 +11,7 @@ import { useProject } from "@/contexts/project";
 import { supabase } from "@/integrations/supabase/client";
 import { Project } from "@/utils/slideTypes";
 import { createDefaultProject } from "@/utils/defaultSlides";
+import { toast } from "sonner";
 
 export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => {
   const { project, setProject } = useProject();
@@ -64,10 +64,12 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         // insert new
         const { data, error } = await supabase
           .from("projects")
-          .insert({ title, data: project as any })
+          .insert({ title, data: project })
           .select("id, data")
           .single();
+        
         if (error) throw error;
+        
         // Use a more robust type assertion with proper type checking
         if (data && data.data) {
           const projectData = data.data as unknown;
@@ -80,6 +82,7 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
             'scenes' in projectData
           ) {
             setProject(projectData as Project);
+            toast.success("Project created in cloud");
           } else {
             throw new Error("Invalid project data format received from server");
           }
@@ -88,13 +91,15 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         // update existing
         const { error } = await supabase
           .from("projects")
-          .update({ data: project as any, title })
+          .update({ data: project, title })
           .eq("id", project.id);
+          
         if (error) throw error;
+        toast.success("Project updated in cloud");
       }
-      alert("Saved to cloud");
     } catch (err: any) {
-      alert("Cloud save error: " + err.message);
+      console.error("Cloud save error:", err);
+      toast.error("Cloud save error: " + err.message);
     }
   };
 
@@ -104,15 +109,20 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         .from("projects")
         .select("id, title")
         .order("updated_at", { ascending: false });
+        
       if (listErr) throw listErr;
+      
       const choices = list.map((p, i) => `${i + 1}. ${p.title}`).join("\n");
       const pick = parseInt(prompt(`Open which project?\n${choices}`) || "", 10) - 1;
+      
       if (isNaN(pick) || pick < 0 || pick >= list.length) return;
+      
       const { data, error: getErr } = await supabase
         .from("projects")
         .select("data")
         .eq("id", list[pick].id)
         .single();
+        
       if (getErr) throw getErr;
       
       // Use a more robust type assertion with proper type checking
@@ -127,12 +137,14 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
           'scenes' in projectData
         ) {
           setProject(projectData as Project);
+          toast.success("Project loaded from cloud");
         } else {
           throw new Error("Invalid project data format received from server");
         }
       }
     } catch (err: any) {
-      alert("Cloud open error: " + err.message);
+      console.error("Cloud open error:", err);
+      toast.error("Cloud open error: " + err.message);
     }
   };
 
