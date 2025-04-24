@@ -62,14 +62,17 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
     try {
       const title = project.title || prompt("Project name:", "Untitled") || "Untitled";
       if (!project.id) {
-        // insert new - explicitly cast the project to Json type
+        // insert new - explicitly cast the project to Json type and specify schema
         const { data, error } = await supabase
           .from("projects")
           .insert({ title, data: project as unknown as Json })
           .select("id, data")
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error("Cloud save error details:", error);
+          throw error;
+        }
         
         // Use a more robust type assertion with proper type checking
         if (data && data.data) {
@@ -95,12 +98,19 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
           .update({ data: project as unknown as Json, title })
           .eq("id", project.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Cloud update error details:", error);
+          throw error;
+        }
         toast.success("Project updated in cloud");
       }
     } catch (err: any) {
       console.error("Cloud save error:", err);
-      toast.error("Cloud save error: " + err.message);
+      if (err.message.includes("The schema must be one of the following")) {
+        toast.error("Cloud save error: Schema configuration issue. Contact support.");
+      } else {
+        toast.error("Cloud save error: " + err.message);
+      }
     }
   };
 
@@ -111,7 +121,15 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         .select("id, title")
         .order("updated_at", { ascending: false });
         
-      if (listErr) throw listErr;
+      if (listErr) {
+        console.error("Cloud list error details:", listErr);
+        throw listErr;
+      }
+      
+      if (!list || list.length === 0) {
+        toast.error("No projects found in the cloud");
+        return;
+      }
       
       const choices = list.map((p, i) => `${i + 1}. ${p.title}`).join("\n");
       const pick = parseInt(prompt(`Open which project?\n${choices}`) || "", 10) - 1;
@@ -124,7 +142,10 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         .eq("id", list[pick].id)
         .single();
         
-      if (getErr) throw getErr;
+      if (getErr) {
+        console.error("Cloud get error details:", getErr);
+        throw getErr;
+      }
       
       // Use a more robust type assertion with proper type checking
       if (data && data.data) {
@@ -145,7 +166,11 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
       }
     } catch (err: any) {
       console.error("Cloud open error:", err);
-      toast.error("Cloud open error: " + err.message);
+      if (err.message.includes("The schema must be one of the following")) {
+        toast.error("Cloud open error: Schema configuration issue. Contact support.");
+      } else {
+        toast.error("Cloud open error: " + err.message);
+      }
     }
   };
 
