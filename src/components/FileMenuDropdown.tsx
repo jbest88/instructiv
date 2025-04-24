@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/menubar";
 import { useProject } from "@/contexts/project";
 import { supabase } from "@/integrations/supabase/client";
+import { Project } from "@/utils/slideTypes";
 
 export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => {
   const { project, setProject } = useProject();
@@ -61,16 +62,16 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         // insert new
         const { data, error } = await supabase
           .from("projects")
-          .insert({ title, data: project })
+          .insert({ title, data: project as any })
           .select("id, data")
           .single();
         if (error) throw error;
-        setProject(data.data);
+        setProject(data.data as Project);
       } else {
         // update existing
         const { error } = await supabase
           .from("projects")
-          .update({ data: project, title })
+          .update({ data: project as any, title })
           .eq("id", project.id);
         if (error) throw error;
       }
@@ -96,7 +97,7 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         .eq("id", list[pick].id)
         .single();
       if (getErr) throw getErr;
-      setProject(data.data);
+      setProject(data.data as Project);
     } catch (err: any) {
       alert("Cloud open error: " + err.message);
     }
