@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { Download, Trash2, Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProjectsListProps {
   isOpen: boolean;
@@ -66,23 +67,33 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
   }, [isOpen, project]);
   
   const handleSaveNewProject = async () => {
-    if (!newProjectTitle.trim()) return;
+    if (!newProjectTitle.trim()) {
+      toast.error("Please enter a project title");
+      return;
+    }
     
     setIsSaving(true);
     try {
       await handleSaveProjectToSupabase(newProjectTitle);
       setNewProjectTitle("");
+      toast.success(`Project "${newProjectTitle}" saved to cloud`);
       onClose();
     } catch (error) {
       console.error("Failed to save project:", error);
+      toast.error("Failed to save project to cloud");
     } finally {
       setIsSaving(false);
     }
   };
   
   const handleLoadProject = async (projectId: string) => {
-    await handleLoadProjectFromSupabase(projectId);
-    onClose();
+    try {
+      await handleLoadProjectFromSupabase(projectId);
+      onClose();
+    } catch (error) {
+      console.error("Failed to load project:", error);
+      toast.error("Failed to load project from cloud");
+    }
   };
   
   const handleDeleteConfirm = async () => {
@@ -91,8 +102,10 @@ export function ProjectsList({ isOpen, onClose }: ProjectsListProps) {
     try {
       await handleDeleteProjectFromSupabase(projectToDelete);
       setProjectToDelete(null);
+      toast.success("Project deleted successfully");
     } catch (error) {
       console.error("Failed to delete project:", error);
+      toast.error("Failed to delete project");
     }
   };
   

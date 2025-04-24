@@ -20,6 +20,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function FileMenuDropdown() {
   const { 
@@ -47,6 +48,16 @@ export function FileMenuDropdown() {
       setIsImporting(false);
       // Reset the input so the same file can be selected again
       e.target.value = '';
+    }
+  };
+
+  const handleSaveToCloud = async () => {
+    try {
+      await handleSaveProjectToSupabase();
+      toast.success("Project saved to cloud");
+    } catch (error) {
+      console.error("Error saving to cloud:", error);
+      toast.error("Failed to save to cloud");
     }
   };
   
@@ -95,7 +106,7 @@ export function FileMenuDropdown() {
           
           {/* Save As (to cloud) */}
           {user && (
-            <DropdownMenuItem onClick={() => handleSaveProjectToSupabase()}>
+            <DropdownMenuItem onClick={handleSaveToCloud}>
               <Upload className="mr-2 h-4 w-4" />
               Save to Cloud
             </DropdownMenuItem>
@@ -118,13 +129,6 @@ export function FileMenuDropdown() {
             <Cloud className="mr-2 h-4 w-4" />
             {user ? "Cloud Projects" : "Sign in for Cloud Projects"}
           </DropdownMenuItem>
-          
-          {user && (
-            <DropdownMenuItem>
-              <Upload className="mr-2 h-4 w-4" />
-              Publish
-            </DropdownMenuItem>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
       
