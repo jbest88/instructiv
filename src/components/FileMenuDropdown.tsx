@@ -66,7 +66,22 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
           .select("id, data")
           .single();
         if (error) throw error;
-        setProject(data.data as Project);
+        // Use a more robust type assertion with proper type checking
+        if (data && data.data) {
+          const projectData = data.data as unknown;
+          // Basic validation to ensure it matches Project structure
+          if (
+            typeof projectData === 'object' && 
+            projectData !== null && 
+            'id' in projectData && 
+            'title' in projectData &&
+            'scenes' in projectData
+          ) {
+            setProject(projectData as Project);
+          } else {
+            throw new Error("Invalid project data format received from server");
+          }
+        }
       } else {
         // update existing
         const { error } = await supabase
@@ -97,7 +112,23 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
         .eq("id", list[pick].id)
         .single();
       if (getErr) throw getErr;
-      setProject(data.data as Project);
+      
+      // Use a more robust type assertion with proper type checking
+      if (data && data.data) {
+        const projectData = data.data as unknown;
+        // Basic validation to ensure it matches Project structure
+        if (
+          typeof projectData === 'object' && 
+          projectData !== null && 
+          'id' in projectData && 
+          'title' in projectData &&
+          'scenes' in projectData
+        ) {
+          setProject(projectData as Project);
+        } else {
+          throw new Error("Invalid project data format received from server");
+        }
+      }
     } catch (err: any) {
       alert("Cloud open error: " + err.message);
     }
@@ -121,3 +152,4 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
     </MenubarMenu>
   );
 };
+
