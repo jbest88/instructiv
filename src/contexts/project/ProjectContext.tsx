@@ -235,13 +235,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const projectData = {
         title: title || project.title,
-        data: project,
+        data: project as any, // Type assertion to avoid TypeScript issues
         user_id: session.session.user.id
       };
 
       const { error } = await supabase
         .from('projects')
-        .insert([projectData]);
+        .insert(projectData);
 
       if (error) throw error;
       
@@ -272,7 +272,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error) throw error;
       if (!data?.data) throw new Error('No project data found');
 
-      setProject(data.data);
+      // Explicitly cast the data to Project type
+      const loadedProject = data.data as unknown as Project;
+      setProject(loadedProject);
       toast.success('Project loaded from cloud');
     } catch (error: any) {
       console.error('Error loading project:', error);
@@ -301,7 +303,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ data: project })
+        .update({ data: project as any }) // Type assertion to avoid TypeScript issues
         .eq('id', projectId);
 
       if (error) throw error;
