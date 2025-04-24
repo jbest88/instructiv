@@ -1,3 +1,4 @@
+
 // src/components/FileMenuDropdown.tsx
 import { FC, ReactNode } from "react";
 import {
@@ -8,7 +9,7 @@ import {
   MenubarSeparator,
 } from "@/components/ui/menubar";
 import { useProject } from "@/contexts/project";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => {
   const { project, setProject } = useProject();
@@ -37,7 +38,7 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = (project.name || "project") + ".json";
+    a.download = (project.title || "project") + ".json";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -55,21 +56,21 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
 
   const handleSaveCloud = async () => {
     try {
-      const name = project.name || prompt("Project name:", "Untitled") || "Untitled";
+      const title = project.title || prompt("Project name:", "Untitled") || "Untitled";
       if (!project.id) {
         // insert new
         const { data, error } = await supabase
           .from("projects")
-          .insert({ name, content: project })
-          .select("id, content")
+          .insert({ title, data: project })
+          .select("id, data")
           .single();
         if (error) throw error;
-        setProject(data.content);
+        setProject(data.data);
       } else {
         // update existing
         const { error } = await supabase
           .from("projects")
-          .update({ content: project, name })
+          .update({ data: project, title })
           .eq("id", project.id);
         if (error) throw error;
       }
@@ -83,19 +84,19 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
     try {
       const { data: list, error: listErr } = await supabase
         .from("projects")
-        .select("id, name")
+        .select("id, title")
         .order("updated_at", { ascending: false });
       if (listErr) throw listErr;
-      const choices = list.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+      const choices = list.map((p, i) => `${i + 1}. ${p.title}`).join("\n");
       const pick = parseInt(prompt(`Open which project?\n${choices}`) || "", 10) - 1;
       if (isNaN(pick) || pick < 0 || pick >= list.length) return;
       const { data, error: getErr } = await supabase
         .from("projects")
-        .select("content")
+        .select("data")
         .eq("id", list[pick].id)
         .single();
       if (getErr) throw getErr;
-      setProject(data.content);
+      setProject(data.data);
     } catch (err: any) {
       alert("Cloud open error: " + err.message);
     }
