@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Project } from "@/utils/slideTypes";
 import { createDefaultProject } from "@/utils/defaultSlides";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => {
   const { project, setProject } = useProject();
@@ -48,23 +49,23 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
 
   const handleSaveLocal = () => {
     localStorage.setItem("instructivProject", JSON.stringify(project));
-    alert("Project saved locally");
+    toast.success("Project saved locally");
   };
 
   const handleOpenLocal = () => {
     const saved = localStorage.getItem("instructivProject");
     if (saved) setProject(JSON.parse(saved));
-    else alert("No local project found");
+    else toast.error("No local project found");
   };
 
   const handleSaveCloud = async () => {
     try {
       const title = project.title || prompt("Project name:", "Untitled") || "Untitled";
       if (!project.id) {
-        // insert new
+        // insert new - explicitly cast the project to Json type
         const { data, error } = await supabase
           .from("projects")
-          .insert({ title, data: project })
+          .insert({ title, data: project as unknown as Json })
           .select("id, data")
           .single();
         
@@ -88,10 +89,10 @@ export const FileMenuDropdown: FC<{ children?: ReactNode }> = ({ children }) => 
           }
         }
       } else {
-        // update existing
+        // update existing - explicitly cast the project to Json type
         const { error } = await supabase
           .from("projects")
-          .update({ data: project, title })
+          .update({ data: project as unknown as Json, title })
           .eq("id", project.id);
           
         if (error) throw error;
