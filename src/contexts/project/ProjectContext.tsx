@@ -231,7 +231,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Save project to Supabase
-  const handleSaveProjectToSupabase = async (newTitle?: string) => {
+  const handleSaveProjectToSupabase = async (newTitle?: string): Promise<void> => {
     if (!user) {
       toast.error("Please sign in to save projects to cloud");
       return;
@@ -249,12 +249,15 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       
       setProject(updatedProject);
       
+      // Stringify project data for storage in Supabase
+      const projectData = JSON.stringify(updatedProject);
+      
       const { data, error } = await supabase
         .from('projects')
         .insert({
           user_id: user.id,
           title: title,
-          data: updatedProject,
+          data: projectData,  // Store as string in the data JSON field
         })
         .select();
       
@@ -264,8 +267,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       
       // Refresh the user's project list
       handleLoadUserProjects();
-      
-      return data?.[0]?.id;
     } catch (error) {
       console.error("Error saving project:", error);
       toast.error("Failed to save project");
@@ -293,8 +294,16 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
       
-      // Load the project from the data
-      const loadedProject = data.data as Project;
+      // Parse the stored project data from JSON string
+      let loadedProject: Project;
+      
+      if (typeof data.data === 'string') {
+        loadedProject = JSON.parse(data.data);
+      } else {
+        // If it's already an object, we need to cast it to Project
+        loadedProject = data.data as unknown as Project;
+      }
+      
       setProject(loadedProject);
       
       toast.success(`Loaded project: ${data.title}`);
@@ -345,10 +354,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
       
+      // Stringify the project data for storage
+      const projectData = JSON.stringify(project);
+      
       const { error } = await supabase
         .from('projects')
         .update({
-          data: project,
+          data: projectData,
           title: projectToUpdate.title,
           updated_at: new Date().toISOString(),
         })
