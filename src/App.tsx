@@ -17,21 +17,23 @@ import ProjectsPage from './pages/ProjectsPage';
 
 function App() {
   return (
-    <AuthProvider>
-      <ProjectProvider>
-        <PanelProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<ProjectContent />} />
-              <Route path="/scene-view" element={<SceneView />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/projects" element={<ProjectsPage />} />
-            </Routes>
-            <Toaster />
-          </Router>
-        </PanelProvider>
-      </ProjectProvider>
-    </AuthProvider>
+    <React.StrictMode>
+      <AuthProvider>
+        <ProjectProvider>
+          <PanelProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<ProjectContent />} />
+                <Route path="/scene-view" element={<SceneView />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/projects" element={<ProjectsPage />} />
+              </Routes>
+              <Toaster />
+            </Router>
+          </PanelProvider>
+        </ProjectProvider>
+      </AuthProvider>
+    </React.StrictMode>
   );
 }
 
