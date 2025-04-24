@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -14,8 +13,6 @@ import { createDefaultProject } from "@/utils/defaultSlides";
 import { useProjectScenes } from "./useProjectScenes";
 import { useProjectSlides } from "./useProjectSlides";
 import { useProjectElements } from "./useProjectElements";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 // Create a global clipboard for storing copied elements
 // This is in memory only and not persisted
@@ -26,7 +23,6 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth();
   const [project, setProject] = useState<Project>(createDefaultProject());
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [openSlides, setOpenSlides] = useState<{ id: string; title: string }[]>([]);
@@ -89,15 +85,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
   }, [project.currentSlideId]);
-
-  // Load user projects from Supabase when user changes
-  useEffect(() => {
-    if (user) {
-      handleLoadUserProjects();
-    } else {
-      setUserProjects([]);
-    }
-  }, [user]);
 
   const currentScene = project.scenes.find(
     (scene) => scene.id === project.currentSceneId
@@ -205,178 +192,30 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
-  // Load user projects from Supabase
+  // Stubbed Supabase functions since we're not using auth-helpers anymore
   const handleLoadUserProjects = async () => {
-    if (!user) return [];
-    
-    setIsLoadingProjects(true);
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('id, title, updated_at')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      setUserProjects(data || []);
-      return data || [];
-    } catch (error) {
-      console.error("Error loading user projects:", error);
-      toast.error("Failed to load your projects");
-      return [];
-    } finally {
-      setIsLoadingProjects(false);
-    }
+    console.log("Load user projects functionality requires Supabase setup");
+    return [];
   };
 
-  // Save project to Supabase
-  const handleSaveProjectToSupabase = async (newTitle?: string): Promise<void> => {
-    if (!user) {
-      toast.error("Please sign in to save projects to cloud");
-      return;
-    }
-    
-    try {
-      // Use provided title or current project title
-      const title = newTitle || project.title || "Untitled Project";
-      
-      // Update the project with the new title
-      const updatedProject = {
-        ...project,
-        title,
-      };
-      
-      setProject(updatedProject);
-      
-      // Stringify project data for storage in Supabase
-      const projectData = JSON.stringify(updatedProject);
-      
-      const { data, error } = await supabase
-        .from('projects')
-        .insert({
-          user_id: user.id,
-          title: title,
-          data: projectData,  // Store as string in the data JSON field
-        })
-        .select();
-      
-      if (error) throw error;
-      
-      toast.success("Project saved to cloud");
-      
-      // Refresh the user's project list
-      handleLoadUserProjects();
-    } catch (error) {
-      console.error("Error saving project:", error);
-      toast.error("Failed to save project");
-    }
+  const handleSaveProjectToSupabase = async (title?: string) => {
+    console.log("Save to Supabase functionality requires Supabase setup");
+    toast.info("Supabase integration not configured");
   };
 
-  // Load project from Supabase
   const handleLoadProjectFromSupabase = async (projectId: string) => {
-    if (!user) {
-      toast.error("Please sign in to load projects from cloud");
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('data, title')
-        .eq('id', projectId)
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) throw error;
-      if (!data) {
-        toast.error("Project not found");
-        return;
-      }
-      
-      // Parse the stored project data from JSON string
-      let loadedProject: Project;
-      
-      if (typeof data.data === 'string') {
-        loadedProject = JSON.parse(data.data);
-      } else {
-        // If it's already an object, we need to cast it to Project
-        loadedProject = data.data as unknown as Project;
-      }
-      
-      setProject(loadedProject);
-      
-      toast.success(`Loaded project: ${data.title}`);
-    } catch (error) {
-      console.error("Error loading project:", error);
-      toast.error("Failed to load project");
-    }
+    console.log("Load from Supabase functionality requires Supabase setup");
+    toast.info("Supabase integration not configured");
   };
 
-  // Delete project from Supabase
   const handleDeleteProjectFromSupabase = async (projectId: string) => {
-    if (!user) {
-      toast.error("Please sign in to delete projects from cloud");
-      return;
-    }
-    
-    try {
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', projectId)
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      
-      toast.success("Project deleted");
-      
-      // Refresh the user's project list
-      handleLoadUserProjects();
-    } catch (error) {
-      console.error("Error deleting project:", error);
-      toast.error("Failed to delete project");
-    }
+    console.log("Delete from Supabase functionality requires Supabase setup");
+    toast.info("Supabase integration not configured");
   };
 
-  // Update project in Supabase
   const handleUpdateProjectInSupabase = async (projectId: string) => {
-    if (!user) {
-      toast.error("Please sign in to update projects");
-      return;
-    }
-    
-    try {
-      // Find the project in userProjects to get current title
-      const projectToUpdate = userProjects.find(p => p.id === projectId);
-      if (!projectToUpdate) {
-        toast.error("Project not found");
-        return;
-      }
-      
-      // Stringify the project data for storage
-      const projectData = JSON.stringify(project);
-      
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          data: projectData,
-          title: projectToUpdate.title,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', projectId)
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      
-      toast.success("Project updated");
-      
-      // Refresh the user's project list
-      handleLoadUserProjects();
-    } catch (error) {
-      console.error("Error updating project:", error);
-      toast.error("Failed to update project");
-    }
+    console.log("Update in Supabase functionality requires Supabase setup");
+    toast.info("Supabase integration not configured");
   };
 
   const handleAddNewElement = (element: SlideElement) => {

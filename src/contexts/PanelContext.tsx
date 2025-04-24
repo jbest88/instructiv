@@ -1,40 +1,57 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
+
+import { createContext, useContext, useState, ReactNode } from "react";
 
 type PanelContextType = {
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
   toolboxOpen: boolean;
   setToolboxOpen: (open: boolean) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
   ribbonOpen: boolean;
   setRibbonOpen: (open: boolean) => void;
+  storyViewOpen: boolean;
+  setStoryViewOpen: (open: boolean) => void;
+  timelineOpen: boolean;
+  setTimelineOpen: (open: boolean) => void;
 };
 
 const PanelContext = createContext<PanelContextType | undefined>(undefined);
 
-export const PanelProvider = ({ children }: { children: React.ReactNode }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [toolboxOpen, setToolboxOpen] = useState(true);
-  const [ribbonOpen, setRibbonOpen] = useState(true); // Set to true by default
-  
-  const value = {
-    sidebarOpen,
-    setSidebarOpen,
-    toolboxOpen,
-    setToolboxOpen,
-    ribbonOpen, 
-    setRibbonOpen,
-  };
-  
+export function PanelProvider({ children }: { children: ReactNode }) {
+  // Start with panels closed
+  const [toolboxOpen, setToolboxOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [ribbonOpen, setRibbonOpen] = useState(false);
+  const [storyViewOpen, setStoryViewOpen] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+
+  // Helper function to toggle sidebar
+  const toggleSidebar = () => setSidebarOpen(prev => !prev);
+
   return (
-    <PanelContext.Provider value={value}>
+    <PanelContext.Provider
+      value={{
+        toolboxOpen,
+        setToolboxOpen,
+        sidebarOpen,
+        setSidebarOpen,
+        toggleSidebar,
+        ribbonOpen,
+        setRibbonOpen,
+        storyViewOpen,
+        setStoryViewOpen,
+        timelineOpen,
+        setTimelineOpen,
+      }}
+    >
       {children}
     </PanelContext.Provider>
   );
-};
+}
 
 export function usePanels() {
   const context = useContext(PanelContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("usePanels must be used within a PanelProvider");
   }
   return context;

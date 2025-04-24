@@ -12,7 +12,6 @@ import { useState } from "react";
 import { useProject } from "@/contexts/project";
 import { ProjectsList } from "@/components/ProjectsList";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,10 +20,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 export function FileMenuDropdown() {
-  const navigate = useNavigate();
   const { 
     handleSaveProject, 
     handleLoadProject,
@@ -44,34 +41,12 @@ export function FileMenuDropdown() {
     try {
       setIsImporting(true);
       await handleImportProject(file);
-      toast.success("Project imported successfully");
     } catch (error) {
       console.error("Import error", error);
-      toast.error("Failed to import project");
     } finally {
       setIsImporting(false);
       // Reset the input so the same file can be selected again
       e.target.value = '';
-    }
-  };
-
-  const handleSaveToCloud = async () => {
-    if (user) {
-      try {
-        await handleSaveProjectToSupabase();
-      } catch (error) {
-        console.error("Error saving to cloud:", error);
-      }
-    } else {
-      navigate('/auth');
-    }
-  };
-
-  const handleOpenProjects = () => {
-    if (user) {
-      navigate('/projects');
-    } else {
-      navigate('/auth');
     }
   };
   
@@ -119,10 +94,12 @@ export function FileMenuDropdown() {
           </DropdownMenuItem>
           
           {/* Save As (to cloud) */}
-          <DropdownMenuItem onClick={handleSaveToCloud}>
-            <Upload className="mr-2 h-4 w-4" />
-            {user ? "Save to Cloud" : "Sign in to Save to Cloud"}
-          </DropdownMenuItem>
+          {user && (
+            <DropdownMenuItem onClick={() => handleSaveProjectToSupabase()}>
+              <Upload className="mr-2 h-4 w-4" />
+              Save to Cloud
+            </DropdownMenuItem>
+          )}
           
           {/* Open from local */}
           <DropdownMenuItem onClick={handleLoadProject}>
@@ -133,13 +110,24 @@ export function FileMenuDropdown() {
           <DropdownMenuSeparator />
           
           {/* Cloud projects */}
-          <DropdownMenuItem onClick={handleOpenProjects}>
+          <DropdownMenuItem 
+            onClick={() => setIsProjectsListOpen(true)}
+            disabled={!user}
+            className={!user ? "opacity-50 cursor-not-allowed" : ""}
+          >
             <Cloud className="mr-2 h-4 w-4" />
-            {user ? "View Cloud Projects" : "Sign in for Cloud Projects"}
+            {user ? "Cloud Projects" : "Sign in for Cloud Projects"}
           </DropdownMenuItem>
+          
+          {user && (
+            <DropdownMenuItem>
+              <Upload className="mr-2 h-4 w-4" />
+              Publish
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
-
+      
       {/* Cloud Projects Modal */}
       <ProjectsList 
         isOpen={isProjectsListOpen}
